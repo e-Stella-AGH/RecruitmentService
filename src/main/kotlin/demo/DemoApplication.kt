@@ -20,6 +20,7 @@ fun get_configuration_data(): MutableMap<String, String> {
 }
 
 fun create_application_properties(env: MutableMap<String, String> = get_configuration_data()) {
+    val strategy: String = if (env.isEmpty()) "none" else "create-drop"
     File(application_path).printWriter().use { out ->
         out.println("""
 			host=${env["host"]}
@@ -28,7 +29,7 @@ fun create_application_properties(env: MutableMap<String, String> = get_configur
 			username=${env["username"]}
 			password=${env["password"]}
 			spring.datasource.url=${env["url"]}
-			spring.jpa.hibernate.ddl-auto=create-drop
+			spring.jpa.hibernate.ddl-auto=${strategy}
 			spring.jpa.show-sql=true
 			spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 			spring.datasource.driver-class-name=org.postgresql.Driver
