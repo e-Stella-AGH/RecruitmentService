@@ -6,6 +6,8 @@ build/
 !**/src/test/**/build/
 
 config.json
+myDB.mv.db
+myDB.trace.db
 
 ### STS ###
 .apt_generated

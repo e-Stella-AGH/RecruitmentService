@@ -10,5 +10,5 @@ import javax.persistence.*
 data class Task(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
         @Lob val tests: Blob, @Lob val description: Clob,
-        val limit: Int, val deadline: Timestamp
+        val timeLimit: Int, val deadline: Timestamp
 )
