@@ -5,11 +5,11 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "Interviews")
+@Table(name = "interviews")
 data class Interview(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: String?,
         val dateTime:Timestamp, val minutesLength:Int,
         @ManyToOne val application:Application,
-        @OneToMany val notes:Set<InterviewNote>
+        @OneToMany @JoinColumn(name="interviews_id") val notes:Set<InterviewNote>
 
 )

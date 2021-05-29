@@ -3,7 +3,7 @@ package demo.models.people
 import javax.persistence.*
 
 @Entity
-@Table(name = "Hrpartners")
+@Table(name = "hrpartners")
 data class Hrpartner(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
         @ManyToOne @JoinColumn(name = "organization_id") val organization: Organization,
