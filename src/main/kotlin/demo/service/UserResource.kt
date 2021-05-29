@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 class UserResource(@Autowired private val userRepository: UserRepository) {
 
 
-    @GetMapping
+    @GetMapping("/all")
     fun getUsers(): MutableIterable<User> =
            userRepository.findAll()
 }

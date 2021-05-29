@@ -8,21 +8,17 @@ import java.io.File
 @SpringBootApplication
 class DemoApplication
 
-val application_path = "src/main/resources/application.properties"
-val config_path = "config.json"
+const val applicationPath = "src/main/resources/application.properties"
+const val configPath = "config.json"
 
-fun get_configuration_data(): MutableMap<String, String> {
-    val file = File(config_path)
+fun getConfigurationData(): MutableMap<String, String> {
+    val file = File(configPath)
     if (!file.exists())
         return HashMap()
-    val result = Klaxon().parse<MutableMap<String, String>>(File(config_path))
-    if (result == null)
-        return HashMap<String, String>()
-    else
-        return result
+    return Klaxon().parse<MutableMap<String, String>>(File(configPath)) ?: HashMap<String, String>()
 }
 
-fun get_application_properties_for_sql(env: MutableMap<String, String>): String {
+fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
     return """
 			host=${env["host"]}
 			port=5432
@@ -37,7 +33,7 @@ fun get_application_properties_for_sql(env: MutableMap<String, String>): String 
 		""".trimIndent()
 }
 
-fun get_application_properties_for_h2(): String {
+fun getApplicationPropertiesForH2(): String {
     return """
         spring.datasource.url=jdbc:h2:file:./myDB
         spring.jpa.hibernate.ddl-auto=create-drop
@@ -48,9 +44,9 @@ fun get_application_properties_for_h2(): String {
     """.trimIndent()
 }
 
-fun prepare_spring_properties(env: MutableMap<String, String> = get_configuration_data()) {
-    val properties = if (env.isNotEmpty()) get_application_properties_for_sql(env) else get_application_properties_for_h2()
-    File(application_path).printWriter().use { out ->
+fun prepareSpringProperties(env: MutableMap<String, String> = getConfigurationData()) {
+    val properties = if (env.isNotEmpty()) getApplicationPropertiesForSql(env) else getApplicationPropertiesForH2()
+    File(applicationPath).printWriter().use { out ->
         out.println(properties)
     }
 }
@@ -58,8 +54,8 @@ fun prepare_spring_properties(env: MutableMap<String, String> = get_configuratio
 fun main(args: Array<String>) {
     val env: MutableMap<String, String> = System.getenv()
     if (env.containsKey("dbname"))
-        prepare_spring_properties(env)
+        prepareSpringProperties(env)
     else
-        prepare_spring_properties()
+        prepareSpringProperties()
     runApplication<DemoApplication>(*args)
 }
