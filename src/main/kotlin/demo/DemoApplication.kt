@@ -20,12 +20,7 @@ fun getConfigurationData(): MutableMap<String, String> {
 
 fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
     return """
-			host=${env["host"]}
-			port=5432
-			dbname=${env["dbname"]}
-			username=${env["username"]}
-			password=${env["password"]}
-			spring.datasource.url=${env["url"]}
+			spring.datasource.url=${env["DATABASE_URL"]}
 			spring.jpa.hibernate.ddl-auto=create-drop
 			spring.jpa.show-sql=true
 			spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
@@ -53,7 +48,7 @@ fun prepareSpringProperties(env: MutableMap<String, String> = getConfigurationDa
 
 fun main(args: Array<String>) {
     val env: MutableMap<String, String> = System.getenv()
-    if (env.containsKey("dbname"))
+    if (env.containsKey("DATABASE_URL"))
         prepareSpringProperties(env)
     else
         prepareSpringProperties()
