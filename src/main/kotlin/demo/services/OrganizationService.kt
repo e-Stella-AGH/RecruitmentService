@@ -10,18 +10,16 @@ import java.util.*
 class OrganizationService(@Autowired private val organizationRepository: OrganizationRepository) {
     fun getOrganizations(): MutableIterable<Organization> = organizationRepository.findAll()
 
-    fun getOrganization(id: String): Optional<Organization> = organizationRepository.findById(id)
+    fun getOrganization(id: UUID): Organization = organizationRepository.findById(id).get()
 
     fun addOrganization(organization: Organization): Organization = organizationRepository.save(organization)
 
-    fun updateOrganization(id: String, organization: Organization) {
-        val currOrganization: Optional<Organization> = organizationRepository.findById(id)
-        if (currOrganization.isPresent) {
-            val updated: Organization = currOrganization.get().copy(name = organization.name, verified = organization.verified)
+    fun updateOrganization(id: UUID, organization: Organization) {
+        val currOrganization: Organization = getOrganization(id)
+        val updated: Organization = currOrganization.copy(name = organization.name, verified = organization.verified)
 
-            organizationRepository.save(updated)
-        }
+        organizationRepository.save(updated)
     }
 
-    fun deleteOrganization(id: String) = organizationRepository.deleteById(id)
+    fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
 }

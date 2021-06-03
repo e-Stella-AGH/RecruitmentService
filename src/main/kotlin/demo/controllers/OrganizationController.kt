@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import java.util.NoSuchElementException
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -18,32 +19,48 @@ class OrganizationController(@Autowired private val organizationService: Organiz
     }
 
     @GetMapping("/{organizationId}")
-    fun getOrganization(@PathVariable organizationId: String): ResponseEntity<Organization> {
-        val organization: Optional<Organization> = organizationService.getOrganization(organizationId)
-        return if (organization.isPresent)
-            ResponseEntity(organizationService.getOrganization(organizationId).get(), HttpStatus.OK)
-        else
-            ResponseEntity(null, HttpStatus.NOT_FOUND)
+    fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> {
+        val organization: Organization = organizationService.getOrganization(organizationId.toId())
+
+        return  ResponseEntity(organization, HttpStatus.OK)
     }
 
     @PostMapping("/addorganization")
-    fun addOrganization(@RequestBody organization: Organization): ResponseEntity<Organization> {
-        val saved: Organization = organizationService.addOrganization(organization)
+    fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
+        val saved: Organization = organizationService.addOrganization(organization.toOffer())
 
         val httpHeaders = HttpHeaders()
-        httpHeaders.add(HttpHeaders.ACCEPT, "/api/organization/" + saved.id)
-        return ResponseEntity(saved, httpHeaders, HttpStatus.CREATED)
+        httpHeaders.add(HttpHeaders.ACCEPT, "/api/organizations/" + saved.id)
+        return ResponseEntity(httpHeaders, HttpStatus.CREATED)
     }
 
-    @PutMapping("update/{organizationId}")
-    fun updateOrganization(@PathVariable("organizationId") organizationId: String, @RequestBody organization: Organization): ResponseEntity<Organization> {
-        organizationService.updateOrganization(organizationId, organization)
-        return ResponseEntity(organizationService.getOrganization(organizationId).get(), HttpStatus.OK)
+    @PutMapping("/{organizationId}")
+    fun updateOrganization(@PathVariable("organizationId") organizationId: OrganizationID, @RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
+        organizationService.updateOrganization(organizationId.toId(), organization.toOffer())
+        return ResponseEntity(HttpStatus.OK)
     }
 
     @DeleteMapping("/{organizationId}")
-    fun deleteOrganization(@PathVariable("organizationId") organizationId: String): ResponseEntity<Organization> {
-        organizationService.deleteOrganization(organizationId)
+    fun deleteOrganization(@PathVariable("organizationId") organizationId: OrganizationID): ResponseEntity<Organization> {
+        organizationService.deleteOrganization(organizationId.toId())
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
+
+    @ExceptionHandler(NoSuchElementException::class)
+    fun handleNoSuchElementException(): ResponseEntity<Any> {
+        return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleException(): ResponseEntity<Any> {
+        return ResponseEntity("Unknown error occurred", HttpStatus.BAD_REQUEST)
+    }
+
+
+    fun OrganizationRequest.toOffer() = Organization(null, name, verified)
+
+    fun OrganizationID.toId(): UUID = UUID.fromString(id)
 }
+
+data class OrganizationRequest(val name: String, val verified: Boolean?)
+data class OrganizationID(val id: String)
