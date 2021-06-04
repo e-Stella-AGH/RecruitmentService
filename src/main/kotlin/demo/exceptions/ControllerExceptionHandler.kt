@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 @ControllerAdvice
 class ControllerExceptionHandler {
     @ExceptionHandler(Exception::class)
-    fun handleException(): ResponseEntity<Any> {
+    fun handleException(ex: Exception): ResponseEntity<Any> {
+        ex.printStackTrace()
         return ResponseEntity("Unknown error occurred", HttpStatus.BAD_REQUEST)
     }
 }
