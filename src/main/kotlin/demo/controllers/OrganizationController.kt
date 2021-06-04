@@ -29,9 +29,7 @@ class OrganizationController(@Autowired private val organizationService: Organiz
     fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
         val saved: Organization = organizationService.addOrganization(organization.toOffer())
 
-        val httpHeaders = HttpHeaders()
-        httpHeaders.add(HttpHeaders.ACCEPT, "/api/organizations/" + saved.id)
-        return ResponseEntity(httpHeaders, HttpStatus.CREATED)
+        return ResponseEntity.created(URI("/api/organizations/" + saved.id)).build()
     }
 
     @PutMapping("/{organizationId}")
