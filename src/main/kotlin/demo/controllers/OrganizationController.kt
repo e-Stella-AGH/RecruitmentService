@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.net.URI
 import java.util.*
 import java.util.NoSuchElementException
 
@@ -27,16 +28,14 @@ class OrganizationController(@Autowired private val organizationService: Organiz
 
     @PostMapping("/addorganization")
     fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
-        val saved: Organization = organizationService.addOrganization(organization.toOffer())
+        val saved: Organization = organizationService.addOrganization(organization.toOrganization())
 
-        val httpHeaders = HttpHeaders()
-        httpHeaders.add(HttpHeaders.ACCEPT, "/api/organizations/" + saved.id)
-        return ResponseEntity(httpHeaders, HttpStatus.CREATED)
+        return ResponseEntity.created(URI("/api/organizations/" + saved.id)).build()
     }
 
     @PutMapping("/{organizationId}")
     fun updateOrganization(@PathVariable("organizationId") organizationId: OrganizationID, @RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
-        organizationService.updateOrganization(organizationId.toId(), organization.toOffer())
+        organizationService.updateOrganization(organizationId.toId(), organization.toOrganization())
         return ResponseEntity(HttpStatus.OK)
     }
 
@@ -51,13 +50,8 @@ class OrganizationController(@Autowired private val organizationService: Organiz
         return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
     }
 
-    @ExceptionHandler(Exception::class)
-    fun handleException(): ResponseEntity<Any> {
-        return ResponseEntity("Unknown error occurred", HttpStatus.BAD_REQUEST)
-    }
 
-
-    fun OrganizationRequest.toOffer() = Organization(null, name, verified)
+    fun OrganizationRequest.toOrganization() = Organization(null, name, verified)
 
     fun OrganizationID.toId(): UUID = UUID.fromString(id)
 }
