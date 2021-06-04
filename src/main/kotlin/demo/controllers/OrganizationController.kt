@@ -50,11 +50,9 @@ class OrganizationController(@Autowired private val organizationService: Organiz
         return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
     }
 
-
     fun OrganizationRequest.toOrganization() = Organization(null, name, verified)
-
-    fun OrganizationID.toId(): UUID = UUID.fromString(id)
+    fun OrganizationID.toId(): UUID = UUID.fromString(organizationId)
 }
 
 data class OrganizationRequest(val name: String, val verified: Boolean?)
-data class OrganizationID(val id: String)
+data class OrganizationID(val organizationId: String)

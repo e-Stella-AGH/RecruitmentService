@@ -1,9 +1,10 @@
 package demo.repositories
 
-import demo.models.people.Organization
+import demo.models.offers.DesiredSkill
+import demo.models.offers.SkillLevel
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
-import java.util.*
 
 @Repository
-interface OrganizationRepository: CrudRepository<Organization, UUID> {}
+interface DesiredSkillRepository: CrudRepository<DesiredSkill, Int> {
+}
