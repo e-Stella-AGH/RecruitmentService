@@ -34,7 +34,7 @@ class OrganizationController(@Autowired private val organizationService: Organiz
 
     @PutMapping("/{organizationId}")
     fun updateOrganization(@PathVariable("organizationId") organizationId: OrganizationID, @RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
-        organizationService.updateOrganization(organizationId.toId(), organization.toOffer())
+        organizationService.updateOrganization(organizationId.toId(), organization.toOrganization())
         return ResponseEntity(HttpStatus.OK)
     }
 
