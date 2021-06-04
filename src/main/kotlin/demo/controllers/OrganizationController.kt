@@ -57,7 +57,7 @@ class OrganizationController(@Autowired private val organizationService: Organiz
     }
 
 
-    fun OrganizationRequest.toOffer() = Organization(null, name, verified)
+    fun OrganizationRequest.toOrganization() = Organization(null, name, verified)
 
     fun OrganizationID.toId(): UUID = UUID.fromString(id)
 }
