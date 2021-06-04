@@ -27,7 +27,7 @@ class OrganizationController(@Autowired private val organizationService: Organiz
 
     @PostMapping("/addorganization")
     fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
-        val saved: Organization = organizationService.addOrganization(organization.toOffer())
+        val saved: Organization = organizationService.addOrganization(organization.toOrganization())
 
         return ResponseEntity.created(URI("/api/organizations/" + saved.id)).build()
     }
