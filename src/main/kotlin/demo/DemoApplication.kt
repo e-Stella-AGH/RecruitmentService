@@ -31,11 +31,15 @@ fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
 fun getApplicationPropertiesForH2(): String {
     return """
         spring.datasource.url=jdbc:h2:file:./myDB
+        spring.datasource.username=admin
+        spring.datasource.password=admin
         spring.jpa.hibernate.ddl-auto=create-drop
         spring.jpa.show-sql=true
         spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
         spring.datasource.driver-class-name=org.h2.Driver
         spring.datasource.driverClassName=org.h2.Driver
+        spring.h2.console.enabled=true
+        springdoc.swagger-ui.path=/docs
     """.trimIndent()
 }
 
