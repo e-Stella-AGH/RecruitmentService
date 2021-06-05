@@ -21,7 +21,8 @@ class ApplicationController(@Autowired private val applicationService: Applicati
         applicationService.insertApplicationWithoutUser(offerId, applicationPayload)
 
     @ExceptionHandler(NoSuchElementException::class)
-    fun handleNoSuchElementException(): ResponseEntity<Any> {
+    fun handleNoSuchElementException(ex: NoSuchElementException): ResponseEntity<Any> {
+        ex.printStackTrace()
         return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
     }
 }
