@@ -17,11 +17,13 @@ import java.util.*
 class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerService,
                           @Autowired private val organizationService: OrganizationService,
                           @Autowired private val userService: UserService) {
+    @CrossOrigin
     @GetMapping
     fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> {
         return ResponseEntity(hrPartnerService.getHrPartners(), HttpStatus.OK)
     }
 
+    @CrossOrigin
     @GetMapping("/{hrPartnerId}")
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> {
         val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
@@ -29,6 +31,7 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
         return ResponseEntity(partner, HttpStatus.OK)
     }
 
+    @CrossOrigin
     @PostMapping("/addHrPartner")
     fun addHrPartner(@RequestBody hrPartner: HrPartnerRequest): ResponseEntity<HrPartner> {
         val saved: HrPartner = hrPartnerService.addHrPartner(hrPartner.toHrPartner())

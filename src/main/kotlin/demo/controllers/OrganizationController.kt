@@ -14,11 +14,14 @@ import java.util.NoSuchElementException
 @RestController
 @RequestMapping("/api/organizations")
 class OrganizationController(@Autowired private val organizationService: OrganizationService) {
+
+    @CrossOrigin
     @GetMapping
     fun getOrganizations(): ResponseEntity<MutableIterable<Organization>> {
         return ResponseEntity(organizationService.getOrganizations(), HttpStatus.OK)
     }
 
+    @CrossOrigin
     @GetMapping("/{organizationId}")
     fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> {
         val organization: Organization = organizationService.getOrganization(organizationId.toId())
@@ -26,6 +29,7 @@ class OrganizationController(@Autowired private val organizationService: Organiz
         return  ResponseEntity(organization, HttpStatus.OK)
     }
 
+    @CrossOrigin
     @PostMapping("/addorganization")
     fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
         val saved: Organization = organizationService.addOrganization(organization.toOrganization())
@@ -33,12 +37,14 @@ class OrganizationController(@Autowired private val organizationService: Organiz
         return ResponseEntity.created(URI("/api/organizations/" + saved.id)).build()
     }
 
+    @CrossOrigin
     @PutMapping("/{organizationId}")
     fun updateOrganization(@PathVariable("organizationId") organizationId: OrganizationID, @RequestBody organization: OrganizationRequest): ResponseEntity<Organization> {
         organizationService.updateOrganization(organizationId.toId(), organization.toOrganization())
         return ResponseEntity(HttpStatus.OK)
     }
 
+    @CrossOrigin
     @DeleteMapping("/{organizationId}")
     fun deleteOrganization(@PathVariable("organizationId") organizationId: OrganizationID): ResponseEntity<Organization> {
         organizationService.deleteOrganization(organizationId.toId())
