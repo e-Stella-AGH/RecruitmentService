@@ -1,9 +1,9 @@
 package demo.repositories;
 
-import demo.models.offers.Offer
+import demo.models.offers.RecruitmentProcess
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface OfferRepository: CrudRepository<Offer, Int> {
+interface RecruitmentProcessRepository: CrudRepository<RecruitmentProcess, Int> {
 }

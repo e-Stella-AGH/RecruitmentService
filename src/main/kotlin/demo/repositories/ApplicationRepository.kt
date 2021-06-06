@@ -1,9 +1,9 @@
 package demo.repositories;
 
-import demo.models.people.HrPartner
+import demo.models.offers.Application;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-interface HrPartnerRepository: CrudRepository<HrPartner, Int> {
+interface ApplicationRepository: CrudRepository<Application, Int> {
 }
