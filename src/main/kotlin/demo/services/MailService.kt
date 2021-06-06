@@ -3,23 +3,18 @@ package demo.services
 import com.fasterxml.jackson.databind.ObjectMapper
 import demo.models.offers.Application
 import demo.models.offers.Offer
-import java.net.URI
-import java.net.http.HttpClient
+import org.springframework.http.HttpEntity
+import org.springframework.web.client.RestTemplate
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 
 object MailService {
 
-    val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
+    const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
 
-    fun send_mail(mailPayload: MailPayload) {
-        val client = HttpClient.newBuilder().build()
-        val request = HttpRequest.newBuilder()
-            .uri(URI.create(SERVICE_URL))
-            .POST(HttpRequest.BodyPublishers.ofString(mailPayload.toRequestBody()))
-            .build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-        println(response.body())
+    fun sendMail(mailPayload: MailPayload) {
+        val restTemplate = RestTemplate();
+        restTemplate
+            .postForLocation(SERVICE_URL, mailPayload.toHttpEntity())
     }
 
     fun getMailPayloadFromApplication(offer: Offer, application: Application): MailPayload {
@@ -48,14 +43,8 @@ data class MailPayload(
     val content: String,
     val sender_email: String
 ) {
-    fun toRequestBody(): String {
-        val values = mapOf(
-            "subject" to subject,
-            "sender_name" to sender_name,
-            "receiver" to receiver,
-            "content" to content,
-            "sender_email" to sender_email
-        )
-        return ObjectMapper().writeValueAsString(values)
+
+    fun toHttpEntity(): HttpEntity<MailPayload> {
+        return HttpEntity(this)
     }
 }

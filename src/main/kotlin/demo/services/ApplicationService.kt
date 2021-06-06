@@ -2,15 +2,11 @@ package demo.services
 
 import demo.dto.application.ApplicationLoggedInPayload
 import demo.dto.application.ApplicationNoUserPayload
-import demo.models.offers.Application
-import demo.models.offers.Offer
 import demo.repositories.ApplicationRepository
 import demo.repositories.JobSeekerRepository
 import demo.repositories.OfferRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
 import kotlin.NoSuchElementException
 
 @Service
@@ -32,7 +28,7 @@ class ApplicationService(
                 val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
                 jobSeekerRepository.save(updatedJobSeeker)
             }
-            MailService.send_mail(MailService.getMailPayloadFromApplication(offer, application))
+            MailService.sendMail(MailService.getMailPayloadFromApplication(offer, application))
         } ?: throw NoSuchElementException()
     }
 
@@ -43,7 +39,7 @@ class ApplicationService(
         stage?.let {
             val application = applicationPayload.toApplication(it, jobSeeker)
             applicationRepository.save(application)
-            MailService.send_mail(MailService.getMailPayloadFromApplication(offer, application))
+            MailService.sendMail(MailService.getMailPayloadFromApplication(offer, application))
         } ?: throw NoSuchElementException()
     }
 
