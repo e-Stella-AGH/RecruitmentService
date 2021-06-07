@@ -28,8 +28,8 @@ class OfferController(
 
     @CrossOrigin
     @GetMapping
-    fun getOffers(): ResponseEntity<MutableIterable<Offer>> {
-        return ResponseEntity(offerService.getOffers(), HttpStatus.OK)
+    fun getOffers(): ResponseEntity<List<OfferResponse>> {
+        return ResponseEntity(offerService.getOffers().map{ OfferResponse.fromOffer(it) }, HttpStatus.OK)
     }
 
     @CrossOrigin
@@ -118,6 +118,7 @@ data class OfferResponse(
 ) {
     companion object {
         fun fromOffer(offer: Offer): OfferResponse {
+            println(offer.description.characterStream.readText())
             return OfferResponse(
                 offer.name, offer.description.characterStream.readText(),
                 offer.position, offer.minSalary, offer.maxSalary, offer.localization, offer.creator.id!!, offer.skills
