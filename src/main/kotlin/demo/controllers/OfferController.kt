@@ -28,8 +28,8 @@ class OfferController(
 
     @CrossOrigin
     @GetMapping
-    fun getOffers(): ResponseEntity<MutableIterable<Offer>> {
-        return ResponseEntity(offerService.getOffers(), HttpStatus.OK)
+    fun getOffers(): ResponseEntity<List<OfferResponse>> {
+        return ResponseEntity(offerService.getOffers().map{ OfferResponse.fromOffer(it) }, HttpStatus.OK)
     }
 
     @CrossOrigin
