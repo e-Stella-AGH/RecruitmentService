@@ -21,7 +21,8 @@ fun getConfigurationData(): MutableMap<String, String> {
 fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
     return """
 			spring.datasource.url=${env["DATABASE_URL"]}
-			spring.jpa.hibernate.ddl-auto=create-drop
+            spring.jpa.generate-ddl=true
+            spring.jpa.hibernate.ddl-auto=create
 			spring.jpa.show-sql=true
 			spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 			spring.datasource.driver-class-name=org.postgresql.Driver
