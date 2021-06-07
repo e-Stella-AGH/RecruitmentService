@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface OfferRepository: CrudRepository<Offer, Int> {
+    fun findByOrderByIdDesc(): MutableList<Offer>
 }

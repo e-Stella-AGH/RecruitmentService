@@ -10,7 +10,7 @@ import java.util.*
 @Service
 class OfferService(@Autowired private val offerRepository: OfferRepository) {
 
-    fun getOffers(): MutableIterable<Offer> = offerRepository.findAll()
+    fun getOffers(): MutableIterable<Offer> = offerRepository.findByOrderByIdDesc()
 
     fun getOffer(id: Int): Offer = offerRepository.findById(id).get()
 
