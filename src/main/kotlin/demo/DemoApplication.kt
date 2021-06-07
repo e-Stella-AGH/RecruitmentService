@@ -9,7 +9,7 @@ import java.io.File
 class DemoApplication
 
 const val applicationPath = "src/main/resources/application.properties"
-const val configPath = "config.json"
+const val configPath = "config2.json"
 
 fun getConfigurationData(): MutableMap<String, String> {
     val file = File(configPath)
