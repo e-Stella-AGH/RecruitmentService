@@ -9,7 +9,7 @@ import java.io.File
 class DemoApplication
 
 const val applicationPath = "src/main/resources/application.properties"
-const val configPath = "config.json"
+const val configPath = "config2.json"
 
 fun getConfigurationData(): MutableMap<String, String> {
     val file = File(configPath)
@@ -32,6 +32,8 @@ fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
 fun getApplicationPropertiesForH2(): String {
     return """
         spring.datasource.url=jdbc:h2:file:./myDB
+        spring.datasource.username=admin
+        spring.datasource.password=admin
         spring.jpa.generate-ddl=true
         spring.jpa.hibernate.ddl-auto=create
         spring.jpa.show-sql=true

@@ -2,7 +2,7 @@ package demo.loader
 
 import demo.models.people.Organization
 
-object FakeCompanies {
+object FakeOrganizations {
     val companies = listOf<Organization>(
         Organization(
             id = null,

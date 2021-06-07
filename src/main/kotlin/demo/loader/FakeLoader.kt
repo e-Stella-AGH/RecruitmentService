@@ -1,21 +1,14 @@
 package demo.loader
 
-import demo.models.offers.*
 import demo.models.people.HrPartner
 import demo.models.people.JobSeeker
-import demo.models.people.Organization
-import demo.models.people.User
 import demo.repositories.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import java.sql.Clob
-import java.sql.Date
-import java.time.LocalDate
 import java.util.*
-import javax.sql.rowset.serial.SerialClob
 import javax.transaction.Transactional
 
 @Component
@@ -31,7 +24,7 @@ data class FakeLoader(
     @EventListener
     @Order(1)
     fun appReady(event: ApplicationReadyEvent) {
-        val companies = FakeCompanies.companies.map { organizationRepository.save(it) }
+        val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
         val jobSeekers = FakeUsers.users
             .filterIndexed { index, _ -> index % 2 != 0 }
             .map {
