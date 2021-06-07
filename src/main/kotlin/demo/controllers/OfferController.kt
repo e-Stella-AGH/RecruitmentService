@@ -112,14 +112,14 @@ data class Skill(
 )
 
 data class OfferResponse(
-    val name: String, val description: String, val position: String,
+    val id: Int?, val name: String, val description: String, val position: String,
     val minSalary: Long, val maxSalary: Long, val localization: String,
     val creatorId: Int, val skills: Set<DesiredSkill>
 ) {
     companion object {
         fun fromOffer(offer: Offer): OfferResponse {
             return OfferResponse(
-                offer.name, offer.description.characterStream.readText(),
+                offer.id, offer.name, offer.description.characterStream.readText(),
                 offer.position, offer.minSalary, offer.maxSalary, offer.localization, offer.creator.id!!, offer.skills
             )
         }
