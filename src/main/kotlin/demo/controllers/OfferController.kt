@@ -1,11 +1,12 @@
 package demo.controllers
 
-import demo.models.offers.DesiredSkill
-import demo.models.offers.Offer
-import demo.models.offers.SkillLevel
+import demo.loader.FakeRecruitmentProcess
+import demo.models.offers.*
+import demo.repositories.RecruitmentProcessRepository
 import demo.services.DesiredSkillService
 import demo.services.HrPartnerService
 import demo.services.OfferService
+import demo.services.RecruitmentProcessService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import java.net.URI
 import java.sql.Clob
+import java.sql.Date
+import java.time.LocalDate
 import java.util.*
 import kotlin.NoSuchElementException
 import kotlin.collections.HashSet
@@ -23,13 +26,14 @@ import kotlin.collections.HashSet
 class OfferController(
     @Autowired private val offerService: OfferService,
     @Autowired private val hrPartnerService: HrPartnerService,
-    @Autowired private val desiredSkillService: DesiredSkillService
+    @Autowired private val desiredSkillService: DesiredSkillService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService
 ) {
 
     @CrossOrigin
     @GetMapping
     fun getOffers(): ResponseEntity<List<OfferResponse>> {
-        return ResponseEntity(offerService.getOffers().map{ OfferResponse.fromOffer(it) }, HttpStatus.OK)
+        return ResponseEntity(offerService.getOffers().map { OfferResponse.fromOffer(it) }, HttpStatus.OK)
     }
 
     @CrossOrigin
@@ -44,6 +48,16 @@ class OfferController(
     @PostMapping("/addoffer")
     fun addOffer(@RequestBody offer: OfferRequest): ResponseEntity<Offer> {
         val saved: Offer = offerService.addOffer(offer.toOffer(hrPartnerService, desiredSkillService))
+
+        val recruitmentProcess = RecruitmentProcess(
+            null,
+            Date.valueOf(LocalDate.now()),
+            null,
+            saved,
+            listOf(RecruitmentStage(null, StageType.APPLIED)),
+            setOf(), setOf()
+        )
+        recruitmentProcessService.addProcess(recruitmentProcess)
 
         return ResponseEntity.created(URI("/api/offers/" + saved.id)).build()
     }
@@ -89,6 +103,8 @@ data class OfferRequest(
         }
         val strongSkillSet: Set<DesiredSkill> =
             toDesiredSkillSet(desiredSkillService).filterNotNull().map { it!! }.toHashSet()
+
+
 
         return Offer(
             null, name,

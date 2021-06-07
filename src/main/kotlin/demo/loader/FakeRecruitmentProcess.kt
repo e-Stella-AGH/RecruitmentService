@@ -41,7 +41,7 @@ object FakeRecruitmentProcess {
     fun getProcesses(offers: List<Offer>): List<RecruitmentProcess> {
         return offers.map {
             ProcessPayload(
-                recruitmentStages = recruitmentStages.subList(0, getRandomNumber(1).toInt())
+                recruitmentStages = recruitmentStages.subList(0, 1+getRandomNumber(1).toInt())
             ).toRecruitmentProcess(it)
         }
     }

@@ -10,7 +10,7 @@ import javax.persistence.*
 @Table(name = "recruitment_processes")
 data class RecruitmentProcess(
         @Id @Column(name = "offer_id") val id: Int?,
-        val startDate: Date, val endDate: Date,
+        val startDate: Date, val endDate: Date?,
         @OneToOne @MapsId @JoinColumn(name = "offer_id") val offer: Offer?,
         @OneToMany(cascade = [CascadeType.ALL]) @JoinColumn(name="recruitment_processes_id") val stages: List<RecruitmentStage>,
         @ManyToMany @JoinTable(
