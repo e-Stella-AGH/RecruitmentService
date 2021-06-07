@@ -118,7 +118,6 @@ data class OfferResponse(
 ) {
     companion object {
         fun fromOffer(offer: Offer): OfferResponse {
-            println(offer.description.characterStream.readText())
             return OfferResponse(
                 offer.name, offer.description.characterStream.readText(),
                 offer.position, offer.minSalary, offer.maxSalary, offer.localization, offer.creator.id!!, offer.skills
