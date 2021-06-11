@@ -19,3 +19,17 @@ data class JobSeekerFilePayload(
         null
     }
 }
+
+data class JobSeekerFileDTO(
+        val fileName: String,
+        val file_base64: String
+){
+    companion object {
+        fun fromJobSeekerFile(jobSeekerFile: JobSeekerFile) = JobSeekerFileDTO(
+                jobSeekerFile.file_name,
+                Base64.getEncoder().encodeToString(
+                        jobSeekerFile.file.getBytes(1, jobSeekerFile.file.length().toInt())
+                )
+        )
+    }
+}
