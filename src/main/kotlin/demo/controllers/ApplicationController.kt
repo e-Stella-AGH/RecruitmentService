@@ -46,6 +46,11 @@ class ApplicationController(@Autowired private val applicationService: Applicati
         applicationService.getApplicationsByOffer(offerId)
 
     @CrossOrigin
+    @GetMapping("/job-seeker/{jobSeekerId}")
+    fun getAllApplicationsByJobSeeker(@PathVariable jobSeekerId: Int) =
+            applicationService.getApplicationsByJobSeeker(jobSeekerId)
+
+    @CrossOrigin
     @DeleteMapping("/delete/{applicationId}")
     fun deleteApplication(@PathVariable applicationId: Int) =
         applicationService.deleteApplication(applicationId)

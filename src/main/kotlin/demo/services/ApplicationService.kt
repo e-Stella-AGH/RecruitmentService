@@ -59,12 +59,18 @@ class ApplicationService(
 
     fun getApplicationsByOffer(offerId: Int): List<ApplicationDTO> {
         val offer = offerRepository.findById(offerId).get()
-        return offer.recruitmentProcess?.stages?.let{ stage ->
+        return offer.recruitmentProcess?.stages?.let { stage ->
             if (stage.isNotEmpty())
-                applicationRepository.getAllByStageIn(stage).map{ ApplicationDTO.fromApplication(it) }
+                applicationRepository.getAllByStageIn(stage).map { ApplicationDTO.fromApplication(it) }
             else
                 Collections.emptyList()
         } ?: Collections.emptyList()
+    }
+
+    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationDTO> {
+        return applicationRepository.getAllByJobSeekerId(jobSeekerId).map {
+            ApplicationDTO.fromApplication(it)
+        }
     }
 
     fun deleteApplication(applicationId: Int) =

@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 interface ApplicationRepository: CrudRepository<Application, Int> {
     fun getAllByStageIn(stage: List<RecruitmentStage>): List<Application>
+    fun getAllByJobSeekerId(jobSeekerId: Int): List<Application>
 }
