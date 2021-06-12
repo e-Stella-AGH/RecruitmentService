@@ -1,14 +1,20 @@
 package demo.dto.application
 
+import demo.dto.jobseeker.JobSeekerDTO
 import demo.models.offers.Application
 import demo.models.offers.ApplicationStatus
 import demo.models.offers.RecruitmentStage
 import demo.models.people.JobSeeker
+import demo.models.people.JobSeekerFile
 import demo.models.people.User
 import java.sql.Date
 import java.time.LocalDate
 import java.util.*
+import javax.persistence.*
 
+////////
+//// PAYLOADS TO CREATE APPLICATIONS
+////////
 //TODO: This solution with separate payloads is temporary
 data class ApplicationLoggedInPayload(val userId: Int, val files: Set<JobSeekerFilePayload>) {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker) = Application(
@@ -53,4 +59,30 @@ data class ApplicationNoUserPayload(
             quizzesResults = Collections.emptySet(),
             interviews = Collections.emptySet(),
     )
+}
+
+////////
+//// DTO TO READ APPLICATIONS
+////////
+
+data class ApplicationDTO(
+        val id: Int?,
+        val applicationDate: Date,
+        val status: ApplicationStatus,
+        val stage: RecruitmentStage,
+        val jobSeeker: JobSeekerDTO,
+        val seekerFiles: Set<JobSeekerFileDTO>
+) {
+    companion object {
+        fun fromApplication(application: Application) = ApplicationDTO(
+                application.id,
+                application.applicationDate,
+                application.status,
+                application.stage,
+                JobSeekerDTO.fromJobSeeker(application.jobSeeker),
+                application.seekerFiles.map {
+                    JobSeekerFileDTO.fromJobSeekerFile(it)
+                }.toSet()
+        )
+    }
 }
