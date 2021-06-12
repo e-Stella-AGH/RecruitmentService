@@ -30,4 +30,6 @@ class ApplicationController(@Autowired private val applicationService: Applicati
         ex.printStackTrace()
         return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
     }
+
+
 }
