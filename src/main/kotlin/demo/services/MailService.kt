@@ -38,13 +38,14 @@ object MailService {
 
     fun getInterviewInvitationAsMailPayload(offer: Offer, interview: Interview): MailPayload {
         val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
-        val url = "${MAIN_URL}/interview/${interview.id}"
+        val url = "${MAIN_URL}interview/${interview.id}"
+        val organizationName = offer.creator.organization
         return MailPayload(
-            subject = "Your are invited for interview with ${offer.creator.organization}!",
+            subject = "Your are invited for interview with ${organizationName}!",
             receiver = interview.application.jobSeeker.user.mail,
             content = """
                 Hi ${interview.application.jobSeeker.user.firstName}
-                Thanks so much for your interest in joining the ${offer.creator.organization.name}! 
+                Thanks so much for your interest in joining the ${organizationName}! 
                 We are excited to move you forward in our engineering recruiting process.
                 Next step will be interview with our recruiters. It will take place at $url
                 All the best,
