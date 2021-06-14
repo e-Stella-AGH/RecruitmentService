@@ -19,8 +19,8 @@ data class Application(
                 joinColumns = [JoinColumn(name = "application_id")],
                 inverseJoinColumns = [JoinColumn(name = "job_seeker_file_id")]
         ) val seekerFiles: Set<JobSeekerFile>,
-        @OneToMany @JoinColumn(name="applications_id") val quizzesResults: Set<QuizResult>,
-        @OneToMany @JoinColumn(name="applications_id") val tasksResults: Set<TaskResult>,
-        @OneToMany @JoinColumn(name="applications_id") val interviews: Set<Interview>
+        @OneToMany @JoinColumn(name="application_id") val quizzesResults: Set<QuizResult>,
+        @OneToMany @JoinColumn(name="application_id") val tasksResults: Set<TaskResult>,
+        @OneToMany @JoinColumn(name="application_id") val interviews: Set<Interview>
 
 )

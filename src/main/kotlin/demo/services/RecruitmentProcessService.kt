@@ -1,6 +1,7 @@
 package demo.services
 
 import demo.models.offers.RecruitmentProcess
+import demo.models.offers.RecruitmentStage
 import demo.repositories.RecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -30,5 +31,9 @@ class RecruitmentProcessService(@Autowired private val recruitmentProcessReposit
 //    }
 
     fun deleteProcess(id: Int) = recruitmentProcessRepository.deleteById(id)
+
+    fun getProcessFromStage(recruitmentProcessStage: RecruitmentStage): RecruitmentProcess {
+        return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!
+    }
 
 }

@@ -7,6 +7,7 @@ import demo.models.offers.Application
 import demo.repositories.ApplicationRepository
 import demo.repositories.JobSeekerRepository
 import demo.repositories.OfferRepository
+import demo.repositories.RecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -16,7 +17,9 @@ import kotlin.NoSuchElementException
 class ApplicationService(
     @Autowired private val applicationRepository: ApplicationRepository,
     @Autowired private val offerRepository: OfferRepository,
-    @Autowired private val jobSeekerRepository: JobSeekerRepository
+    @Autowired private val jobSeekerRepository: JobSeekerRepository,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val interviewService: InterviewService
 ) {
     fun insertApplicationLoggedInUser(offerId: Int, applicationPayload: ApplicationLoggedInPayload): Application {
         val offer = offerRepository.findById(offerId).get()
@@ -31,7 +34,7 @@ class ApplicationService(
                 val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
                 jobSeekerRepository.save(updatedJobSeeker)
             }
-            MailService.sendMail(MailService.getMailPayloadFromApplication(offer, application))
+            MailService.sendMail(MailService.getApplicationConfirmationAsMailPayload(offer, application))
             application
         } ?: throw NoSuchElementException()
     }
@@ -42,11 +45,25 @@ class ApplicationService(
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
             val application = applicationRepository.save(
-                    applicationPayload.toApplication(it, jobSeeker)
+                applicationPayload.toApplication(it, jobSeeker)
             )
-            MailService.sendMail(MailService.getMailPayloadFromApplication(offer, application))
+            MailService.sendMail(MailService.getApplicationConfirmationAsMailPayload(offer, application))
+            setNextStageOfApplication(application.id!!)
+            interviewService.createInterview(offer, application)
             application
         } ?: throw NoSuchElementException()
+
+    }
+
+    fun setNextStageOfApplication(applicationId: Int) {
+        val application = applicationRepository.findById(applicationId).get()
+        val recruitmentProcessStages = recruitmentProcessService
+            .getProcessFromStage(application.stage)
+            .stages
+            .sortedBy { it.id }
+        val index = recruitmentProcessStages.indexOf(application.stage)
+        if (index + 1 < recruitmentProcessStages.size)
+            applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))
     }
 
     fun getApplicationById(applicationId: Int): ApplicationDTO =

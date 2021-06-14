@@ -29,7 +29,7 @@ object FakeRecruitmentProcess {
         }
     }
 
-    val recruitmentStages = listOf(
+    fun recruitmentStages() = listOf(
         RecruitmentStage(null, StageType.APPLIED),
         RecruitmentStage(null, StageType.HR_INTERVIEW),
         RecruitmentStage(null, StageType.TECHNICAL_INTERVIEW),
@@ -41,7 +41,7 @@ object FakeRecruitmentProcess {
     fun getProcesses(offers: List<Offer>): List<RecruitmentProcess> {
         return offers.map {
             ProcessPayload(
-                recruitmentStages = recruitmentStages.subList(0, 1+getRandomNumber(1).toInt())
+                recruitmentStages = recruitmentStages().subList(0, 3)
             ).toRecruitmentProcess(it)
         }
     }
