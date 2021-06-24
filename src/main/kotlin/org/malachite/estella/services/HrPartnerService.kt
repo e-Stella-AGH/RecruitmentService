@@ -1,7 +1,8 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.HrPartner
-import org.malachite.estella.people.infrastrucutre.HrPartnerRepository
+import org.malachite.estella.people.domain.HrPartnerRepository
+import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

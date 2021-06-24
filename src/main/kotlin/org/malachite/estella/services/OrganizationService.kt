@@ -1,7 +1,8 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.organization.infrastructure.OrganizationRepository
+import org.malachite.estella.organization.domain.OrganizationRepository
+import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*

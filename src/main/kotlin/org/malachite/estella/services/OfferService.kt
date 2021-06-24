@@ -2,7 +2,8 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
-import org.malachite.estella.offer.infrastructure.OfferRepository
+import org.malachite.estella.offer.domain.OfferRepository
+import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*

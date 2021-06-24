@@ -3,10 +3,10 @@ package org.malachite.estella.services
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
 import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
-import org.malachite.estella.aplication.infrastructure.ApplicationRepository
+import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.models.offers.Application
-import org.malachite.estella.offer.infrastructure.OfferRepository
-import org.malachite.estella.people.infrastrucutre.JobSeekerRepository
+import org.malachite.estella.offer.domain.OfferRepository
+import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*

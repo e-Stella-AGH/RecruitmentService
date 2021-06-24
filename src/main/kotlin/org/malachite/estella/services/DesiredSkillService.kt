@@ -2,7 +2,8 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.SkillLevel
-import org.malachite.estella.process.infrastructure.DesiredSkillRepository
+import org.malachite.estella.process.domain.DesiredSkillRepository
+import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -19,7 +20,8 @@ class DesiredSkillService(@Autowired private val desiredSkillRepository: Desired
 
     fun addDesiredSkill(skill: DesiredSkill): DesiredSkill = desiredSkillRepository.save(skill)
 
-    fun addDesiredSkills(skills: Iterable<DesiredSkill>): MutableIterable<DesiredSkill> = desiredSkillRepository.saveAll(skills)
+    fun addDesiredSkills(skills: List<DesiredSkill>): MutableIterable<DesiredSkill> =
+        skills.map { desiredSkillRepository.save(it) } as MutableIterable<DesiredSkill>
 
     fun updateDesiredSkill(id: Int, skill: DesiredSkill) {
         val currSkill: DesiredSkill = getDesiredSkill(id)

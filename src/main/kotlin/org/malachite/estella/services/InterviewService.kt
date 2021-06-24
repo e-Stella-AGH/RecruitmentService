@@ -4,7 +4,7 @@ import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.process.domain.InterviewPayloads
-import org.malachite.estella.process.infrastructure.InterviewRepository
+import org.malachite.estella.process.domain.InterviewRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

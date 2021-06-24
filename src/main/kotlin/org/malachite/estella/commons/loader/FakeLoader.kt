@@ -2,12 +2,12 @@ package org.malachite.estella.commons.loader
 
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.offer.infrastructure.OfferRepository
-import org.malachite.estella.organization.infrastructure.OrganizationRepository
-import org.malachite.estella.people.infrastrucutre.HrPartnerRepository
-import org.malachite.estella.people.infrastrucutre.JobSeekerRepository
-import org.malachite.estella.process.infrastructure.DesiredSkillRepository
-import org.malachite.estella.process.infrastructure.RecruitmentProcessRepository
+import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
+import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
+import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
+import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
+import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
+import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -19,12 +19,12 @@ import javax.transaction.Transactional
 @Component
 @Transactional
 data class FakeLoader(
-    @Autowired val organizationRepository: OrganizationRepository,
-    @Autowired val hrPartnerRepository: HrPartnerRepository,
-    @Autowired val jobSeekerRepository: JobSeekerRepository,
-    @Autowired val offerRepository: OfferRepository,
-    @Autowired val recruitmentProcessRepository: RecruitmentProcessRepository,
-    @Autowired val desiredSkillRepository: DesiredSkillRepository
+    @Autowired val organizationRepository: HibernateOrganizationRepository,
+    @Autowired val hrPartnerRepository: HibernateHrPartnerRepository,
+    @Autowired val jobSeekerRepository: HibernateJobSeekerRepository,
+    @Autowired val offerRepository: HibernateOfferRepository,
+    @Autowired val recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
+    @Autowired val desiredSkillRepository: HibernateDesiredSkillRepository
 ) {
     @EventListener
     @Order(1)

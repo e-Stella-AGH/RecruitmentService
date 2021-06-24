@@ -2,7 +2,8 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
-import org.malachite.estella.process.infrastructure.RecruitmentProcessRepository
+import org.malachite.estella.process.domain.RecruitmentProcessRepository
+import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
