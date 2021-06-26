@@ -2,6 +2,7 @@ package org.malachite.estella.commons.loader
 
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
@@ -30,33 +31,40 @@ data class FakeLoader(
     @Order(1)
     fun appReady(event: ApplicationReadyEvent) {
         val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
-        val jobSeekers = FakeUsers.users
-            .filterIndexed { index, _ -> index % 2 != 0 }
-            .map {
-                jobSeekerRepository.save(
-                    JobSeeker(
-                        id = null,
-                        user = it,
-                        files = Collections.emptySet()
-                    )
-                )
-            }
-        val hrPartners = FakeUsers.users
-            .filterIndexed { index, _ -> index % 2 == 0 }
-            .mapIndexed { index, user ->
-                hrPartnerRepository.save(
+
+        jobSeekerRepository.saveAll(getFakeJobSeekers())
+
+        val hrPartners = getHrPartners(companies)
+        hrPartnerRepository.saveAll(hrPartners)
+        val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
+        val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
+
+        FakeRecruitmentProcess.getProcesses(offers).map {
+            recruitmentProcessRepository.save(it)
+        }
+    }
+
+    companion object {
+        fun getHrPartners(companies: List<Organization>) =
+            FakeUsers.users
+                .filterIndexed { index, _ -> index % 2 == 0 }
+                .mapIndexed { index, user ->
                     HrPartner(
                         id = null,
                         user = user,
                         organization = companies[index % companies.size]
                     )
-                )
-            }
-        val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
-        val offers = FakeOffers.getOffers(hrPartners,desiredSkills).map { offerRepository.save(it) }
+                }
 
-        val recruitmentProcesses = FakeRecruitmentProcess.getProcesses(offers).map {
-            recruitmentProcessRepository.save(it)
-        }
+        fun getFakeJobSeekers() =
+            FakeUsers.users
+                .filterIndexed { index, _ -> index % 2 != 0 }
+                .map {
+                    JobSeeker(
+                        id = null,
+                        user = it,
+                        files = Collections.emptySet()
+                    )
+                }
     }
 }
