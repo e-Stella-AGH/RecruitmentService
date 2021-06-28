@@ -76,11 +76,9 @@ class UserController(
 
     @CrossOrigin
     @GetMapping("/{userId}")
-    fun getUser(@PathVariable userId: Int): ResponseEntity<User> {
-        val user: User = userService.getUser(userId)
+    fun getUser(@PathVariable userId: Int): ResponseEntity<User> =
+        ResponseEntity(userService.getUser(userId), HttpStatus.OK)
 
-        return ResponseEntity(user, HttpStatus.OK)
-    }
 
     @CrossOrigin
     @PutMapping("/{userId}")

@@ -12,7 +12,8 @@ class UserService(@Autowired private val userRepository: UserRepository) {
     fun getUsers(): MutableIterable<User> =
         userRepository.findAll()
 
-    fun getUser(id: Int): User = userRepository.findById(id).get()
+    fun getUser(id: Int): User =
+        userRepository.findById(id).get()
 
     fun addUser(user: User): User = userRepository.save(user)
 

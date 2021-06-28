@@ -16,7 +16,7 @@ import java.util.*
 //// PAYLOADS TO CREATE APPLICATIONS
 ////////
 //TODO: This solution with separate payloads is temporary
-data class ApplicationLoggedInPayload(val userId: Int, val files: Set<JobSeekerFilePayload>) {
+data class ApplicationLoggedInPayload(val files: Set<JobSeekerFilePayload>) {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker) = Application(
             applicationDate = Date.valueOf(LocalDate.now()),
             status = ApplicationStatus.IN_PROGRESS,
