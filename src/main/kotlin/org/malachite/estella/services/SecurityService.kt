@@ -60,11 +60,11 @@ class SecurityService(
     }
 
     fun getJobSeekerFromJWT(jwt: String?): JobSeeker? {
-        return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) } ?: null
+        return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
     }
 
     fun getHrPartnerFromJWT(jwt: String?): HrPartner? {
-        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) } ?: null
+        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
     }
 
     fun setCookie(user: User, response: HttpServletResponse): Unit {
@@ -87,9 +87,12 @@ class SecurityService(
         response.addCookie(cookie)
     }
 
-    fun refreshToken(token: String, response: HttpServletResponse): Unit? {
-        val user = getUserFromJWT(token, refreshSecret)
-        return user?.let { setCookie(user, response) } ?: null
+    fun refreshToken(token: String, jwt: String?, response: HttpServletResponse): Unit? {
+        val refreshUser = getUserFromJWT(token, refreshSecret)
+        val authUser = getUserFromJWT(jwt, authSecret)
+        if (refreshUser == authUser && refreshUser != null)
+            return setCookie(refreshUser, response)
+        return null
     }
 
 

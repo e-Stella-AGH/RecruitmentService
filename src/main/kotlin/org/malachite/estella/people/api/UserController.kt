@@ -60,8 +60,10 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/refreshToken")
-    fun refresh(@RequestBody token: String, response: HttpServletResponse): ResponseEntity<String> {
-        return securityService.refreshToken(token, response)
+    fun refresh(@RequestBody token: String,@CookieValue("jwt") jwt: String?,
+                response: HttpServletResponse): ResponseEntity<String> {
+
+        return securityService.refreshToken(token,jwt, response)
             ?.let { ResponseEntity.ok("Success") }
             ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
     }
