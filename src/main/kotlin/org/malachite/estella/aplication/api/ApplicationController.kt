@@ -3,6 +3,7 @@ package org.malachite.estella.aplication.api
 import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
 import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
 import org.malachite.estella.services.ApplicationService
+import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -12,13 +13,17 @@ import java.net.URI
 
 @RestController
 @Transactional
-@RequestMapping("/applications")
-class ApplicationController(@Autowired private val applicationService: ApplicationService) {
+@RequestMapping("/api/applications")
+class ApplicationController(
+    @Autowired private val applicationService: ApplicationService,
+    @Autowired private val securityService: SecurityService
+) {
 
     @CrossOrigin
     @PostMapping("/apply/{offerId}/user")
-    fun applyForAnOffer(@PathVariable offerId: Int, @RequestBody applicationPayload: ApplicationLoggedInPayload): ResponseEntity<Void> {
-        val saved = applicationService.insertApplicationLoggedInUser(offerId, applicationPayload)
+    fun applyForAnOffer(@PathVariable offerId: Int, @CookieValue("jwt") jwt: String?, @RequestBody applicationPayload: ApplicationLoggedInPayload): ResponseEntity<Any> {
+        val jobSeeker = securityService.getJobSeekerFromJWT(jwt) ?: return ResponseEntity.status(404).body("Unauthenticated")
+        val saved = applicationService.insertApplicationLoggedInUser(offerId,jobSeeker, applicationPayload)
         return ResponseEntity.created(URI("/api/applications/" + saved.id)).build()
     }
 

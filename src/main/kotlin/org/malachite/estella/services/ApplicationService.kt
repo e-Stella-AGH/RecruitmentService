@@ -5,6 +5,7 @@ import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
 import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.models.offers.Application
+import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,9 +20,8 @@ class ApplicationService(
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val interviewService: InterviewService
 ) {
-    fun insertApplicationLoggedInUser(offerId: Int, applicationPayload: ApplicationLoggedInPayload): Application {
+    fun insertApplicationLoggedInUser(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationLoggedInPayload): Application {
         val offer = offerRepository.findById(offerId).get()
-        val jobSeeker = jobSeekerRepository.findByUserId(applicationPayload.userId).get()
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
             val application = applicationRepository.save(

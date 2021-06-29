@@ -2,10 +2,11 @@ package org.malachite.estella
 
 import com.beust.klaxon.Klaxon
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 import org.springframework.boot.runApplication
 import java.io.File
 
-@SpringBootApplication
+@SpringBootApplication(exclude = [SecurityAutoConfiguration::class])
 class DemoApplication
 
 const val applicationPath = "src/main/resources/application.properties"
