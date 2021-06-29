@@ -34,9 +34,9 @@ fun appReady(
     return CommandLineRunner {
         val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
 
-        jobSeekerRepository.saveAll(getFakeJobSeekers())
+        jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
 
-        val hrPartners = getHrPartners(companies)
+        val hrPartners = FakeLoader.getHrPartners(companies)
         hrPartnerRepository.saveAll(hrPartners)
         val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
         val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
@@ -46,25 +46,26 @@ fun appReady(
         }
     }
 }
+object FakeLoader {
+    fun getHrPartners(companies: List<Organization>) =
+        FakeUsers.users
+            .filterIndexed { index, _ -> index % 2 == 0 }
+            .mapIndexed { index, user ->
+                HrPartner(
+                    id = null,
+                    user = user,
+                    organization = companies[index % companies.size]
+                )
+            }
 
-fun getHrPartners(companies: List<Organization>) =
-    FakeUsers.users
-        .filterIndexed { index, _ -> index % 2 == 0 }
-        .mapIndexed { index, user ->
-            HrPartner(
-                id = null,
-                user = user,
-                organization = companies[index % companies.size]
-            )
-        }
-
-fun getFakeJobSeekers() =
-    FakeUsers.users
-        .filterIndexed { index, _ -> index % 2 != 0 }
-        .map {
-            JobSeeker(
-                id = null,
-                user = it,
-                files = Collections.emptySet()
-            )
-        }
+    fun getFakeJobSeekers() =
+        FakeUsers.users
+            .filterIndexed { index, _ -> index % 2 != 0 }
+            .map {
+                JobSeeker(
+                    id = null,
+                    user = it,
+                    files = Collections.emptySet()
+                )
+            }
+}

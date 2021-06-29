@@ -6,8 +6,7 @@ import org.malachite.estella.commons.loader.FakeOffers
 import org.malachite.estella.commons.loader.FakeOrganizations
 import java.util.*
 
-val desiredSkills = FakeDesiredSkills.
-        desiredSkills
+val desiredSkills = FakeDesiredSkills.desiredSkills
     .mapIndexed { index, desiredSkill ->
         desiredSkill.copy(id = index)
     }
