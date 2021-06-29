@@ -45,6 +45,11 @@ class SecurityService(
             .compact()
     }
 
+    private fun isSigned(jwt:String,secret: String) =
+        Jwts.parser()
+            .setSigningKey(secret)
+            .isSigned(jwt)
+
     private fun parseJWT(jwt: String, secret: String) =
         Jwts.parser()
             .setSigningKey(secret)
@@ -52,7 +57,7 @@ class SecurityService(
 
 
     fun getUserFromJWT(jwt: String?, secret: String = authSecret): User? {
-        if (jwt == null) return null
+        if (jwt == null || isSigned(jwt,secret)) return null
         val id = parseJWT(jwt, secret)
             .body
             .issuer
