@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Bean
 import java.io.File
 
 @SpringBootApplication(exclude = [SecurityAutoConfiguration::class])
-class DemoApplication{
+class DemoApplication {
     @Bean
     fun appReady(
         @Autowired organizationRepository: HibernateOrganizationRepository,
@@ -28,17 +28,19 @@ class DemoApplication{
         @Autowired desiredSkillRepository: HibernateDesiredSkillRepository
     ): CommandLineRunner {
         return CommandLineRunner {
-            val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
+            if (offerRepository.findAll().count() == 0) {
+                val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
 
-            jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
+                jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
 
-            val hrPartners = FakeLoader.getHrPartners(companies)
-            hrPartnerRepository.saveAll(hrPartners)
-            val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
-            val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
+                val hrPartners = FakeLoader.getHrPartners(companies)
+                hrPartnerRepository.saveAll(hrPartners)
+                val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
+                val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
 
-            FakeRecruitmentProcess.getProcesses(offers).map {
-                recruitmentProcessRepository.save(it)
+                FakeRecruitmentProcess.getProcesses(offers).map {
+                    recruitmentProcessRepository.save(it)
+                }
             }
         }
     }
