@@ -11,7 +11,7 @@ import javax.persistence.*
 data class RecruitmentProcess(
         @Id @Column(name = "offer_id") val id: Int?,
         val startDate: Date, val endDate: Date?,
-        @OneToOne @MapsId @JoinColumn(name = "offer_id") val offer: Offer?,
+        @OneToOne(cascade = [CascadeType.ALL]) @MapsId @JoinColumn(name = "offer_id") val offer: Offer,
         @OneToMany(cascade = [CascadeType.ALL]) @JoinColumn(name="recruitment_processes_id") val stages: List<RecruitmentStage>,
         @ManyToMany @JoinTable(
                 name = "recruitment_process_quizes",

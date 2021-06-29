@@ -22,30 +22,7 @@ import javax.annotation.PostConstruct
 import javax.transaction.Transactional
 
 
-@Bean
-fun appReady(
-    @Autowired organizationRepository: HibernateOrganizationRepository,
-    @Autowired hrPartnerRepository: HibernateHrPartnerRepository,
-    @Autowired jobSeekerRepository: HibernateJobSeekerRepository,
-    @Autowired offerRepository: HibernateOfferRepository,
-    @Autowired recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
-    @Autowired desiredSkillRepository: HibernateDesiredSkillRepository
-): CommandLineRunner {
-    return CommandLineRunner {
-        val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
 
-        jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
-
-        val hrPartners = FakeLoader.getHrPartners(companies)
-        hrPartnerRepository.saveAll(hrPartners)
-        val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
-        val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
-
-        FakeRecruitmentProcess.getProcesses(offers).map {
-            recruitmentProcessRepository.save(it)
-        }
-    }
-}
 object FakeLoader {
     fun getHrPartners(companies: List<Organization>) =
         FakeUsers.users

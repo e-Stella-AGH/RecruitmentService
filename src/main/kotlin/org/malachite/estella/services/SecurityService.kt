@@ -45,7 +45,7 @@ class SecurityService(
             .compact()
     }
 
-    private fun isSigned(jwt:String,secret: String) =
+    private fun isSigned(jwt: String, secret: String) =
         Jwts.parser()
             .setSigningKey(secret)
             .isSigned(jwt)
@@ -57,7 +57,7 @@ class SecurityService(
 
 
     fun getUserFromJWT(jwt: String?, secret: String = authSecret): User? {
-        if (jwt == null || isSigned(jwt,secret)) return null
+        if (jwt == null || !isSigned(jwt, secret)) return null
         val id = parseJWT(jwt, secret)
             .body
             .issuer
@@ -87,8 +87,10 @@ class SecurityService(
     }
 
     fun deleteCookie(response: HttpServletResponse) {
-        val cookie = Cookie("jwt", "")
+        val cookie = Cookie("jwt", null)
         cookie.maxAge = 0
+        cookie.isHttpOnly = true
+        cookie.path = "/"
         response.addCookie(cookie)
     }
 
