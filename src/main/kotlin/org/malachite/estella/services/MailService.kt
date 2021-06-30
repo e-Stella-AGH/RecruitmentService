@@ -8,11 +8,11 @@ import org.springframework.web.client.RestTemplate
 
 object MailService {
 
-    const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
-    const val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
+    private const val MAIN_URL = "https://e-stella-site.herokuapp.com/"
 
     fun sendMail(mailPayload: MailPayload) {
-        val restTemplate = RestTemplate();
+        val restTemplate = RestTemplate()
         restTemplate
             .postForLocation(SERVICE_URL, mailPayload.toHttpEntity())
     }
