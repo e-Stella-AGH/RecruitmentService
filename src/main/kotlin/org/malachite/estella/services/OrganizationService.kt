@@ -39,24 +39,7 @@ class OrganizationService(
                 .copy(verified = verified)
         )
 
-        mailService.sendMail(organization.verificationMailPayload(verified))
+        mailService.sendMail(mailService.organizationVerificationMailPayload(organization, verified))
         return organization
     }
-
-    fun Organization.verificationMailPayload(verified: Boolean) =
-        MailPayload(
-            subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
-            sender_name = "e-Stella Team",
-            receiver = "a@a.pl", //TODO - change, when organization gets its email
-            content = if(verified) getVerificationText() else getUnVerificationText(),
-            sender_email = "estellaagh@gmail.com"
-        )
-
-    fun getVerificationText() =
-        """Your company was successfully verified! You can log in now to your account!"""
-
-    fun getUnVerificationText() =
-        """We're sorry to inform you that your company was unverified and so your account was disabled. Please, contact us
-            at estellaagh@gmail.com to resolve this issue.
-        """.trimMargin()
 }
