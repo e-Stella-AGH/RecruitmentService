@@ -1,5 +1,6 @@
 package org.malachite.estella.admin
 
+import com.fasterxml.jackson.core.JsonParseException
 import org.junit.jupiter.api.Test
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.models.people.Organization
@@ -22,10 +23,14 @@ class AdminTests : BaseIntegration() {
         expectThat(notVerifiedOrganization).isNotNull()
 
         //when - sending http request to verify organization
-        val response = httpRequest(
-            path="/_admin/verify/${notVerifiedOrganization!!.id}",
-            method = HttpMethod.POST
-        )
+        try {
+            val response = httpRequest(
+                path = "/_admin/verify/${notVerifiedOrganization!!.id}",
+                method = HttpMethod.POST
+            )
+        } catch(ex: JsonParseException) {
+            ex.printStackTrace()
+        }
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
         //then - check if organization was verified
