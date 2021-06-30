@@ -23,4 +23,16 @@ class OrganizationService(@Autowired private val organizationRepository: Organiz
     }
 
     fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
+
+    fun verifyOrganization(uuid: String) =
+        changeOrganizationVerification(uuid, true)
+
+    fun deverifyOrganization(uuid: String) =
+        changeOrganizationVerification(uuid, false)
+
+    fun changeOrganizationVerification(uuid: String, verified: Boolean) =
+        addOrganization(
+            getOrganization(UUID.fromString(uuid))
+                .copy(verified = verified)
+        )
 }

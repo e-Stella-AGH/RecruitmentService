@@ -7,7 +7,7 @@ object FakeOrganizations {
         Organization(
             id = null,
             name = "Qualtrics",
-            verified = true
+            verified = false
         ),
         Organization(
             id = null,
