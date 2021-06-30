@@ -3,18 +3,23 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
+import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 
-object MailService {
+@Component
+class MailService(
+    @Value("\${mail_service_url}") val SERVICE_URL: String
+) {
 
-    private const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
-    private const val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
 
     fun sendMail(mailPayload: MailPayload) {
+        println(SERVICE_URL)
         val restTemplate = RestTemplate()
         restTemplate
-            .postForLocation(SERVICE_URL, mailPayload.toHttpEntity())
+            .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
     }
 
     fun getApplicationConfirmationAsMailPayload(offer: Offer, application: Application): MailPayload {

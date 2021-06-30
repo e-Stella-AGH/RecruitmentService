@@ -2,13 +2,15 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.organization.domain.OrganizationRepository
-import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class OrganizationService(@Autowired private val organizationRepository: OrganizationRepository) {
+class OrganizationService(
+    @Autowired private val organizationRepository: OrganizationRepository,
+    @Autowired private val mailService: MailService
+) {
     fun getOrganizations(): MutableIterable<Organization> = organizationRepository.findAll()
 
     fun getOrganization(id: UUID): Organization = organizationRepository.findById(id).get()
@@ -36,8 +38,8 @@ class OrganizationService(@Autowired private val organizationRepository: Organiz
             getOrganization(UUID.fromString(uuid))
                 .copy(verified = verified)
         )
-        //send mail
-        MailService.sendMail(organization.verificationMailPayload(verified))
+
+        mailService.sendMail(organization.verificationMailPayload(verified))
         return organization
     }
 
@@ -45,7 +47,7 @@ class OrganizationService(@Autowired private val organizationRepository: Organiz
         MailPayload(
             subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
             sender_name = "e-Stella Team",
-            receiver = "null", //TODO - change, when organization gets its email
+            receiver = "a@a.pl", //TODO - change, when organization gets its email
             content = if(verified) getVerificationText() else getUnVerificationText(),
             sender_email = "estellaagh@gmail.com"
         )

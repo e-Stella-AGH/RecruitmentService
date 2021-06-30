@@ -18,7 +18,8 @@ class ApplicationService(
     @Autowired private val offerRepository: OfferRepository,
     @Autowired private val jobSeekerRepository: JobSeekerRepository,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
-    @Autowired private val interviewService: InterviewService
+    @Autowired private val interviewService: InterviewService,
+    @Autowired private val mailService: MailService
 ) {
     fun insertApplicationLoggedInUser(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationLoggedInPayload): Application {
         val offer = offerRepository.findById(offerId).get()
@@ -32,7 +33,7 @@ class ApplicationService(
                 val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
                 jobSeekerRepository.save(updatedJobSeeker)
             }
-            MailService.sendMail(MailService.getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendMail(mailService.getApplicationConfirmationAsMailPayload(offer, application))
             application
         } ?: throw NoSuchElementException()
     }
@@ -45,7 +46,7 @@ class ApplicationService(
             val application = applicationRepository.save(
                 applicationPayload.toApplication(it, jobSeeker)
             )
-            MailService.sendMail(MailService.getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendMail(mailService.getApplicationConfirmationAsMailPayload(offer, application))
             setNextStageOfApplication(application.id!!)
             interviewService.createInterview(offer, application)
             application
