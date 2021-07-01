@@ -6,6 +6,7 @@ import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
+import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,13 +24,15 @@ class DemoApplication {
         @Autowired organizationRepository: HibernateOrganizationRepository,
         @Autowired hrPartnerRepository: HibernateHrPartnerRepository,
         @Autowired jobSeekerRepository: HibernateJobSeekerRepository,
+        @Autowired userRepository: HibernateUserRepository,
         @Autowired offerRepository: HibernateOfferRepository,
         @Autowired recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
         @Autowired desiredSkillRepository: HibernateDesiredSkillRepository
     ): CommandLineRunner {
         return CommandLineRunner {
             if (offerRepository.findAll().count() == 0) {
-                val companies = FakeOrganizations.companies.map { organizationRepository.save(it) }
+                val organizationUsers = userRepository.saveAll(FakeUsers.organizationUsers).toList()
+                val companies = FakeOrganizations.getCompanies(organizationUsers).map { organizationRepository.save(it) }
 
                 jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
 
@@ -47,7 +50,7 @@ class DemoApplication {
 }
 
 const val applicationPath = "src/main/resources/application.properties"
-const val configPath = "config.json"
+const val configPath = "config2.json"
 
 fun getConfigurationData(): MutableMap<String, String> {
     val file = File(configPath)

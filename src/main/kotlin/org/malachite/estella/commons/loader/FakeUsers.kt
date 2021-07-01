@@ -32,7 +32,11 @@ object FakeUsers {
             mail = "pecunia@non.olet",
             password = "a"
         )
+    )
 
+    val organizationUsers = listOf(
+        User(null,"Qualtrics","","hr@qualtrics.com","a"),
+        User(null,"Pega","","hr@pega.com","a")
     )
 }
 
