@@ -1,16 +1,15 @@
 package org.malachite.estella.people.api
 
-import io.jsonwebtoken.Jwts
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.OneStringValueMessage
+import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.net.URI
-import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 
 
@@ -29,16 +28,19 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<String> {
+    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<OneStringValueMessage> {
         val user = userService.getUserByEmail(body.mail)
-            ?: return ResponseEntity.badRequest().body("User with such email: ${body.mail} not found")
+            ?: return ResponseEntity(
+                Message("User with such email: ${body.mail} not found"),
+                HttpStatus.BAD_REQUEST
+            )
 
         if (!user.comparePassword(body.password))
-            return ResponseEntity.badRequest().body("Invalid password")
+            return ResponseEntity(Message("Invalid password"), HttpStatus.BAD_REQUEST)
 
         val token = securityService.getTokens(user, response)
-        return token?.let { ResponseEntity.ok(token) }
-            ?: ResponseEntity.badRequest().body("Error with generating token")
+        return token?.let { ResponseEntity(Token(token), HttpStatus.OK) }
+            ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
 
@@ -47,34 +49,34 @@ class UserController(
     fun getLoggedInUser(@CookieValue("jwt") jwt: String?): ResponseEntity<Any> {
         val user = securityService.getUserFromJWT(jwt)
         return user?.let {
-            ResponseEntity.ok(user)
-        } ?: ResponseEntity.status(401).body("Unauthenticated")
+            ResponseEntity(user, HttpStatus.OK)
+        } ?: ResponseEntity(Message("Unauthenticated"), HttpStatus.UNAUTHORIZED)
     }
 
     @CrossOrigin
     @PostMapping("/logout")
-    fun logout(response: HttpServletResponse): ResponseEntity<String> {
+    fun logout(response: HttpServletResponse): ResponseEntity<Message> {
         securityService.deleteCookie(response)
-        return ResponseEntity.ok("Success")
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @PostMapping("/refreshToken")
     fun refresh(@RequestBody token: String,@CookieValue("jwt") jwt: String?,
-                response: HttpServletResponse): ResponseEntity<String> {
+                response: HttpServletResponse): ResponseEntity<Message> {
 
         return securityService.refreshToken(token,jwt, response)
-            ?.let { ResponseEntity.ok("Success") }
-            ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
+            ?.let { ResponseEntity.ok(SuccessMessage) }
+            ?: ResponseEntity.status(404).body(Message("Failed during refreshing not found user"))
     }
 
     @CrossOrigin
     @PostMapping("/adduser")
-    fun addUser(@RequestBody user: UserRequest): ResponseEntity<User> {
-        val saved: User = userService.addUser(user.toUser())
-
-        return ResponseEntity.created(URI("/api/users/" + saved.id)).build()
-    }
+    fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
+        userService.addUser(user.toUser())
+            .let {
+                ResponseEntity(Message("User Registered"), HttpStatus.CREATED)
+            }
 
     @CrossOrigin
     @GetMapping("/{userId}")
@@ -84,16 +86,16 @@ class UserController(
 
     @CrossOrigin
     @PutMapping("/{userId}")
-    fun updateUser(@PathVariable("userId") userId: Int, @RequestBody user: UserRequest): ResponseEntity<User> {
+    fun updateUser(@PathVariable("userId") userId: Int, @RequestBody user: UserRequest): ResponseEntity<Message> {
         userService.updateUser(userId, user.toUser())
-        return ResponseEntity(HttpStatus.OK)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @DeleteMapping("/{userId}")
-    fun deleteUser(@PathVariable("userId") userId: Int): ResponseEntity<User> {
+    fun deleteUser(@PathVariable("userId") userId: Int): ResponseEntity<Message> {
         userService.deleteUser(userId)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
 }
@@ -103,3 +105,4 @@ data class UserRequest(val firstName: String, val lastName: String, val mail: St
 }
 
 data class LoginRequest(val mail: String, val password: String)
+data class Token(val token: String): OneStringValueMessage()
