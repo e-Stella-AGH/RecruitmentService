@@ -11,7 +11,7 @@ object FakeOrganizations {
             id = null,
             name = "Qualtrics",
             user = organizationsUsers[0],
-            verified = true
+            verified = false
         ),
         Organization(
             id = null,

@@ -1,3 +1,6 @@
 package org.malachite.estella.commons
 
-data class Message(val message: String)
+open class OneStringValueMessage
+
+open class Message(val message: String): OneStringValueMessage()
+object SuccessMessage: Message("Success")

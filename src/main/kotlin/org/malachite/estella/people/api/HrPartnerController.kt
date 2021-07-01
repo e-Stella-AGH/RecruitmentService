@@ -1,7 +1,9 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -37,12 +39,12 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
     @CrossOrigin
     @PostMapping("/addHrPartner")
     fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest,
-                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<String> {
+                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<Message> {
         val organizationUser = securityService.getUserFromJWT(jwt)
             ?:return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
         val saved: HrPartner = hrPartnerService.addHrPartner(hrPartnerRequest.toHrPartner(organization))
-        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).build()
+        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
     }
 }
 

@@ -35,8 +35,8 @@ object FakeUsers {
     )
 
     val organizationUsers = listOf(
-        User(null,"Qualtrics","","hr@qualtrics.com","a"),
-        User(null,"Pega","","hr@pega.com","a")
+        User(null,"","","hr@qualtrics.com","a"),
+        User(null,"","","hr@pega.com","a")
     )
 }
 

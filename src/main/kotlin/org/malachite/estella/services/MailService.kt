@@ -3,18 +3,25 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.people.User
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
+import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 
-object MailService {
+@Component
+class MailService(
+    @Value("\${mail_service_url}") val SERVICE_URL: String
+) {
 
-    const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
-    const val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private val MAIN_MAIL = "estellaagh@gmail.com"
 
     fun sendMail(mailPayload: MailPayload) {
-        val restTemplate = RestTemplate();
+        val restTemplate = RestTemplate()
         restTemplate
-            .postForLocation(SERVICE_URL, mailPayload.toHttpEntity())
+            .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
     }
 
     fun getApplicationConfirmationAsMailPayload(offer: Offer, application: Application): MailPayload {
@@ -54,8 +61,39 @@ object MailService {
             )
 
         }
-
     }
+
+    fun organizationVerificationMailPayload(organization: Organization, verified: Boolean) =
+        MailPayload(
+            subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
+            sender_name = "e-Stella Team",
+            receiver = organization.user.mail,
+            content = if(verified) getVerificationText() else getUnVerificationText(),
+            sender_email = MAIN_MAIL
+        )
+
+    fun getVerificationText() =
+        """Your company was successfully verified! You can log in now to your account!"""
+
+    fun getUnVerificationText() =
+        """We're sorry to inform you that your company was unverified and so your account was disabled. Please, contact us
+            at estellaagh@gmail.com to resolve this issue.
+        """.trimMargin()
+
+    fun userRegistrationMailPayload(user:User) =
+        MailPayload(
+            subject = "Thank you for register",
+            sender_name = "e-Stella Team",
+            receiver = user.mail,
+            content = getRegistrationText(),
+            sender_email = MAIN_MAIL
+        )
+
+    fun getRegistrationText() =
+        """
+            Thank you for registration in our service. We hope we will help you find employees or employer.
+            Please, contact us at estellaagh@gmail.com with any questions you have..
+        """.trimIndent()
 }
 
 data class MailPayload(

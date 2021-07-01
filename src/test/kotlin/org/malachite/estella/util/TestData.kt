@@ -1,9 +1,6 @@
 package org.malachite.estella.util
 
-import org.malachite.estella.commons.loader.FakeDesiredSkills
-import org.malachite.estella.commons.loader.FakeLoader
-import org.malachite.estella.commons.loader.FakeOffers
-import org.malachite.estella.commons.loader.FakeOrganizations
+import org.malachite.estella.commons.loader.*
 import java.util.*
 
 val desiredSkills = FakeDesiredSkills.desiredSkills
@@ -12,7 +9,7 @@ val desiredSkills = FakeDesiredSkills.desiredSkills
     }
 
 val hrPartners = FakeLoader.getHrPartners(
-    FakeOrganizations.companies
+    FakeOrganizations.getCompanies(FakeUsers.organizationUsers)
         .mapIndexed { index, company ->
             company.copy(UUID.randomUUID())
         }
@@ -22,3 +19,5 @@ val offersWithNullProcess = FakeOffers.getOffers(hrPartners, desiredSkills)
     .mapIndexed { index, offer ->
         offer.copy(id = index)
     }
+
+val users = FakeUsers.users.mapIndexed { index, user -> user.copy(id = index) }

@@ -73,12 +73,11 @@ class SecurityService(
     }
 
 
-
-    fun getTokens(user: User): Pair<String,String>? {
+    fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)
         val authJWT = getAuthenticateToken(user)
-        if(refreshJWT==null || authJWT==null)return null
-        return Pair(authJWT,refreshJWT)
+        if (refreshJWT == null || authJWT == null) return null
+        return Pair(authJWT, refreshJWT)
     }
 
 
@@ -90,9 +89,7 @@ class SecurityService(
         return null
     }
 
-    fun checkUserRights(jwt:String?,userId: Int):Boolean{
-        val tokenUser = getUserFromJWT(jwt)
-        return tokenUser != null && tokenUser.id ==userId
-    }
+    fun checkUserRights(jwt: String?, userId: Int): Boolean =
+        getUserFromJWT(jwt)?.let { it.id == userId } ?: false
 
 }
