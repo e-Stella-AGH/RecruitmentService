@@ -84,11 +84,16 @@ fun getApplicationPropertiesForH2(): String {
 }
 
 fun prepareSpringProperties(env: MutableMap<String, String> = getConfigurationData()) {
-    val properties = if (env.isNotEmpty()) getApplicationPropertiesForSql(env) else getApplicationPropertiesForH2()
+    var properties = if (env.isNotEmpty()) getApplicationPropertiesForSql(env) else getApplicationPropertiesForH2()
+    properties += "\n" + getOtherApplicationProperties()
     File(applicationPath).printWriter().use { out ->
         out.println(properties)
     }
 }
+
+fun getOtherApplicationProperties(): String = """
+    mail_service_url=https://email-service-estella.herokuapp.com/
+""".trimIndent()
 
 fun main(args: Array<String>) {
     val env: MutableMap<String, String> = System.getenv()
