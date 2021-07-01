@@ -1,6 +1,7 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.OneStringValueMessage
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
@@ -27,7 +28,7 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<Message> {
+    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<OneStringValueMessage> {
         val user = userService.getUserByEmail(body.mail)
             ?: return ResponseEntity(
                 Message("User with such email: ${body.mail} not found"),
@@ -38,7 +39,7 @@ class UserController(
             return ResponseEntity(Message("Invalid password"), HttpStatus.BAD_REQUEST)
 
         val token = securityService.getTokens(user, response)
-        return token?.let { ResponseEntity(SuccessMessage, HttpStatus.OK) }
+        return token?.let { ResponseEntity(Token(token), HttpStatus.OK) }
             ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
@@ -104,3 +105,4 @@ data class UserRequest(val firstName: String, val lastName: String, val mail: St
 }
 
 data class LoginRequest(val mail: String, val password: String)
+data class Token(val token: String): OneStringValueMessage()
