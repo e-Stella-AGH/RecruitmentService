@@ -94,6 +94,7 @@ class MailService(
             Thank you for registration in our service. We hope we will help you find employees or employer.
             Please, contact us at estellaagh@gmail.com with any questions you have..
         """.trimIndent()
+
 }
 
 data class MailPayload(

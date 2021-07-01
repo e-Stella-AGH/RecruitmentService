@@ -25,6 +25,14 @@ class UserService(
         }
 
 
+    private fun withUserNotFound(fn: () -> Any) =
+        try {
+            fn()
+        } catch(ex: NoSuchElementException) {
+            throw UserNotFoundException()
+        }
+
+
     fun getUsers(): MutableIterable<User> =
         withUserNotFound { userRepository.findAll() } as MutableIterable<User>
 

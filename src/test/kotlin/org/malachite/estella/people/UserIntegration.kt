@@ -15,6 +15,7 @@ import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class UserIntegration : BaseIntegration() {
+
     @Test
     @Order(1)
     fun `should add user to database`() {
@@ -68,7 +69,7 @@ class UserIntegration : BaseIntegration() {
         val user = getUsers().find { it.mail == mail }!!
 
         val response = updateUser(user.id!!)
-        println(response)
+
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
         val updatedUser = getUserById(user.id!!)
@@ -77,7 +78,7 @@ class UserIntegration : BaseIntegration() {
 
     @Test
     @Order(7)
-    fun `should return Bad Request with message when user wasn't found`() {
+    fun `should return Bad Request with message that user is unauthenticated`() {
         val response = updateUser(1000000)
         withStatusAndMessage(response, "Unauthenticated", HttpStatus.BAD_REQUEST)
     }
