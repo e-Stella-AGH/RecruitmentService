@@ -1,6 +1,8 @@
 package org.malachite.estella.people.api
 
 import io.jsonwebtoken.Jwts
+import org.malachite.estella.commons.OwnHeaders
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
@@ -29,42 +31,37 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<String> {
+    fun loginUser(@RequestBody body: LoginRequest): ResponseEntity<String> {
         val user = userService.getUserByEmail(body.mail)
             ?: return ResponseEntity.badRequest().body("User with such email: ${body.mail} not found")
 
         if (!user.comparePassword(body.password))
             return ResponseEntity.badRequest().body("Invalid password")
 
-        val token = securityService.getTokens(user, response)
-        return token?.let { ResponseEntity.ok(token) }
+        val tokens = securityService.getTokens(user)
+        return tokens?.let {
+            ResponseEntity.ok()
+                .header(OwnHeaders.authToken, it.first)
+                .header(OwnHeaders.refreshToken, it.second)
+                .body("Success")
+        }
             ?: ResponseEntity.badRequest().body("Error with generating token")
     }
 
 
     @CrossOrigin
     @GetMapping("/loggedInUser")
-    fun getLoggedInUser(@CookieValue("jwt") jwt: String?): ResponseEntity<Any> {
-        val user = securityService.getUserFromJWT(jwt)
-        return user?.let {
-            ResponseEntity.ok(user)
-        } ?: ResponseEntity.status(401).body("Unauthenticated")
+    fun getLoggedInUser(@RequestHeader(OwnHeaders.jwtToken) jwt: String?): ResponseEntity<Any> {
+        val user = securityService.getUserFromJWT(jwt) ?: OwnResponses.UNAUTH
+        return ResponseEntity.ok(user)
     }
 
     @CrossOrigin
-    @PostMapping("/logout")
-    fun logout(response: HttpServletResponse): ResponseEntity<String> {
-        securityService.deleteCookie(response)
-        return ResponseEntity.ok("Success")
-    }
-
-    @CrossOrigin
-    @PostMapping("/refreshToken")
-    fun refresh(@RequestBody token: String,@CookieValue("jwt") jwt: String?,
-                response: HttpServletResponse): ResponseEntity<String> {
-
-        return securityService.refreshToken(token,jwt, response)
-            ?.let { ResponseEntity.ok("Success") }
+    @PostMapping("/{userId}/refreshToken")
+    fun refresh(@PathVariable userId: Int, @RequestHeader(OwnHeaders.jwtToken) jwt: String?): ResponseEntity<String> {
+        jwt?:return OwnResponses.UNAUTH
+        return securityService.refreshToken(jwt, userId)
+            ?.let { ResponseEntity.ok().header(OwnHeaders.authToken, it).body("Success") }
             ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
     }
 
@@ -84,16 +81,25 @@ class UserController(
 
     @CrossOrigin
     @PutMapping("/{userId}")
-    fun updateUser(@PathVariable("userId") userId: Int, @RequestBody user: UserRequest): ResponseEntity<User> {
+    fun updateUser(
+        @RequestHeader(OwnHeaders.jwtToken) jwt: String?,
+        @PathVariable("userId") userId: Int,
+        @RequestBody user: UserRequest
+    ): ResponseEntity<String> {
+        if(!securityService.checkUserRights(jwt,userId))return OwnResponses.UNAUTH
         userService.updateUser(userId, user.toUser())
-        return ResponseEntity(HttpStatus.OK)
+        return ResponseEntity.ok("Success")
     }
 
     @CrossOrigin
     @DeleteMapping("/{userId}")
-    fun deleteUser(@PathVariable("userId") userId: Int): ResponseEntity<User> {
+    fun deleteUser(
+        @RequestHeader(OwnHeaders.jwtToken) jwt: String?,
+        @PathVariable("userId") userId: Int
+    ): ResponseEntity<String> {
+        if(!securityService.checkUserRights(jwt,userId))return OwnResponses.UNAUTH
         userService.deleteUser(userId)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Success")
     }
 
 }

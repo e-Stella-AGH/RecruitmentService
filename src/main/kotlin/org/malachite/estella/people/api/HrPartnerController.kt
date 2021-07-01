@@ -1,6 +1,7 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.OwnHeaders
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -38,7 +39,7 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
     @CrossOrigin
     @PostMapping("/addHrPartner")
     fun addHrPartner(@RequestBody hrPartner: HrPartnerRequest,
-                     @RequestHeader("jwt") jwt:String?): ResponseEntity<Any> {
+                     @RequestHeader(OwnHeaders.jwtToken) jwt:String?): ResponseEntity<Any> {
         val organizationUser = securityService.getUserFromJWT(jwt)
             ?:return ResponseEntity.badRequest().body(Message("Unathenticated"))
         val organization = organizationService.getOrganizationByUser(organizationUser)

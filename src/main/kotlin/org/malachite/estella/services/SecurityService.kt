@@ -72,35 +72,27 @@ class SecurityService(
         return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
     }
 
-    fun setCookie(user: User, response: HttpServletResponse): Unit {
-        val authJWT = getAuthenticateToken(user)
-        val cookie = Cookie("jwt", authJWT)
-        cookie.isHttpOnly = true
-        cookie.path = "/"
-        response.addCookie(cookie)
-    }
 
-    fun getTokens(user: User, response: HttpServletResponse): String? {
+
+    fun getTokens(user: User): Pair<String,String>? {
         val refreshJWT = getRefreshToken(user)
-        setCookie(user, response)
-        return refreshJWT
+        val authJWT = getAuthenticateToken(user)
+        if(refreshJWT==null || authJWT==null)return null
+        return Pair(authJWT,refreshJWT)
     }
 
-    fun deleteCookie(response: HttpServletResponse) {
-        val cookie = Cookie("jwt", null)
-        cookie.maxAge = 0
-        cookie.isHttpOnly = true
-        cookie.path = "/"
-        response.addCookie(cookie)
-    }
 
-    fun refreshToken(token: String, jwt: String?, response: HttpServletResponse): Unit? {
+    fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
-        val authUser = getUserFromJWT(jwt, authSecret)
-        if (refreshUser == authUser && refreshUser != null)
-            return setCookie(refreshUser, response)
+        val authUser = userService.getUser(userId)
+        if (refreshUser == authUser)
+            return getAuthenticateToken(refreshUser)
         return null
     }
 
+    fun checkUserRights(jwt:String?,userId: Int):Boolean{
+        val tokenUser = getUserFromJWT(jwt)
+        return tokenUser == null || tokenUser.id !=userId
+    }
 
 }
