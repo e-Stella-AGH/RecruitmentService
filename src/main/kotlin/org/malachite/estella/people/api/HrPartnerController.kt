@@ -1,20 +1,18 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnHeaders
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
-import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.net.URI
-import java.util.*
 
 @RestController
 @RequestMapping("/api/hrpartners")
@@ -38,12 +36,12 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
 
     @CrossOrigin
     @PostMapping("/addHrPartner")
-    fun addHrPartner(@RequestBody hrPartner: HrPartnerRequest,
-                     @RequestHeader(OwnHeaders.jwtToken) jwt:String?): ResponseEntity<Any> {
+    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest,
+                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<String> {
         val organizationUser = securityService.getUserFromJWT(jwt)
-            ?:return ResponseEntity.badRequest().body(Message("Unathenticated"))
+            ?:return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
-        val saved: HrPartner = hrPartnerService.addHrPartner(hrPartner.toHrPartner(organization))
+        val saved: HrPartner = hrPartnerService.addHrPartner(hrPartnerRequest.toHrPartner(organization))
         return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).build()
     }
 }

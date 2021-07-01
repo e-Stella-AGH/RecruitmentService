@@ -92,7 +92,7 @@ class SecurityService(
 
     fun checkUserRights(jwt:String?,userId: Int):Boolean{
         val tokenUser = getUserFromJWT(jwt)
-        return tokenUser == null || tokenUser.id !=userId
+        return tokenUser != null && tokenUser.id ==userId
     }
 
 }

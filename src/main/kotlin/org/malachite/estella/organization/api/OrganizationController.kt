@@ -14,7 +14,8 @@ import java.util.*
 @RestController
 @RequestMapping("/api/organizations")
 class OrganizationController(
-    @Autowired private val organizationService: OrganizationService) {
+    @Autowired private val organizationService: OrganizationService
+) {
 
     @CrossOrigin
     @GetMapping
@@ -24,10 +25,9 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/{organizationId}")
-    fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> {
-        val organization: Organization = organizationService.getOrganization(organizationId.toId())
-        return ResponseEntity(organization, HttpStatus.OK)
-    }
+    fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> =
+        ResponseEntity(organizationService.getOrganization(organizationId.toId()), HttpStatus.OK)
+
 
     @CrossOrigin
     @PostMapping("/addorganization")
@@ -58,10 +58,13 @@ class OrganizationController(
         return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
     }
 
-    fun OrganizationRequest.toOrganization() = Organization(null, name,
-        User(null,name,"",email,password))
+    fun OrganizationRequest.toOrganization() = Organization(
+        null, name,
+        User(null, name, "", email, password),verified
+    )
+
     fun OrganizationID.toId(): UUID = UUID.fromString(organizationId)
 }
 
-data class OrganizationRequest(val name: String, val email: String, val password: String)
+data class OrganizationRequest(val name: String, val email: String, val password: String, val verified: Boolean=false)
 data class OrganizationID(val organizationId: String)

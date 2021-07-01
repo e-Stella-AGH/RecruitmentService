@@ -1,19 +1,15 @@
 package org.malachite.estella.people.api
 
-import io.jsonwebtoken.Jwts
-import org.malachite.estella.commons.OwnHeaders
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.net.URI
-import javax.servlet.http.Cookie
-import javax.servlet.http.HttpServletResponse
 
 
 @RestController
@@ -41,8 +37,8 @@ class UserController(
         val tokens = securityService.getTokens(user)
         return tokens?.let {
             ResponseEntity.ok()
-                .header(OwnHeaders.authToken, it.first)
-                .header(OwnHeaders.refreshToken, it.second)
+                .header(EStellaHeaders.authToken, it.first)
+                .header(EStellaHeaders.refreshToken, it.second)
                 .body("Success")
         }
             ?: ResponseEntity.badRequest().body("Error with generating token")
@@ -51,17 +47,17 @@ class UserController(
 
     @CrossOrigin
     @GetMapping("/loggedInUser")
-    fun getLoggedInUser(@RequestHeader(OwnHeaders.jwtToken) jwt: String?): ResponseEntity<Any> {
+    fun getLoggedInUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> {
         val user = securityService.getUserFromJWT(jwt) ?: OwnResponses.UNAUTH
         return ResponseEntity.ok(user)
     }
 
     @CrossOrigin
     @PostMapping("/{userId}/refreshToken")
-    fun refresh(@PathVariable userId: Int, @RequestHeader(OwnHeaders.jwtToken) jwt: String?): ResponseEntity<String> {
+    fun refresh(@PathVariable userId: Int, @RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<String> {
         jwt?:return OwnResponses.UNAUTH
         return securityService.refreshToken(jwt, userId)
-            ?.let { ResponseEntity.ok().header(OwnHeaders.authToken, it).body("Success") }
+            ?.let { ResponseEntity.ok().header(EStellaHeaders.authToken, it).body("Success") }
             ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
     }
 
@@ -82,7 +78,7 @@ class UserController(
     @CrossOrigin
     @PutMapping("/{userId}")
     fun updateUser(
-        @RequestHeader(OwnHeaders.jwtToken) jwt: String?,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("userId") userId: Int,
         @RequestBody user: UserRequest
     ): ResponseEntity<String> {
@@ -94,7 +90,7 @@ class UserController(
     @CrossOrigin
     @DeleteMapping("/{userId}")
     fun deleteUser(
-        @RequestHeader(OwnHeaders.jwtToken) jwt: String?,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("userId") userId: Int
     ): ResponseEntity<String> {
         if(!securityService.checkUserRights(jwt,userId))return OwnResponses.UNAUTH
