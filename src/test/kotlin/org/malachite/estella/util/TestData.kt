@@ -9,7 +9,7 @@ val desiredSkills = FakeDesiredSkills.desiredSkills
     }
 
 val hrPartners = FakeLoader.getHrPartners(
-    FakeOrganizations.companies
+    FakeOrganizations.getCompanies(FakeUsers.organizationUsers)
         .mapIndexed { index, company ->
             company.copy(UUID.randomUUID())
         }

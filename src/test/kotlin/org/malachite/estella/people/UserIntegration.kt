@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.User
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -37,7 +38,9 @@ class UserIntegration : BaseIntegration() {
         val response = loginUser()
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as Map<String, String>
-        expectThat(response.body["token"]).isNotNull()
+        expectThat(response.headers).isNotNull()
+        expectThat(response.headers!![EStellaHeaders.refreshToken]).isNotNull()
+        expectThat(response.headers[EStellaHeaders.authToken]).isNotNull()
     }
 
     @Test
@@ -66,6 +69,7 @@ class UserIntegration : BaseIntegration() {
         val user = getUsers().find { it.mail == mail }!!
 
         val response = updateUser(user.id!!)
+
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
         val updatedUser = getUserById(user.id!!)
@@ -74,18 +78,18 @@ class UserIntegration : BaseIntegration() {
 
     @Test
     @Order(7)
-    fun `should return Bad Request with message when user wasn't found`() {
+    fun `should return Bad Request with message that user is unauthenticated`() {
         val response = updateUser(1000000)
-        withStatusAndMessage(response, "There is no such user", HttpStatus.BAD_REQUEST)
+        withStatusAndMessage(response, "Unauthenticated", HttpStatus.BAD_REQUEST)
     }
 
     @Test
     @Order(8)
     fun `should delete user`() {
         val user = getUsers().find { it.mail == mail }!!
-
         val response = httpRequest(
             path = "/api/users/${user.id}",
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
             method = HttpMethod.DELETE
         )
         withStatusAndMessage(response, "Success", HttpStatus.OK)
@@ -111,6 +115,7 @@ class UserIntegration : BaseIntegration() {
         return httpRequest(
             path = "/api/users/$id",
             method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
             body = mapOf(
                 "firstName" to newName,
                 "lastName" to lastName,
@@ -159,14 +164,9 @@ class UserIntegration : BaseIntegration() {
         )
     }
 
-    private fun Map<String, Any>.toUser() =
-        User(
-            this["id"] as Int?,
-            this["firstName"] as String,
-            this["lastName"] as String,
-            this["mail"] as String,
-            this["password"] as String?
-        )
+    private fun getAuthToken():String =
+        loginUser().headers!![EStellaHeaders.authToken]!![0]
+
 
     private val firstName = "name"
     private val lastName = "surname"

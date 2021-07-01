@@ -8,5 +8,6 @@ import javax.persistence.*
 data class Organization(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: UUID?,
         val name: String,
-        val verified: Boolean?
+        @OneToOne val user: User,
+        val verified: Boolean = false
 )

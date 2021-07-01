@@ -4,6 +4,7 @@ import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.people.User
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
 import org.springframework.stereotype.Component
@@ -15,6 +16,7 @@ class MailService(
 ) {
 
     private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private val MAIN_MAIL = "estellaagh@gmail.com"
 
     fun sendMail(mailPayload: MailPayload) {
         val restTemplate = RestTemplate()
@@ -65,9 +67,9 @@ class MailService(
         MailPayload(
             subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
             sender_name = "e-Stella Team",
-            receiver = "a@a.pl", //TODO - change, when organization gets its email
+            receiver = organization.user.mail,
             content = if(verified) getVerificationText() else getUnVerificationText(),
-            sender_email = "estellaagh@gmail.com"
+            sender_email = MAIN_MAIL
         )
 
     fun getVerificationText() =
@@ -77,6 +79,22 @@ class MailService(
         """We're sorry to inform you that your company was unverified and so your account was disabled. Please, contact us
             at estellaagh@gmail.com to resolve this issue.
         """.trimMargin()
+
+    fun userRegistrationMailPayload(user:User) =
+        MailPayload(
+            subject = "Thank you for register",
+            sender_name = "e-Stella Team",
+            receiver = user.mail,
+            content = getRegistrationText(),
+            sender_email = MAIN_MAIL
+        )
+
+    fun getRegistrationText() =
+        """
+            Thank you for registration in our service. We hope we will help you find employees or employer.
+            Please, contact us at estellaagh@gmail.com with any questions you have..
+        """.trimIndent()
+
 }
 
 data class MailPayload(

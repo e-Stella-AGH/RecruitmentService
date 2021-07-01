@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import org.junit.jupiter.api.Test
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -15,7 +16,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isTrue
 import java.util.*
 
-class AdminTests : BaseIntegration() {
+class AdminIntegration : BaseIntegration() {
 
     @Test
     fun `should verify organization`() {
@@ -73,14 +74,7 @@ class AdminTests : BaseIntegration() {
         ).body
             .let {
                 it as List<Map<String, Any>>
-                it.map { toOrganization(it) }
+                it.map { it.toOrganization() }
             }
-
-    private fun toOrganization(map: Map<String, Any>) =
-        Organization(
-            UUID.fromString(map["id"] as String),
-            map["name"] as String,
-            map["verified"] as Boolean
-        )
 
 }

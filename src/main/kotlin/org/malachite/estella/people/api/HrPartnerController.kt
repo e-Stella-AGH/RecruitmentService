@@ -1,21 +1,26 @@
 package org.malachite.estella.people.api
 
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
-import org.malachite.estella.services.UserService
+import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.net.URI
-import java.util.*
 
 @RestController
 @RequestMapping("/api/hrpartners")
 class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerService,
                           @Autowired private val organizationService: OrganizationService,
-                          @Autowired private val userService: UserService
+                          @Autowired private val securityService:SecurityService
 ) {
     @CrossOrigin
     @GetMapping
@@ -33,15 +38,17 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
 
     @CrossOrigin
     @PostMapping("/addHrPartner")
-    fun addHrPartner(@RequestBody hrPartner: HrPartnerRequest): ResponseEntity<HrPartner> {
-        val saved: HrPartner = hrPartnerService.addHrPartner(hrPartner.toHrPartner())
-
-        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).build()
+    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest,
+                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<Message> {
+        val organizationUser = securityService.getUserFromJWT(jwt)
+            ?:return OwnResponses.UNAUTH
+        val organization = organizationService.getOrganizationByUser(organizationUser)
+        val saved: HrPartner = hrPartnerService.addHrPartner(hrPartnerRequest.toHrPartner(organization))
+        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
     }
-
-    fun HrPartnerRequest.toHrPartner() = HrPartner(null,
-        organizationService.getOrganization(UUID.fromString(organizationId)),
-        userService.getUser(userId))
 }
 
-data class HrPartnerRequest(val organizationId: String, val userId: Int)
+data class HrPartnerRequest(val email:String){
+    fun toHrPartner(organization: Organization):HrPartner =
+        HrPartner(null,organization, User(null,"","",email))
+}

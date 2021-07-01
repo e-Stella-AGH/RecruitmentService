@@ -2,6 +2,8 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.people.User
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.*
@@ -11,6 +13,7 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
+import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -38,11 +41,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody)
+            Response(statusCode, responseBody,response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody)
+            Response(statusCode, responseBody,exception.responseHeaders)
         }
     }
 
@@ -64,6 +67,25 @@ class BaseIntegration {
 
     data class Response(
         val statusCode: HttpStatus,
-        val body: Any
+        val body: Any,
+        val headers: HttpHeaders?
     )
+
+    fun Map<String, Any>.toUser() =
+        User(
+            this["id"] as Int?,
+            this["firstName"] as String,
+            this["lastName"] as String,
+            this["mail"] as String,
+            this["password"] as String?
+        )
+
+    fun Map<String, Any>.toOrganization() =
+        Organization(
+            UUID.fromString(this["id"] as String),
+            this["name"] as String,
+            (this["user"] as Map<String,Any>).toUser(),
+            this["verified"] as Boolean
+        )
+
 }
