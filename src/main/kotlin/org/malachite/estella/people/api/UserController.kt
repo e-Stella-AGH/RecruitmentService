@@ -74,7 +74,7 @@ class UserController(
     fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
         userService.addUser(user.toUser())
             .let {
-                ResponseEntity(Message("User Registered"), HttpStatus.OK)
+                ResponseEntity(Message("User Registered"), HttpStatus.CREATED)
             }
 
     @CrossOrigin
