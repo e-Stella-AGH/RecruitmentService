@@ -1,11 +1,9 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserRepository
 import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 
 @Service
@@ -17,11 +15,7 @@ class UserService(@Autowired private val userRepository: UserRepository) {
     fun getUser(id: Int): User =
         userRepository.findById(id).get()
 
-    fun addUser(user: User): User = try {
-        userRepository.save(user)
-    } catch (ex: DataIntegrityViolationException) {
-        throw UserAlreadyExistsException()
-    }
+    fun addUser(user: User): User = userRepository.save(user)
 
     fun updateUser(id: Int, user: User) {
         val currUser: User = getUser(id)
@@ -35,5 +29,6 @@ class UserService(@Autowired private val userRepository: UserRepository) {
     fun deleteUser(id: Int) = userRepository.deleteById(id)
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
+
 
 }
