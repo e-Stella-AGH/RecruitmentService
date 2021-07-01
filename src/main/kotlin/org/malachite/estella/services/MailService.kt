@@ -3,18 +3,23 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.people.Organization
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
+import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 
-object MailService {
+@Component
+class MailService(
+    @Value("\${mail_service_url}") val SERVICE_URL: String
+) {
 
-    const val SERVICE_URL = "https://email-service-estella.herokuapp.com/email"
-    const val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+    private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
 
     fun sendMail(mailPayload: MailPayload) {
-        val restTemplate = RestTemplate();
+        val restTemplate = RestTemplate()
         restTemplate
-            .postForLocation(SERVICE_URL, mailPayload.toHttpEntity())
+            .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
     }
 
     fun getApplicationConfirmationAsMailPayload(offer: Offer, application: Application): MailPayload {
@@ -54,8 +59,24 @@ object MailService {
             )
 
         }
-
     }
+
+    fun organizationVerificationMailPayload(organization: Organization, verified: Boolean) =
+        MailPayload(
+            subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
+            sender_name = "e-Stella Team",
+            receiver = "a@a.pl", //TODO - change, when organization gets its email
+            content = if(verified) getVerificationText() else getUnVerificationText(),
+            sender_email = "estellaagh@gmail.com"
+        )
+
+    fun getVerificationText() =
+        """Your company was successfully verified! You can log in now to your account!"""
+
+    fun getUnVerificationText() =
+        """We're sorry to inform you that your company was unverified and so your account was disabled. Please, contact us
+            at estellaagh@gmail.com to resolve this issue.
+        """.trimMargin()
 }
 
 data class MailPayload(
