@@ -1,9 +1,8 @@
 package org.malachite.estella.people.api
 
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.people.domain.InvalidLoginResponseDto
-import org.malachite.estella.people.domain.LoginResponse
-import org.malachite.estella.people.domain.LoginResponseDto
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,19 +27,19 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<LoginResponse> {
+    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<Message> {
         val user = userService.getUserByEmail(body.mail)
             ?: return ResponseEntity(
-                InvalidLoginResponseDto("User with such email: ${body.mail} not found"),
+                Message("User with such email: ${body.mail} not found"),
                 HttpStatus.BAD_REQUEST
             )
 
         if (!user.comparePassword(body.password))
-            return ResponseEntity(InvalidLoginResponseDto("Invalid password"), HttpStatus.BAD_REQUEST)
+            return ResponseEntity(Message("Invalid password"), HttpStatus.BAD_REQUEST)
 
         val token = securityService.getTokens(user, response)
-        return token?.let { ResponseEntity(LoginResponseDto("OK"), HttpStatus.OK) }
-            ?: ResponseEntity(InvalidLoginResponseDto("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
+        return token?.let { ResponseEntity(SuccessMessage, HttpStatus.OK) }
+            ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
 
@@ -49,15 +48,15 @@ class UserController(
     fun getLoggedInUser(@CookieValue("jwt") jwt: String?): ResponseEntity<Any> {
         val user = securityService.getUserFromJWT(jwt)
         return user?.let {
-            ResponseEntity.ok(user)
-        } ?: ResponseEntity.status(401).body("Unauthenticated")
+            ResponseEntity(user, HttpStatus.OK)
+        } ?: ResponseEntity(Message("Unauthenticated"), HttpStatus.UNAUTHORIZED)
     }
 
     @CrossOrigin
     @PostMapping("/logout")
-    fun logout(response: HttpServletResponse): ResponseEntity<String> {
+    fun logout(response: HttpServletResponse): ResponseEntity<Message> {
         securityService.deleteCookie(response)
-        return ResponseEntity.ok("Success")
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
@@ -65,19 +64,19 @@ class UserController(
     fun refresh(
         @RequestBody token: String, @CookieValue("jwt") jwt: String?,
         response: HttpServletResponse
-    ): ResponseEntity<String> {
+    ): ResponseEntity<Message> {
 
         return securityService.refreshToken(token, jwt, response)
-            ?.let { ResponseEntity.ok("Success") }
-            ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
+            ?.let { ResponseEntity.ok(SuccessMessage) }
+            ?: ResponseEntity.status(404).body(Message("Failed during refreshing not found user"))
     }
 
     @CrossOrigin
     @PostMapping("/adduser")
-    fun addUser(@RequestBody user: UserRequest): ResponseEntity<LoginResponseDto> =
+    fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
         userService.addUser(user.toUser())
             .let {
-                ResponseEntity(LoginResponseDto("User Registered"), HttpStatus.OK)
+                ResponseEntity(Message("User Registered"), HttpStatus.OK)
             }
 
     @CrossOrigin
@@ -88,16 +87,16 @@ class UserController(
 
     @CrossOrigin
     @PutMapping("/{userId}")
-    fun updateUser(@PathVariable("userId") userId: Int, @RequestBody user: UserRequest): ResponseEntity<User> {
+    fun updateUser(@PathVariable("userId") userId: Int, @RequestBody user: UserRequest): ResponseEntity<Message> {
         userService.updateUser(userId, user.toUser())
-        return ResponseEntity(HttpStatus.OK)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @DeleteMapping("/{userId}")
-    fun deleteUser(@PathVariable("userId") userId: Int): ResponseEntity<User> {
+    fun deleteUser(@PathVariable("userId") userId: Int): ResponseEntity<Message> {
         userService.deleteUser(userId)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
 }
