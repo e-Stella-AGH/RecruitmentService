@@ -35,7 +35,9 @@ class UserIntegration : BaseIntegration() {
     @Order(3)
     fun `should login user, when account was created`() {
         val response = loginUser()
-        withStatusAndMessage(response, "Success", HttpStatus.OK)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        response.body as Map<String, String>
+        expectThat(response.body["token"]).isNotNull()
     }
 
     @Test
