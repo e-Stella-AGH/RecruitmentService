@@ -16,15 +16,6 @@ class UserService(
     @Autowired private val userRepository: UserRepository,
     @Autowired private val mailService: MailService
 ) {
-
-    private fun withUserNotFound(fn: () -> Any) =
-        try {
-            fn()
-        } catch(ex: NoSuchElementException) {
-            throw UserNotFoundException()
-        }
-
-
     private fun withUserNotFound(fn: () -> Any) =
         try {
             fn()
