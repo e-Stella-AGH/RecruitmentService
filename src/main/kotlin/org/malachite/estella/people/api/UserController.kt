@@ -1,15 +1,16 @@
 package org.malachite.estella.people.api
 
+import io.jsonwebtoken.Jwts
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.people.domain.InvalidLoginResponseDto
-import org.malachite.estella.people.domain.LoginResponse
-import org.malachite.estella.people.domain.LoginResponseDto
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.net.URI
+import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 
 
@@ -28,19 +29,16 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<LoginResponse> {
+    fun loginUser(@RequestBody body: LoginRequest, response: HttpServletResponse): ResponseEntity<String> {
         val user = userService.getUserByEmail(body.mail)
-            ?: return ResponseEntity(
-                InvalidLoginResponseDto("User with such email: ${body.mail} not found"),
-                HttpStatus.BAD_REQUEST
-            )
+            ?: return ResponseEntity.badRequest().body("User with such email: ${body.mail} not found")
 
         if (!user.comparePassword(body.password))
-            return ResponseEntity(InvalidLoginResponseDto("Invalid password"), HttpStatus.BAD_REQUEST)
+            return ResponseEntity.badRequest().body("Invalid password")
 
         val token = securityService.getTokens(user, response)
-        return token?.let { ResponseEntity(LoginResponseDto("OK"), HttpStatus.OK) }
-            ?: ResponseEntity(InvalidLoginResponseDto("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
+        return token?.let { ResponseEntity.ok(token) }
+            ?: ResponseEntity.badRequest().body("Error with generating token")
     }
 
 
@@ -62,23 +60,21 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/refreshToken")
-    fun refresh(
-        @RequestBody token: String, @CookieValue("jwt") jwt: String?,
-        response: HttpServletResponse
-    ): ResponseEntity<String> {
+    fun refresh(@RequestBody token: String,@CookieValue("jwt") jwt: String?,
+                response: HttpServletResponse): ResponseEntity<String> {
 
-        return securityService.refreshToken(token, jwt, response)
+        return securityService.refreshToken(token,jwt, response)
             ?.let { ResponseEntity.ok("Success") }
             ?: ResponseEntity.status(404).body("Failed during refreshing not found user")
     }
 
     @CrossOrigin
     @PostMapping("/adduser")
-    fun addUser(@RequestBody user: UserRequest): ResponseEntity<LoginResponseDto> =
-        userService.addUser(user.toUser())
-            .let {
-                ResponseEntity(LoginResponseDto("User Registered"), HttpStatus.OK)
-            }
+    fun addUser(@RequestBody user: UserRequest): ResponseEntity<User> {
+        val saved: User = userService.addUser(user.toUser())
+
+        return ResponseEntity.created(URI("/api/users/" + saved.id)).build()
+    }
 
     @CrossOrigin
     @GetMapping("/{userId}")
