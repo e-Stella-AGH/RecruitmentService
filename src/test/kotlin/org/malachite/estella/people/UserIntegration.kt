@@ -167,14 +167,6 @@ class UserIntegration : BaseIntegration() {
     private fun getAuthToken():String =
         loginUser().headers!![EStellaHeaders.authToken]!![0]
 
-    private fun Map<String, Any>.toUser() =
-        User(
-            this["id"] as Int?,
-            this["firstName"] as String,
-            this["lastName"] as String,
-            this["mail"] as String,
-            this["password"] as String?
-        )
 
     private val firstName = "name"
     private val lastName = "surname"

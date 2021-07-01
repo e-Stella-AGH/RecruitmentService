@@ -16,7 +16,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isTrue
 import java.util.*
 
-class AdminTests : BaseIntegration() {
+class AdminIntegration : BaseIntegration() {
 
     @Test
     fun `should verify organization`() {
@@ -74,15 +74,7 @@ class AdminTests : BaseIntegration() {
         ).body
             .let {
                 it as List<Map<String, Any>>
-                it.map { toOrganization(it) }
+                it.map { it.toOrganization() }
             }
-
-    private fun toOrganization(map: Map<String, Any>) =
-        Organization(
-            UUID.fromString(map["id"] as String),
-            map["name"] as String,
-            map["user"] as User,
-            map["verified"] as Boolean
-        )
 
 }

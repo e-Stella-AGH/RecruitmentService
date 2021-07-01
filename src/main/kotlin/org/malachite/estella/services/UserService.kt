@@ -13,13 +13,12 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository,
-    @Autowired private val mailService: MailService
+    @Autowired private val userRepository: UserRepository
 ) {
     private fun withUserNotFound(fn: () -> Any) =
         try {
             fn()
-        } catch(ex: NoSuchElementException) {
+        } catch (ex: NoSuchElementException) {
             throw UserNotFoundException()
         }
 

@@ -158,25 +158,8 @@ class OrganizationIntegration : BaseIntegration() {
     private fun getAuthToken():String =
         loginUser().headers!![EStellaHeaders.authToken]!![0]
 
-    private fun Map<String, Any>.toUser() =
-        User(
-            this["id"] as Int?,
-            this["firstName"] as String,
-            this["lastName"] as String,
-            this["mail"] as String,
-            this["password"] as String?
-        )
-
-    private fun Map<String, Any>.toOrganization() =
-        Organization(
-            UUID.fromString(this["id"] as String),
-            this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
-            this["verified"] as Boolean
-        )
-
     private val name = "name"
-    private val mail = "examplemail@user.pl"
+    private val mail = "examplemail@organization.pl"
     private val password = "123"
 
     private val randomMail = "randommail@user.pl"

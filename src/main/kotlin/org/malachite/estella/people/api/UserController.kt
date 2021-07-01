@@ -45,6 +45,7 @@ class UserController(
                 .header(EStellaHeaders.authToken, it.first)
                 .header(EStellaHeaders.refreshToken, it.second)
                 .body(Message("Success"))
+        } ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
 
@@ -101,7 +102,7 @@ class UserController(
     ): ResponseEntity<Message> {
         if (!securityService.checkUserRights(jwt, userId)) return OwnResponses.UNAUTH
         userService.deleteUser(userId)
-        return ResponseEntity(SuccessMessage,HttpStatus.OK)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
 }
@@ -116,4 +117,3 @@ data class UserRequest(
 }
 
 data class LoginRequest(val mail: String, val password: String)
-data class Token(val token: String): OneStringValueMessage()
