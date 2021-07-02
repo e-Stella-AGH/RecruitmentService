@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.springframework.beans.factory.annotation.Value
@@ -65,10 +66,10 @@ class MailService(
 
     fun organizationVerificationMailPayload(organization: Organization, verified: Boolean) =
         MailPayload(
-            subject = "Your company has been ${if(verified) "verified" else "unverified"}!",
+            subject = "Your company has been ${if (verified) "verified" else "unverified"}!",
             sender_name = "e-Stella Team",
             receiver = organization.user.mail,
-            content = if(verified) getVerificationText() else getUnVerificationText(),
+            content = if (verified) getVerificationText() else getUnVerificationText(),
             sender_email = MAIN_MAIL
         )
 
@@ -80,7 +81,7 @@ class MailService(
             at estellaagh@gmail.com to resolve this issue.
         """.trimMargin()
 
-    fun userRegistrationMailPayload(user:User) =
+    fun userRegistrationMailPayload(user: User) =
         MailPayload(
             subject = "Thank you for register",
             sender_name = "e-Stella Team",
@@ -89,10 +90,29 @@ class MailService(
             sender_email = MAIN_MAIL
         )
 
+    fun hrPartnerRegistrationMailPayload(hrpPartner: HrPartner, password: String) =
+        MailPayload(
+            subject = "Your account as HR partner was created",
+            sender_name = "e-Stella Team",
+            receiver = hrpPartner.user.mail,
+            content = getHrPartnerRegistrationText(hrpPartner.organization.name,
+                hrpPartner.user.mail, password),
+            sender_email = MAIN_MAIL
+        )
+
     fun getRegistrationText() =
         """
             Thank you for registration in our service. We hope we will help you find employees or employer.
-            Please, contact us at estellaagh@gmail.com with any questions you have..
+            Please, contact us at estellaagh@gmail.com with any questions you have.
+        """.trimIndent()
+
+    fun getHrPartnerRegistrationText(organization: String, mail: String, password: String) =
+        """
+            Your account as HR partner for $organization was created in our service. 
+            You can login on our page: $MAIN_URL with credentials:
+            login: $mail
+            password: $password
+            After first login change password and setup your name. We hope that our site will help you with work.
         """.trimIndent()
 
 }

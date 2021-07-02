@@ -7,18 +7,30 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class HrPartnerService(@Autowired private val hrPartnerRepository: HrPartnerRepository) {
+class HrPartnerService(
+    @Autowired private val hrPartnerRepository: HrPartnerRepository,
+    @Autowired private val mailService: MailService,
+    @Autowired private val userService: UserService
+    ) {
     fun getHrPartners(): MutableIterable<HrPartner> = hrPartnerRepository.findAll()
 
     fun getHrPartner(id: Int): HrPartner = hrPartnerRepository.findById(id).get()
 
     fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
 
+    fun registerHrPartner(hrPartner: HrPartner):HrPartner {
+        val password = userService.generatePassword()
+        hrPartner.user.password = password
+        val user = userService.addUser(hrPartner.user)
+        val resultHrPartner = addHrPartner(hrPartner.copy(user = user))
+        mailService.sendMail(mailService.hrPartnerRegistrationMailPayload(resultHrPartner,password))
+        return hrPartner
+    }
+
     fun updateHrPartner(id: Int, hrPartner: HrPartner) {
         val currPartner: HrPartner = hrPartnerRepository.findById(id).get()
         val updated: HrPartner = currPartner.copy(organization = hrPartner.organization,
                 user = hrPartner.user)
-
         hrPartnerRepository.save(updated)
 
     }

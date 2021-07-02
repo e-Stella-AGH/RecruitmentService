@@ -22,6 +22,12 @@ class UserService(
             throw UserNotFoundException()
         }
 
+    fun generatePassword(length:Int = 15):String {
+        val alphanumeric = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return buildString {
+            repeat(length) {append(alphanumeric.random())}
+        }
+    }
 
     fun getUsers(): MutableIterable<User> =
         withUserNotFound { userRepository.findAll() } as MutableIterable<User>
