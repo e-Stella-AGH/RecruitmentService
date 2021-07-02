@@ -79,6 +79,6 @@ fun hrPartnerRegistrationMailPayload(hrPartner: HrPartner, password: String) =
         sender_name = "e-Stella Team",
         receiver = hrpPartner.user.mail,
         content = getHrPartnerRegistrationText(hrpPartner.organization.name,
-            hrpPartner.user.mail, password, MAIN_URL),
+            hrPartner.user.mail, password, MAIN_URL),
         sender_email = MAIN_MAIL
     )
