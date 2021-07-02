@@ -34,7 +34,7 @@ class ApplicationService(
                 val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
                 jobSeekerRepository.save(updatedJobSeeker)
             }
-            mailService.sendMail(getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendApplicationConfirmationMail(offer, application)
             application
         } ?: throw NoSuchElementException()
     }
@@ -47,7 +47,7 @@ class ApplicationService(
             val application = applicationRepository.save(
                 applicationPayload.toApplication(it, jobSeeker)
             )
-            mailService.sendMail(getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendApplicationConfirmationMail(offer, application)
             setNextStageOfApplication(application.id!!)
             interviewService.createInterview(offer, application)
             application

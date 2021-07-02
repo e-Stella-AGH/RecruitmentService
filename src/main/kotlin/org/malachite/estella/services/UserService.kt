@@ -56,7 +56,7 @@ class UserService(
 
     fun registerUser(user:User):User =
         addUser(user).let {
-            mailService.sendMail(userRegistrationMailPayload(user))
+            mailService.sendRegisterMail(user)
             user
         }
 

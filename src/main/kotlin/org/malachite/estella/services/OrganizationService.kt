@@ -48,7 +48,7 @@ class OrganizationService(
                 .copy(verified = verified)
         )
 
-        mailService.sendMail(organizationVerificationMailPayload(organization, verified))
+        mailService.sendOrganizationVerificationMail(organization, verified)
         return organization
     }
 }

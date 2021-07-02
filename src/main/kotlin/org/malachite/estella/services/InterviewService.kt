@@ -18,7 +18,7 @@ class InterviewService(
     fun createInterview(offer: Offer, application: Application, payload: InterviewPayloads = InterviewPayloads()) {
         val interview = Interview(null, payload.dateTime, payload.minutesLength, application, setOf())
         interviewRepository.save(interview)
-        mailService.sendMail(getInterviewInvitationAsMailPayload(offer, interview))
+        mailService.sendInterviewInvitationMail(offer, interview)
     }
 
 }
