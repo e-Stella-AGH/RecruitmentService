@@ -6,7 +6,6 @@ import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.mails.getApplicationConfirmationAsMailPayload
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired

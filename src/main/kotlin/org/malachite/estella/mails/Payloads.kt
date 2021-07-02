@@ -3,9 +3,11 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.mails.MailTexts.getApplicationConfirmation
+import org.malachite.estella.mails.MailTexts.getHrPartnerRegistrationText
 import org.malachite.estella.mails.MailTexts.getRegistrationText
 import org.malachite.estella.mails.MailTexts.getUnVerificationText
 import org.malachite.estella.mails.MailTexts.getVerificationText
@@ -27,25 +29,25 @@ data class MailPayload(
 private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
 private val MAIN_MAIL = "estellaagh@gmail.com"
 
-fun getApplicationConfirmationAsMailPayload(offer: Offer, application: Application): MailPayload {
+fun Application.toApplicationConfirmationAsMailPayload(offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     return MailPayload(
         subject = "Your application has been received!",
-        receiver = application.jobSeeker.user.mail,
-        content = getApplicationConfirmation(application,offer,hrPartnerFullName),
+        receiver = this.jobSeeker.user.mail,
+        content = getApplicationConfirmation(this,offer,hrPartnerFullName),
         sender_name = hrPartnerFullName,
         sender_email = offer.creator.user.mail
     )
 }
 
-fun getInterviewInvitationAsMailPayload(offer: Offer, interview: Interview): MailPayload {
+fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
-    val url = "${MAIN_URL}interview/${interview.id}"
+    val url = "${MAIN_URL}interview/${this.id}"
     return offer.creator.organization.name.let {
         MailPayload(
             subject = "Your are invited for interview with ${it}!",
-            receiver = interview.application.jobSeeker.user.mail,
-            content = MailTexts.getInterviewInvitation(interview,it,url,hrPartnerFullName),
+            receiver = this.application.jobSeeker.user.mail,
+            content = MailTexts.getInterviewInvitation(this,it,url,hrPartnerFullName),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
         )
@@ -53,22 +55,30 @@ fun getInterviewInvitationAsMailPayload(offer: Offer, interview: Interview): Mai
     }
 }
 
-fun organizationVerificationMailPayload(organization: Organization, verified: Boolean) =
+fun Organization.toVerificationMailPayload( verified: Boolean) =
     MailPayload(
         subject = "Your company has been ${if (verified) "verified" else "unverified"}!",
         sender_name = "e-Stella Team",
-        receiver = organization.user.mail,
+        receiver = this.user.mail,
         content = if (verified) getVerificationText() else getUnVerificationText(),
         sender_email = MAIN_MAIL
     )
 
-fun userRegistrationMailPayload(user: User) =
+fun User.toRegistrationMailPayload() =
     MailPayload(
         subject = "Thank you for register",
         sender_name = "e-Stella Team",
-        receiver = user.mail,
+        receiver = this.mail,
         content = getRegistrationText(),
         sender_email = MAIN_MAIL
     )
 
-
+fun HrPartner.toRegistrationMailPayload(password: String) =
+    MailPayload(
+        subject = "Your account as Recruiter was created",
+        sender_name = "e-Stella Team",
+        receiver = this.user.mail,
+        content = getHrPartnerRegistrationText(this.organization.name,
+            this.user.mail, password, MAIN_URL),
+        sender_email = MAIN_MAIL
+    )

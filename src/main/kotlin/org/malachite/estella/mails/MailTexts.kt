@@ -38,4 +38,14 @@ object MailTexts {
             All the best,
             $hrPartnerFullName
             """.trimIndent()
+
+    fun getHrPartnerRegistrationText(organization: String, mail: String, password: String,url: String) =
+        """
+            Your account as Recruiter for $organization was created in our service. 
+            You can login on our page: $url/login with credentials:
+            login: $mail
+            password: $password
+            After first login change password and setup your name. We hope that our site will help you with work.
+        """.trimIndent()
+
 }

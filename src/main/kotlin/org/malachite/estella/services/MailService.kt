@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.mails.*
@@ -22,17 +23,19 @@ class MailService(
             .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
     }
 
-
     fun sendRegisterMail(user:User) =
-        sendMail(userRegistrationMailPayload(user))
+        sendMail(user.toRegistrationMailPayload())
+
+    fun sendHrPartnerRegisterMail(hrPartner: HrPartner,password:String)=
+        sendMail(hrPartner.toRegistrationMailPayload(password))
 
     fun sendOrganizationVerificationMail(organization: Organization,verified:Boolean) =
-        sendMail(organizationVerificationMailPayload(organization, verified))
+        sendMail(organization.toVerificationMailPayload( verified))
 
     fun sendInterviewInvitationMail(offer: Offer, interview:Interview) =
-        sendMail(getInterviewInvitationAsMailPayload(offer, interview))
+        sendMail(interview.toInterviewInvitationAsMailPayload(offer))
 
     fun sendApplicationConfirmationMail(offer: Offer,application: Application) =
-        sendMail(getApplicationConfirmationAsMailPayload(offer, application))
+        sendMail(application.toApplicationConfirmationAsMailPayload(offer))
 
 }

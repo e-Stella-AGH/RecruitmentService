@@ -1,7 +1,6 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.mails.userRegistrationMailPayload
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.people.domain.UserRepository
@@ -24,6 +23,12 @@ class UserService(
             throw UserNotFoundException()
         }
 
+    fun generatePassword(length:Int = 15):String {
+        val alphanumeric = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return buildString {
+            repeat(length) {append(alphanumeric.random())}
+        }
+    }
 
     fun getUsers(): MutableIterable<User> =
         withUserNotFound { userRepository.findAll() } as MutableIterable<User>

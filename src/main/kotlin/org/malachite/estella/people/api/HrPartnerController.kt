@@ -43,12 +43,12 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
         val organizationUser = securityService.getUserFromJWT(jwt)
             ?:return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
-        val saved: HrPartner = hrPartnerService.addHrPartner(hrPartnerRequest.toHrPartner(organization))
+        val saved: HrPartner = hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(organization))
         return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
     }
 }
 
-data class HrPartnerRequest(val email:String){
+data class HrPartnerRequest(val mail:String){
     fun toHrPartner(organization: Organization):HrPartner =
-        HrPartner(null,organization, User(null,"","",email))
+        HrPartner(null,organization, User(null,"","",mail))
 }
