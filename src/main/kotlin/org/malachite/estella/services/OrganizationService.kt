@@ -2,6 +2,7 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.mails.organizationVerificationMailPayload
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -47,7 +48,7 @@ class OrganizationService(
                 .copy(verified = verified)
         )
 
-        mailService.sendMail(mailService.organizationVerificationMailPayload(organization, verified))
+        mailService.sendMail(organizationVerificationMailPayload(organization, verified))
         return organization
     }
 }

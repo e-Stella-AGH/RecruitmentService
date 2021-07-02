@@ -1,6 +1,7 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.mails.userRegistrationMailPayload
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.people.domain.UserRepository
@@ -53,10 +54,11 @@ class UserService(
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
 
-    fun registerUser(user:User):User {
-        val user = addUser(user)
-        mailService.sendMail(mailService.userRegistrationMailPayload(user))
-        return user
-    }
+    fun registerUser(user:User):User =
+        addUser(user).let {
+            mailService.sendMail(userRegistrationMailPayload(user))
+            user
+        }
+
 
 }
