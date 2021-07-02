@@ -38,6 +38,4 @@ class MailService(
     fun sendApplicationConfirmationMail(offer: Offer,application: Application) =
         sendMail(getApplicationConfirmationAsMailPayload(offer, application))
 
-
-
 }

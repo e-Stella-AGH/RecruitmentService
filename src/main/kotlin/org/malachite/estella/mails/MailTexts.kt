@@ -47,4 +47,5 @@ object MailTexts {
             password: $password
             After first login change password and setup your name. We hope that our site will help you with work.
         """.trimIndent()
+
 }
