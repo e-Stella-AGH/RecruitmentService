@@ -13,7 +13,8 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository
+    @Autowired private val userRepository: UserRepository,
+    @Autowired private val mailService: MailService
 ) {
     private fun withUserNotFound(fn: () -> Any) =
         try {
@@ -52,5 +53,10 @@ class UserService(
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
 
+    fun registerUser(user:User):User {
+        val user = addUser(user)
+        mailService.sendMail(mailService.userRegistrationMailPayload(user))
+        return user
+    }
 
 }
