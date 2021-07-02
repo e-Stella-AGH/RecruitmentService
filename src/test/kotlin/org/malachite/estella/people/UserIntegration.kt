@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
@@ -19,6 +20,7 @@ class UserIntegration : BaseIntegration() {
     @Test
     @Order(1)
     fun `should add user to database`() {
+        EmailServiceStub.stubForSendEmail()
         val response = addUser()
         expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val users = getUsers()

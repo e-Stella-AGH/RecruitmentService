@@ -83,7 +83,7 @@ class OrganizationIntegration : BaseIntegration() {
             method = HttpMethod.POST,
             body = mapOf(
                 "name" to name,
-                "email" to mail,
+                "mail" to mail,
                 "password" to password,
                 "verified" to false
             )
@@ -97,7 +97,7 @@ class OrganizationIntegration : BaseIntegration() {
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
             body = mapOf(
                 "name" to newName,
-                "email" to mail,
+                "mail" to mail,
                 "password" to password,
                 "verified" to false
             )

@@ -6,6 +6,7 @@ import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.mails.getApplicationConfirmationAsMailPayload
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,7 +34,7 @@ class ApplicationService(
                 val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
                 jobSeekerRepository.save(updatedJobSeeker)
             }
-            mailService.sendMail(mailService.getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendApplicationConfirmationMail(offer, application)
             application
         } ?: throw NoSuchElementException()
     }
@@ -46,7 +47,7 @@ class ApplicationService(
             val application = applicationRepository.save(
                 applicationPayload.toApplication(it, jobSeeker)
             )
-            mailService.sendMail(mailService.getApplicationConfirmationAsMailPayload(offer, application))
+            mailService.sendApplicationConfirmationMail(offer, application)
             setNextStageOfApplication(application.id!!)
             interviewService.createInterview(offer, application)
             application
