@@ -71,7 +71,7 @@ class UserController(
     @CrossOrigin
     @PostMapping("/adduser")
     fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
-        userService.addUser(user.toUser())
+        userService.registerUser(user.toUser())
             .let {
                 ResponseEntity(Message("User Registered"), HttpStatus.CREATED)
             }

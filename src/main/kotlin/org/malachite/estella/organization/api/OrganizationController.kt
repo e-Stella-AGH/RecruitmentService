@@ -76,12 +76,12 @@ class OrganizationController(
 
     fun OrganizationRequest.toOrganization() = Organization(
         null, name,
-        User(null, name, "", email, password), verified
+        User(null, name, "", mail, password), verified
     )
 
     fun OrganizationID.toId(): UUID = UUID.fromString(organizationId)
 }
 
 
-data class OrganizationRequest(val name: String, val email: String, val password: String, val verified: Boolean = false)
+data class OrganizationRequest(val name: String, val mail: String, val password: String, val verified: Boolean = false)
 data class OrganizationID(val organizationId: String)

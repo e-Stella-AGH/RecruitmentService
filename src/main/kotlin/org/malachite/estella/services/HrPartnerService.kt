@@ -23,7 +23,7 @@ class HrPartnerService(
         hrPartner.user.password = password
         val user = userService.addUser(hrPartner.user)
         val resultHrPartner = addHrPartner(hrPartner.copy(user = user))
-        mailService.sendMail(mailService.hrPartnerRegistrationMailPayload(resultHrPartner,password))
+        mailService.sendHrPartnerRegisterMail(resultHrPartner,password)
         return hrPartner
     }
 

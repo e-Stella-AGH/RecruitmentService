@@ -1,6 +1,7 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.mails.userRegistrationMailPayload
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.people.domain.UserRepository
@@ -13,7 +14,8 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository
+    @Autowired private val userRepository: UserRepository,
+    @Autowired private val mailService: MailService
 ) {
     private fun withUserNotFound(fn: () -> Any) =
         try {
@@ -57,6 +59,12 @@ class UserService(
     fun deleteUser(id: Int) = withUserNotFound { userRepository.deleteById(id) } as Optional<User>
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
+
+    fun registerUser(user:User):User =
+        addUser(user).let {
+            mailService.sendRegisterMail(user)
+            user
+        }
 
 
 }

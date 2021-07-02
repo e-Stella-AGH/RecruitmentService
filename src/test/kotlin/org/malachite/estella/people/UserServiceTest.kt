@@ -4,7 +4,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.people.domain.UserNotFoundException
+import org.malachite.estella.services.MailService
 import org.malachite.estella.services.UserService
+import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.users
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -14,11 +16,13 @@ import strikt.assertions.isEqualTo
 class UserServiceTest {
 
     private val repository = DummyUserRepository()
-    private val userService = UserService(repository)
+    private val userService = UserService(repository, MailService("/email"))
+
 
     @BeforeEach
     fun setup(){
         testUsers.forEach { userService.addUser(it) }
+        EmailServiceStub.stubForSendEmail()
     }
 
     @AfterEach

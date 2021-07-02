@@ -74,9 +74,8 @@ class HrPartnerIntegration : BaseIntegration() {
             method = HttpMethod.POST,
             body = mapOf(
                 "name" to name,
-                "email" to organizationMail,
+                "mail" to organizationMail,
                 "password" to password,
-                "verified" to false
             )
         )
     }
