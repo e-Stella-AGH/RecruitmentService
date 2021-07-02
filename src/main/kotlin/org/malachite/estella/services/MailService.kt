@@ -24,18 +24,18 @@ class MailService(
     }
 
     fun sendRegisterMail(user:User) =
-        sendMail(userRegistrationMailPayload(user))
+        sendMail(user.toRegistrationMailPayload())
 
     fun sendHrPartnerRegisterMail(hrPartner: HrPartner,password:String)=
-        sendMail(hrPartnerRegistrationMailPayload(hrPartner,password))
+        sendMail(hrPartner.toRegistrationMailPayload(password))
 
     fun sendOrganizationVerificationMail(organization: Organization,verified:Boolean) =
-        sendMail(organizationVerificationMailPayload(organization, verified))
+        sendMail(organization.toVerificationMailPayload( verified))
 
     fun sendInterviewInvitationMail(offer: Offer, interview:Interview) =
-        sendMail(getInterviewInvitationAsMailPayload(offer, interview))
+        sendMail(interview.toInterviewInvitationAsMailPayload(offer))
 
     fun sendApplicationConfirmationMail(offer: Offer,application: Application) =
-        sendMail(getApplicationConfirmationAsMailPayload(offer, application))
+        sendMail(application.toApplicationConfirmationAsMailPayload(offer))
 
 }

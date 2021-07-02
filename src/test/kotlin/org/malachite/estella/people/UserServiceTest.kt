@@ -1,6 +1,7 @@
 package org.malachite.estella.people
 
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.people.domain.UserNotFoundException
@@ -18,11 +19,17 @@ class UserServiceTest {
     private val repository = DummyUserRepository()
     private val userService = UserService(repository, MailService("/email"))
 
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupTest(){
+            EmailServiceStub.stubForSendEmail()
+        }
+    }
 
     @BeforeEach
     fun setup(){
         testUsers.forEach { userService.addUser(it) }
-        EmailServiceStub.stubForSendEmail()
     }
 
     @AfterEach
