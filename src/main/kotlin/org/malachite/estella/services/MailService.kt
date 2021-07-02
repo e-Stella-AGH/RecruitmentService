@@ -7,19 +7,18 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.mails.*
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 
 @Component
 class MailService(
-    @Value("\${mail_service_url}") val SERVICE_URL: String
+    @Value("\${mail_service_url}") val MAIL_SERVICE_URL: String
 ) {
 
     private fun sendMail(mailPayload: MailPayload) {
         val restTemplate = RestTemplate()
         restTemplate
-            .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
+            .postForLocation("$MAIL_SERVICE_URL/email", mailPayload.toHttpEntity())
     }
 
 
