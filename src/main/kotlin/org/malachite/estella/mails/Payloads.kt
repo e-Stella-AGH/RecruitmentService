@@ -73,7 +73,7 @@ fun userRegistrationMailPayload(user: User) =
         sender_email = MAIN_MAIL
     )
 
-fun hrPartnerRegistrationMailPayload(hrpPartner: HrPartner, password: String) =
+fun hrPartnerRegistrationMailPayload(hrPartner: HrPartner, password: String) =
     MailPayload(
         subject = "Your account as Recruiter was created",
         sender_name = "e-Stella Team",
@@ -82,4 +82,3 @@ fun hrPartnerRegistrationMailPayload(hrpPartner: HrPartner, password: String) =
             hrpPartner.user.mail, password, MAIN_URL),
         sender_email = MAIN_MAIL
     )
-
