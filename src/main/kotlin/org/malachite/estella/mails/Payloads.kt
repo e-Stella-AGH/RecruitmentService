@@ -5,6 +5,7 @@ import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.mails.MailTexts.getApplicationConfirmation
 import org.malachite.estella.mails.MailTexts.getRegistrationText
 import org.malachite.estella.mails.MailTexts.getUnVerificationText
 import org.malachite.estella.mails.MailTexts.getVerificationText
@@ -31,13 +32,7 @@ fun getApplicationConfirmationAsMailPayload(offer: Offer, application: Applicati
     return MailPayload(
         subject = "Your application has been received!",
         receiver = application.jobSeeker.user.mail,
-        content = """
-                Hi ${application.jobSeeker.user.firstName}
-                Thank you for submitting your application to be a ${offer.position}. 
-                I with our team are reviewing your application and will be in touch if we think you’re a potential match for the position.
-                All the best,
-                $hrPartnerFullName
-                """.trimIndent(),
+        content = getApplicationConfirmation(application,offer,hrPartnerFullName),
         sender_name = hrPartnerFullName,
         sender_email = offer.creator.user.mail
     )
@@ -50,14 +45,7 @@ fun getInterviewInvitationAsMailPayload(offer: Offer, interview: Interview): Mai
         MailPayload(
             subject = "Your are invited for interview with ${it}!",
             receiver = interview.application.jobSeeker.user.mail,
-            content = """
-                Hi ${interview.application.jobSeeker.user.firstName}
-                Thanks so much for your interest in joining the ${it}! 
-                We are excited to move you forward in our engineering recruiting process.
-                Next step will be interview with our recruiters. It will take place at $url
-                All the best,
-                $hrPartnerFullName
-                """.trimIndent(),
+            content = MailTexts.getInterviewInvitation(interview,it,url,hrPartnerFullName),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
         )
