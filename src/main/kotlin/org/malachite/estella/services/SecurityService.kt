@@ -26,11 +26,18 @@ class SecurityService(
     private val refreshTime = 3600 * 1000 * 24 // 1 day
     private val authTime = 15 * 60 * 1000 // 15 minutes
 
+    private val mailKey = "mail"
+    private val firstNameKey = "firstName"
+    private val lastNameKey = "lastName"
+
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
         return Jwts.builder()
             .setIssuer(issuer)
             .setExpiration(Date(System.currentTimeMillis() + authTime))
+            .claim(mailKey, user.mail)
+            .claim(firstNameKey, user.firstName)
+            .claim(lastNameKey, user.lastName)
             .signWith(SignatureAlgorithm.HS512, authSecret)
             .compact()
     }
