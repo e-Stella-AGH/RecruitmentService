@@ -4,6 +4,7 @@ import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.services.DesiredSkillService
 import org.malachite.estella.services.HrPartnerService
 import java.util.HashSet
@@ -30,7 +31,7 @@ data class OfferRequest(
     private fun toDesiredSkillSet(desiredSkillService: DesiredSkillService): HashSet<DesiredSkill> = skills
         .map {
             desiredSkillService
-                .safeGetDesiredSkill(Pair(it.name, SkillLevel.valueOf(it.level)))?: it.toDesiredSkill()
+                .safeGetDesiredSkill(Pair(it.name, SkillLevel.valueOf(it.level))) ?: it.toDesiredSkill()
         }
         .toCollection(HashSet<DesiredSkill>())
 }
@@ -45,14 +46,29 @@ data class Skill(
 data class OfferResponse(
     val id: Int?, val name: String, val description: String, val position: String,
     val minSalary: Long, val maxSalary: Long, val localization: String,
-    val creatorId: Int, val skills: Set<DesiredSkill>
+    val organization: OrganizationResponse, val skills: Set<DesiredSkill>
 ) {
     companion object {
         fun fromOffer(offer: Offer): OfferResponse {
             return OfferResponse(
-                offer.id, offer.name, offer.description.characterStream.readText(),
-                offer.position, offer.minSalary, offer.maxSalary, offer.localization, offer.creator.id!!, offer.skills
+                offer.id,
+                offer.name,
+                offer.description.characterStream.readText(),
+                offer.position,
+                offer.minSalary,
+                offer.maxSalary,
+                offer.localization,
+                offer.getOrganizationResponse(),
+                offer.skills
             )
         }
     }
 }
+
+data class OrganizationResponse(
+    val name: String
+)
+
+fun Offer.getOrganizationResponse() = OrganizationResponse(
+    this.creator.organization.name
+)
