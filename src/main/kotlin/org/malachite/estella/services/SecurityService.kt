@@ -10,7 +10,7 @@ import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.sql.Date
+import java.util.*
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
 
@@ -26,11 +26,19 @@ class SecurityService(
     private val refreshTime = 3600 * 1000 * 24 // 1 day
     private val authTime = 15 * 60 * 1000 // 15 minutes
 
+    private val mailKey = "mail"
+    private val firstNameKey = "firstName"
+    private val lastNameKey = "lastName"
+
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
         return Jwts.builder()
             .setIssuer(issuer)
+            .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + authTime))
+            .claim(mailKey, user.mail)
+            .claim(firstNameKey, user.firstName)
+            .claim(lastNameKey, user.lastName)
             .signWith(SignatureAlgorithm.HS512, authSecret)
             .compact()
     }
@@ -40,6 +48,7 @@ class SecurityService(
         val issuer = user.id.toString()
         return Jwts.builder()
             .setIssuer(issuer)
+            .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + refreshTime))
             .signWith(SignatureAlgorithm.HS512, refreshSecret)
             .compact()

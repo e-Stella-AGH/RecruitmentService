@@ -2,6 +2,7 @@ package org.malachite.estella.admin.api
 
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.services.OrganizationService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping("/_admin")
 class AdminController(
-    val organizationService: OrganizationService
+    @Autowired val organizationService: OrganizationService
 ) {
 
     @PostMapping("/verify/{organizationUUID}")
