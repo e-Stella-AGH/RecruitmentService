@@ -9,6 +9,7 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -20,6 +21,8 @@ class UserController(
     @Autowired private val userService: UserService,
     @Autowired private val securityService: SecurityService
 ) {
+
+    private val loginExposedHeaders: String = arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
 
     @CrossOrigin
     @GetMapping()
@@ -44,6 +47,7 @@ class UserController(
             ResponseEntity.ok()
                 .header(EStellaHeaders.authToken, it.first)
                 .header(EStellaHeaders.refreshToken, it.second)
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
                 .body(Message("Success"))
         } ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
@@ -64,7 +68,10 @@ class UserController(
     ): ResponseEntity<Message> {
         jwt ?: return OwnResponses.UNAUTH
         return securityService.refreshToken(jwt, userId)
-            ?.let { ResponseEntity.ok().header(EStellaHeaders.authToken, it).body(SuccessMessage) }
+            ?.let { ResponseEntity.ok()
+                    .header(EStellaHeaders.authToken, it)
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
+                    .body(SuccessMessage) }
             ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
     }
 
