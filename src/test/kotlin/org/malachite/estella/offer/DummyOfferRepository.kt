@@ -12,10 +12,11 @@ class DummyOfferRepository: OfferRepository {
         offers.sortedByDescending { it.id } as MutableList<Offer>
 
     override fun findById(offerId: Int): Optional<Offer> =
-        Optional.of(offers.firstOrNull { it.id == offerId } as Offer)
+        Optional.ofNullable(offers.firstOrNull { it.id == offerId })
 
 
     override fun save(offer: Offer): Offer {
+        this.deleteById(offer.id!!)
         offers.add(offer)
         return offer
     }
@@ -27,4 +28,6 @@ class DummyOfferRepository: OfferRepository {
     fun clear() {
         this.offers.clear()
     }
+
+    fun size() = this.offers.size
 }

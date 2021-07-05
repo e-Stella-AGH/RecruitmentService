@@ -1,8 +1,13 @@
 package org.malachite.estella.offer.api
 
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.offer.domain.OfferRequest
 import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.toOfferResponse
 import org.malachite.estella.services.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -18,68 +23,49 @@ import java.util.*
 @Transactional
 @RequestMapping("/api/offers")
 class OfferController(
-    @Autowired private val offerService: OfferService,
-    @Autowired private val hrPartnerService: HrPartnerService,
-    @Autowired private val desiredSkillService: DesiredSkillService,
-    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val offerService: OfferService
 ) {
 
     @CrossOrigin
     @GetMapping
-    fun getOffers(): ResponseEntity<List<OfferResponse>> {
-        return ResponseEntity(offerService.getOffers().map { OfferResponse.fromOffer(it) }, HttpStatus.OK)
-    }
+    fun getOffers(): ResponseEntity<List<OfferResponse>> =
+        offerService.getOffers()
+            .map { it.toOfferResponse() }
+            .let { ResponseEntity(it, HttpStatus.OK) }
+
 
     @CrossOrigin
     @GetMapping("/{offerId}")
-    fun getOffer(@PathVariable offerId: Int): ResponseEntity<OfferResponse> {
-        val offer = offerService.getOffer(offerId)
-
-        return ResponseEntity(OfferResponse.fromOffer(offer), HttpStatus.OK)
-    }
+    fun getOffer(@PathVariable offerId: Int): ResponseEntity<OfferResponse> =
+        offerService.getOffer(offerId)
+            .let { ResponseEntity(it.toOfferResponse(), HttpStatus.OK) }
 
     @CrossOrigin
     @PostMapping("/addoffer")
-    fun addOffer(@RequestBody offer: OfferRequest, @CookieValue("jwt") jwt: String?): ResponseEntity<Any> {
-        val hrPartner =
-            securityService.getHrPartnerFromJWT(jwt) ?: return ResponseEntity.status(404).body("Unauthenticated")
-
-        val saved: Offer = offerService.addOffer(offer.toOffer(hrPartner, desiredSkillService))
-
-        val recruitmentProcess = RecruitmentProcess(
-            null,
-            Date.valueOf(LocalDate.now()),
-            null,
-            saved,
-            listOf(RecruitmentStage(null, StageType.APPLIED)),
-            setOf(), setOf()
-        )
-        recruitmentProcessService.addProcess(recruitmentProcess)
-
-        return ResponseEntity.created(URI("/api/offers/" + saved.id)).build()
+    fun addOffer(
+        @RequestBody offer: OfferRequest,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+    ): ResponseEntity<Message> {
+        offerService.addOffer(offer, jwt)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @PutMapping("/update/{offerId}")
-    fun updateOffer(@PathVariable("offerId") offerId: Int, @RequestBody offer: OfferRequest,
-                    @CookieValue("jwt") jwt: String?): ResponseEntity<Any> {
-        val hrPartner =
-            securityService.getHrPartnerFromJWT(jwt) ?: return ResponseEntity.status(404).body("Unauthenticated")
-        offerService.updateOffer(offerId, offer.toOffer(hrPartner, desiredSkillService))
-        return ResponseEntity(HttpStatus.OK)
+    fun updateOffer(
+        @PathVariable("offerId") offerId: Int,
+        @RequestBody offer: OfferRequest,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+    ): ResponseEntity<Any> {
+        offerService.updateOffer(offerId, offer, jwt)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @DeleteMapping("/{offerId}")
-    fun deleteOffer(@PathVariable("offerId") offerId: Int): ResponseEntity<Offer> {
+    fun deleteOffer(@PathVariable("offerId") offerId: Int): ResponseEntity<Message> {
         offerService.deleteOffer(offerId)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
-    }
-
-    @ExceptionHandler(NoSuchElementException::class)
-    fun handleNoSuchElementException(): ResponseEntity<Any> {
-        return ResponseEntity("No resource with such id", HttpStatus.NOT_FOUND)
+        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
 }
