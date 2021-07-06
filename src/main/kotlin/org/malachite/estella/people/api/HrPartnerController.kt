@@ -7,7 +7,9 @@ import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.services.HrPartnerService
+import org.malachite.estella.services.OfferService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +21,7 @@ import java.net.URI
 @RestController
 @RequestMapping("/api/hrpartners")
 class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerService,
+                          @Autowired private val offerService: OfferService,
                           @Autowired private val organizationService: OrganizationService,
                           @Autowired private val securityService:SecurityService
 ) {
@@ -34,6 +37,15 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
         val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
 
         return ResponseEntity(partner, HttpStatus.OK)
+    }
+
+    @CrossOrigin
+    @GetMapping("/{hrPartnerId}/offers")
+    fun getHrPartnerOffers(@PathVariable("hrPartnerId") hrPartnerId: Int): MutableList<OfferResponse> {
+        return offerService.getOffers()
+            .filter { offer -> offer.creator.id == hrPartnerId }
+            .map { offer -> OfferResponse.fromOffer(offer) }
+            .toMutableList();
     }
 
     @CrossOrigin
