@@ -2,8 +2,12 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.models.offers.DesiredSkill
+import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.OrganizationResponse
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.*
@@ -12,6 +16,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
+import wiremock.org.antlr.v4.runtime.misc.OrderedHashSet
 import java.net.URI
 import java.util.*
 
@@ -88,4 +93,43 @@ class BaseIntegration {
             this["verified"] as Boolean
         )
 
+    fun Map<String, Any>.toOrganizationResponse() =
+        OrganizationResponse(
+            this["name"] as String,
+        )
+
+    fun Map<String, Any>.toOfferResponse() =
+        OfferResponse(
+            this["id"] as Int,
+            this["name"] as String,
+            this["description"] as String,
+            this["position"] as String,
+            (this["minSalary"] as Int).toLong(),
+            (this["maxSalary"] as Int).toLong(),
+            this["localization"] as String,
+            (this["organization"] as Map<String, Any>).toOrganizationResponse(),
+            (this["skills"] as ArrayList<Map<String, Any>>).toDesiredSkillSet()
+        )
+
+    fun ArrayList<Map<String, Any>>.toDesiredSkillSet() =
+        this.map { it.toDesiredSkill() }
+            .toHashSet()
+
+    fun Map<String, Any>.toDesiredSkill() =
+        DesiredSkill(
+            this["id"] as Int,
+            this["name"] as String,
+            (this["level"] as String).toSkillLevel()!!
+        )
+
+    fun String.toSkillLevel(): SkillLevel? {
+        return when (this) {
+            "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
+            "JUNIOR" -> SkillLevel.JUNIOR
+            "REGULAR" -> SkillLevel.REGULAR
+            "ADVANCED" -> SkillLevel.ADVANCED
+            "MASTER" -> SkillLevel.MASTER
+            else -> null
+        }
+    }
 }

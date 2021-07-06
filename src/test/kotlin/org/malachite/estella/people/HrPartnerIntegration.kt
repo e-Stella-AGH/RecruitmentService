@@ -4,7 +4,11 @@ import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
+import org.malachite.estella.util.hrPartners
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
@@ -38,6 +42,33 @@ class HrPartnerIntegration : BaseIntegration() {
         val response = addHrpartner(organizationMail)
         withStatusAndMessage(response, "Address already in use!", HttpStatus.BAD_REQUEST)
     }
+
+    @Test
+    @Order(4)
+    fun `should return ok and list of partner offers`(@Autowired offerService: OfferService) {
+        val response = getPartnersOffers(legitHrPartner.user.mail, legitHrPartnerPassword)
+        response.forEach{
+            val offer = it.id?.let { it1 -> offerService.getOffer(it1) }
+            offer?.let {
+                expectThat(it.creator.user).isEqualTo(legitHrPartner.user)
+            }
+        }
+    }
+
+    private fun getPartnersOffers(mail: String, password: String): List<OfferResponse> {
+        return httpRequest(
+            path = "/api/hrpartners/offers",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password))
+        ).let {
+            it.body as List<Map<String, Any>>
+            it.body.map {
+                it.toOfferResponse()
+            }
+        }
+    }
+
+
 
     private fun withStatusAndMessage(response: Response, message: String, status: HttpStatus) {
         expectThat(response.statusCode).isEqualTo(status)
@@ -91,13 +122,16 @@ class HrPartnerIntegration : BaseIntegration() {
         )
     }
 
-    private fun getAuthToken(mail:String = hrpartnerMail):String =
-        loginUser(mail).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
+    private fun getAuthToken(mail:String = hrpartnerMail, userPassword: String = password):String =
+        loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
 
     private val name = "name"
     private val organizationMail = "organization@hrpartner.pl"
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
+
+    private val legitHrPartner = hrPartners[0]
+    private val legitHrPartnerPassword = "a"
 
     private val randomMail = "randommail@user.pl"
     private val randomPassword = "random-password"

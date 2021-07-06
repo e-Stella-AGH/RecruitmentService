@@ -20,10 +20,11 @@ import java.net.URI
 
 @RestController
 @RequestMapping("/api/hrpartners")
-class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerService,
-                          @Autowired private val offerService: OfferService,
-                          @Autowired private val organizationService: OrganizationService,
-                          @Autowired private val securityService:SecurityService
+class HrPartnerController(
+    @Autowired private val hrPartnerService: HrPartnerService,
+    @Autowired private val offerService: OfferService,
+    @Autowired private val organizationService: OrganizationService,
+    @Autowired private val securityService: SecurityService
 ) {
     @CrossOrigin
     @GetMapping
@@ -40,18 +41,20 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
     }
 
     @CrossOrigin
-    @GetMapping("/{hrPartnerId}/offers")
-    fun getHrPartnerOffers(@PathVariable("hrPartnerId") hrPartnerId: Int): MutableList<OfferResponse> {
+    @GetMapping("/offers")
+    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<OfferResponse>> {
+        val hrPartner = securityService.getHrPartnerFromJWT(jwt)
+            ?: return ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
+
         return offerService.getOffers()
-            .filter { offer -> offer.creator.id == hrPartnerId }
+            .filter { offer -> offer.creator == hrPartner }
             .map { offer -> OfferResponse.fromOffer(offer) }
-            .toMutableList();
+            .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
     }
 
     @CrossOrigin
     @PostMapping("/addHrPartner")
-    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest,
-                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<Message> {
+    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest, @RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Message> {
         val organizationUser = securityService.getUserFromJWT(jwt)
             ?:return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
