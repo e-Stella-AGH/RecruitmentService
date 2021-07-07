@@ -1,9 +1,6 @@
 package org.malachite.estella.offer.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.SuccessMessage
-import org.malachite.estella.commons.UnauthenticatedMessage
+import org.malachite.estella.commons.*
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.offer.domain.OfferRequest
 import org.malachite.estella.offer.domain.OfferResponse
@@ -23,7 +20,8 @@ import java.util.*
 @Transactional
 @RequestMapping("/api/offers")
 class OfferController(
-    @Autowired private val offerService: OfferService
+    @Autowired private val offerService: OfferService,
+    @Autowired private val securityService: SecurityService
 ) {
 
     @CrossOrigin
@@ -43,29 +41,37 @@ class OfferController(
     @CrossOrigin
     @PostMapping("/addoffer")
     fun addOffer(
-        @RequestBody offer: OfferRequest,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @RequestBody offer: OfferRequest
     ): ResponseEntity<Message> {
-        offerService.addOffer(offer, jwt)
+        val hrPartner = getHrPartnerFromJWT(jwt)
+        offerService.addOffer(offer, hrPartner)
         return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @PutMapping("/update/{offerId}")
     fun updateOffer(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int,
-        @RequestBody offer: OfferRequest,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+        @RequestBody offer: OfferRequest
     ): ResponseEntity<Any> {
-        offerService.updateOffer(offerId, offer, jwt)
+        val hrPartner = getHrPartnerFromJWT(jwt)
+        offerService.updateOffer(offerId, offer, hrPartner)
         return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
     @CrossOrigin
     @DeleteMapping("/{offerId}")
-    fun deleteOffer(@PathVariable("offerId") offerId: Int): ResponseEntity<Message> {
+    fun deleteOffer(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable("offerId") offerId: Int
+    ): ResponseEntity<Message> {
         offerService.deleteOffer(offerId)
         return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
+
+    private fun getHrPartnerFromJWT(jwt: String?) =
+        securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException()
 
 }

@@ -2,8 +2,14 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.OrganizationResponse
+import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.*
@@ -31,7 +37,7 @@ class BaseIntegration {
         body: Map<String, Any> = mapOf()
     ): Response {
         val httpHeaders = HttpHeaders().also {
-            headers.forEach{ (key, value) -> it.add(key, value) }
+            headers.forEach { (key, value) -> it.add(key, value) }
         }
         val uri = URI.create("http://localhost:8080$path")
 
@@ -41,11 +47,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody,response.headers)
+            Response(statusCode, responseBody, response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody,exception.responseHeaders)
+            Response(statusCode, responseBody, exception.responseHeaders)
         }
     }
 
@@ -84,8 +90,26 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
+            (this["user"] as Map<String, Any>).toUser(),
             this["verified"] as Boolean
         )
+
+    fun Map<String, Any>.toHrPartner() = HrPartner(
+        this["id"] as Int?,
+        (this["organization"] as Map<String, Any>).toOrganization(),
+        (this["user"] as Map<String, Any>).toUser()
+    )
+
+    fun Map<String, Any>.toOfferResponse() = OfferResponse(
+        this["id"] as Int?,
+        this["name"] as String,
+        this["description"] as String,
+        this["position"] as String,
+        (this["minSalary"] as Int).toLong(),
+        (this["maxSalary"] as Int).toLong(),
+        this["localization"] as String,
+        OrganizationResponse(this["organization"].let { it as Map<String, String>; it["name"] as String }),
+        setOf()
+    )
 
 }
