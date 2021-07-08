@@ -64,6 +64,4 @@ class UserService(
             mailService.sendRegisterMail(user)
             user
         }
-
-
 }

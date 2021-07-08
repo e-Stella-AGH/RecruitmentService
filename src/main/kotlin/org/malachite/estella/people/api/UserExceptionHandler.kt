@@ -1,6 +1,7 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.Message
+import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.springframework.http.HttpStatus
@@ -18,4 +19,8 @@ class UserExceptionHandler {
     @ExceptionHandler(UserNotFoundException::class)
     fun returnBadRequestWhenUserWasntFound(ex: UserNotFoundException) =
         ResponseEntity(Message("There is no such user"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(InvalidUserException::class)
+    fun returnBadRequestWhenUserWasInvalid(ex: InvalidUserException) =
+        ResponseEntity(Message("This user isn't job seeker, hr employee, nor organizaiton"), HttpStatus.BAD_REQUEST)
 }

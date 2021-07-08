@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.UserResponse
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -100,6 +101,20 @@ class UserIntegration : BaseIntegration() {
         withStatusAndMessage(deletedUserResponse, "There is no such user", HttpStatus.BAD_REQUEST)
     }
 
+    @Test
+    @Order(9)
+    fun `should return user type job seeker, when user is job seeker`() {
+        val user = loggedInUser(variant = 1)
+        expectThat(user.userType).isEqualTo("job_seeker")
+    }
+
+    @Test
+    @Order(10)
+    fun `should return user type hr, when user is hr partner`() {
+        val user = loggedInUser(variant = 2)
+        expectThat(user.userType).isEqualTo("hr")
+    }
+
     private fun addUser(): Response {
         return httpRequest(
             path = "/api/users/adduser",
@@ -139,6 +154,24 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
+    private fun loggedInUser(variant: Int): UserResponse {
+        val response = httpRequest(
+            path = "/api/users/loggedInUser",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(variant = variant))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        response.body.let {
+            it as Map<String, Any>
+            return UserResponse(
+                it["firstName"] as String,
+                it["lastName"] as String,
+                it["mail"] as String,
+                it["userType"] as String
+            )
+        }
+    }
+
     private fun getUserById(userId: Int): User {
         val response = getUserAsResponse(userId)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
@@ -155,19 +188,21 @@ class UserIntegration : BaseIntegration() {
         )
     }
 
-    private fun loginUser(userMail: String = mail, userPassword: String = password): Response {
+    private fun loginUser(userMail: String = mail, userPassword: String = password, variant: Int = 0): Response {
+        val uM = if(variant == 0) userMail else if (variant == 1) "carthago@delenda.est" else "principus@roma.com"
+        val uP = if(variant == 0) userPassword else "a"
         return httpRequest(
             path = "/api/users/login",
             method = HttpMethod.POST,
             body = mapOf(
-                "mail" to userMail,
-                "password" to userPassword
+                "mail" to uM,
+                "password" to uP
             )
         )
     }
 
-    private fun getAuthToken():String =
-        loginUser().headers!![EStellaHeaders.authToken]!![0]
+    private fun getAuthToken(variant: Int = 0): String =
+        loginUser(variant = variant).headers!![EStellaHeaders.authToken]!![0]
 
 
     private val firstName = "name"

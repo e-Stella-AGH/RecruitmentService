@@ -4,8 +4,11 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
+import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,7 +21,8 @@ import javax.servlet.http.HttpServletResponse
 class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
-    @Autowired val hrPartnerRepository: HrPartnerRepository
+    @Autowired val hrPartnerRepository: HrPartnerRepository,
+    @Autowired val organizationRepository: OrganizationRepository
 ) {
 
     private val authSecret = "secret"
@@ -81,6 +85,15 @@ class SecurityService(
         return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
     }
 
+    fun getOrganizationFromJWT(jwt: String?): Organization? {
+        return getUserFromJWT(jwt)?.let { organizationRepository.findByUser(it).orElse(null) }
+    }
+
+    fun getUserTypeByJWT(jwt: String?) =
+        this.getJobSeekerFromJWT(jwt)?.let { "job_seeker" } ?:
+        this.getHrPartnerFromJWT(jwt)?.let { "hr" } ?:
+        this.getOrganizationFromJWT(jwt)?.let { "organization" } ?:
+        throw InvalidUserException()
 
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)

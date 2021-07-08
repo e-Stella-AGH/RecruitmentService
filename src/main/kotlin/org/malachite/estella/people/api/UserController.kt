@@ -1,11 +1,13 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OneStringValueMessage
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.LoginRequest
+import org.malachite.estella.people.domain.UserRequest
+import org.malachite.estella.people.domain.toUserResponse
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,7 +24,8 @@ class UserController(
     @Autowired private val securityService: SecurityService
 ) {
 
-    private val loginExposedHeaders: String = arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
+    private val loginExposedHeaders: String =
+        arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
 
     @CrossOrigin
     @GetMapping()
@@ -55,10 +58,10 @@ class UserController(
 
     @CrossOrigin
     @GetMapping("/loggedInUser")
-    fun getLoggedInUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> {
-        val user = securityService.getUserFromJWT(jwt) ?: OwnResponses.UNAUTH
-        return ResponseEntity.ok(user)
-    }
+    fun getLoggedInUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?) =
+        securityService.getUserFromJWT(jwt)?.let {
+            ResponseEntity(it.toUserResponse(securityService, jwt), HttpStatus.OK)
+        } ?: OwnResponses.UNAUTH
 
     @CrossOrigin
     @PostMapping("/{userId}/refreshToken")
@@ -68,10 +71,12 @@ class UserController(
     ): ResponseEntity<Message> {
         jwt ?: return OwnResponses.UNAUTH
         return securityService.refreshToken(jwt, userId)
-            ?.let { ResponseEntity.ok()
+            ?.let {
+                ResponseEntity.ok()
                     .header(EStellaHeaders.authToken, it)
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
-                    .body(SuccessMessage) }
+                    .body(SuccessMessage)
+            }
             ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
     }
 
@@ -113,14 +118,3 @@ class UserController(
     }
 
 }
-
-data class UserRequest(
-    val firstName: String,
-    val lastName: String,
-    val mail: String,
-    val password: String
-) {
-    fun toUser() = User(null, firstName, lastName, mail, password)
-}
-
-data class LoginRequest(val mail: String, val password: String)
