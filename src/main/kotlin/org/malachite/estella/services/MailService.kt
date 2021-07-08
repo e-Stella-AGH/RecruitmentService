@@ -11,17 +11,21 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 
 @Component
 class MailService(
-    @Value("\${mail_service_url}") val SERVICE_URL: String
+    @Value("\${mail_service_url}") final val SERVICE_URL: String
 ) {
 
-    private fun sendMail(mailPayload: MailPayload) {
-        val restTemplate = RestTemplate()
-        restTemplate
-            .postForLocation("$SERVICE_URL/email", mailPayload.toHttpEntity())
-    }
+    val webClient = WebClient.create(SERVICE_URL)
+
+    private fun sendMail(mailPayload: MailPayload) =
+        webClient
+            .post()
+            .uri("/email")
+            .body(Mono.just(mailPayload), MailPayload::class.java)
 
     fun sendRegisterMail(user:User) =
         sendMail(user.toRegistrationMailPayload())
