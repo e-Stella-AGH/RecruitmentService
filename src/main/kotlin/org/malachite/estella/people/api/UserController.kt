@@ -1,9 +1,6 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.*
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.LoginRequest
 import org.malachite.estella.people.domain.UserRequest
@@ -35,7 +32,7 @@ class UserController(
 
     @CrossOrigin
     @PostMapping("/login")
-    fun loginUser(@RequestBody body: LoginRequest): ResponseEntity<Message> {
+    fun loginUser(@RequestBody body: LoginRequest): ResponseEntity<OneStringValueMessage> {
         val user = userService.getUserByEmail(body.mail)
             ?: return ResponseEntity(
                 Message("User with such email: ${body.mail} not found"),
@@ -51,7 +48,7 @@ class UserController(
                 .header(EStellaHeaders.authToken, it.first)
                 .header(EStellaHeaders.refreshToken, it.second)
                 .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
-                .body(Message("Success"))
+                .body(TokenMessage("${it.first};${it.second}"))
         } ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
