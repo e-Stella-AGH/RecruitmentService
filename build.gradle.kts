@@ -49,4 +49,3 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-apply("$projectDir/gradle/preCommit.gradle")
