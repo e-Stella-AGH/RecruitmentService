@@ -9,6 +9,7 @@ import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.servlet.http.Cookie
@@ -18,7 +19,8 @@ import javax.servlet.http.HttpServletResponse
 class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
-    @Autowired val hrPartnerRepository: HrPartnerRepository
+    @Autowired val hrPartnerRepository: HrPartnerRepository,
+    @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
     private val authSecret = "secret"
@@ -100,5 +102,8 @@ class SecurityService(
 
     fun checkUserRights(jwt: String?, userId: Int): Boolean =
         getUserFromJWT(jwt)?.let { it.id == userId } ?: false
+
+    fun isCorrectApiKey(apiKey:String?):Boolean =
+        apiKey!=null && apiKey == API_KEY
 
 }

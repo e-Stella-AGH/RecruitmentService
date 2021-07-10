@@ -3,6 +3,7 @@ package org.malachite.estella.admin
 import com.fasterxml.jackson.core.JsonParseException
 import org.junit.jupiter.api.Test
 import org.malachite.estella.BaseIntegration
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.util.EmailServiceStub
@@ -29,8 +30,9 @@ class AdminIntegration : BaseIntegration() {
 
         //when - sending http request to verify organization
         val response = httpRequest(
-            path = "/_admin/verify/${notVerifiedOrganization!!.id}",
-            method = HttpMethod.POST
+            path = "/api/_admin/verify/${notVerifiedOrganization!!.id}",
+            method = HttpMethod.POST,
+            headers = mapOf(EStellaHeaders.apiKey to API_KEY)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
@@ -53,8 +55,9 @@ class AdminIntegration : BaseIntegration() {
 
         //when - sending http request to verify organization
         val response = httpRequest(
-            path = "/_admin/deverify/${verifiedOrganization!!.id}",
-            method = HttpMethod.POST
+            path = "/api/_admin/deverify/${verifiedOrganization!!.id}",
+            method = HttpMethod.POST,
+            headers = mapOf(EStellaHeaders.apiKey to API_KEY)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
@@ -66,6 +69,7 @@ class AdminIntegration : BaseIntegration() {
         }
     }
 
+    val API_KEY = "API_KEY"
 
     private fun getOrganizations() =
         httpRequest(
