@@ -49,13 +49,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.register<Copy>("InstallGitHook") {
-    from("$projectDir/pre-commit")
-    into(".git/hooks/")
+tasks.register<Copy>("installGitHook") {
+    from(File(rootProject.rootDir,"pre-commit"))
+    into(File(rootProject.rootDir,".git/hooks"))
 }
-
-tasks{
-    "build"{
-        dependsOn("InstallGitHook")
-    }
-}
+tasks.getByPath(":build").dependsOn("installGitHook")
