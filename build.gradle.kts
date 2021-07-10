@@ -49,3 +49,7 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+tasks.withType<Copy> {
+    from("$projectDir/pre-commit")
+    into(".git/hooks/")
+}
