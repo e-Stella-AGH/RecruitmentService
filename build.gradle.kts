@@ -49,7 +49,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.withType<Copy> {
+tasks.register<Copy>("InstallGitHook") {
     from("$projectDir/pre-commit")
     into(".git/hooks/")
+}
+
+tasks{
+    "build"{
+        dependsOn("InstallGitHook")
+    }
 }
