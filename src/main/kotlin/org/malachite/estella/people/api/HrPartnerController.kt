@@ -7,7 +7,9 @@ import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.services.HrPartnerService
+import org.malachite.estella.services.OfferService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,7 +23,8 @@ import java.net.URI
 class HrPartnerController(
     @Autowired private val hrPartnerService: HrPartnerService,
     @Autowired private val organizationService: OrganizationService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val offerService: OfferService
 ) {
     @CrossOrigin
     @GetMapping
@@ -35,6 +38,18 @@ class HrPartnerController(
         val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
 
         return ResponseEntity(partner, HttpStatus.OK)
+    }
+
+    @CrossOrigin
+    @GetMapping("/offers")
+    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<OfferResponse>> {
+        val hrPartner = securityService.getHrPartnerFromJWT(jwt)
+            ?: return ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
+
+        return offerService.getOffers()
+            .filter { offer -> offer.creator == hrPartner }
+            .map { offer -> OfferResponse.fromOffer(offer) }
+            .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
     }
 
     @CrossOrigin

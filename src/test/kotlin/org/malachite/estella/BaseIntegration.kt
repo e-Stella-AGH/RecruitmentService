@@ -2,14 +2,19 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.models.offers.DesiredSkill
+import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.OrganizationResponse
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.http.*
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import org.springframework.http.RequestEntity
 import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
@@ -18,9 +23,11 @@ import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = ["mail_service_url=http://localhost:9797"]
+    properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY"]
 )
 class BaseIntegration {
+
+
 
     private val restTemplate = TestRestTemplate()
     val objectMapper = jacksonObjectMapper()
@@ -95,4 +102,43 @@ class BaseIntegration {
         (this["user"] as Map<String, Any>).toUser()
     )
 
+    fun Map<String, Any>.toOrganizationResponse() =
+        OrganizationResponse(
+            this["name"] as String,
+        )
+
+    fun Map<String, Any>.toOfferResponse() =
+        OfferResponse(
+            this["id"] as Int,
+            this["name"] as String,
+            this["description"] as String,
+            this["position"] as String,
+            (this["minSalary"] as Int).toLong(),
+            (this["maxSalary"] as Int).toLong(),
+            this["localization"] as String,
+            (this["organization"] as Map<String, Any>).toOrganizationResponse(),
+            (this["skills"] as ArrayList<Map<String, Any>>).toDesiredSkillSet()
+        )
+
+    fun ArrayList<Map<String, Any>>.toDesiredSkillSet() =
+        this.map { it.toDesiredSkill() }
+            .toHashSet()
+
+    fun Map<String, Any>.toDesiredSkill() =
+        DesiredSkill(
+            this["id"] as Int,
+            this["name"] as String,
+            (this["level"] as String).toSkillLevel()!!
+        )
+
+    fun String.toSkillLevel(): SkillLevel? {
+        return when (this) {
+            "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
+            "JUNIOR" -> SkillLevel.JUNIOR
+            "REGULAR" -> SkillLevel.REGULAR
+            "ADVANCED" -> SkillLevel.ADVANCED
+            "MASTER" -> SkillLevel.MASTER
+            else -> null
+        }
+    }
 }

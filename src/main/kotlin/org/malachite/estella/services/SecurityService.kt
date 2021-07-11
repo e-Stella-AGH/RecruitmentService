@@ -10,6 +10,7 @@ import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -18,7 +19,8 @@ class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
-    @Autowired val organizationRepository: OrganizationRepository
+    @Autowired val organizationRepository: OrganizationRepository,
+    @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
     private val authSecret = "secret"
@@ -112,4 +114,7 @@ class SecurityService(
         hrPartnerRepository.findById(this.id).orElse(null)?.let { "hr" } ?:
         organizationRepository.findByUser(this).orElse(null)?.let { "organization" } ?:
         throw InvalidUserException()
+
+    fun isCorrectApiKey(apiKey:String?):Boolean =
+        apiKey!=null && apiKey == API_KEY
 }
