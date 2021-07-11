@@ -46,6 +46,13 @@ class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerServ
         val saved: HrPartner = hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(organization))
         return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
     }
+
+    @CrossOrigin
+    @DeleteMapping("/{hrPartnerId}")
+    fun deleteHrPartner(@PathVariable("hrPartnerId") hrId: Int) =
+        hrPartnerService.deleteHrPartner(hrId).let {
+            ResponseEntity(SuccessMessage, HttpStatus.OK)
+        }
 }
 
 data class HrPartnerRequest(val mail:String){
