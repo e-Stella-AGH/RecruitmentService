@@ -47,28 +47,24 @@ data class OfferResponse(
     val id: Int?, val name: String, val description: String, val position: String,
     val minSalary: Long, val maxSalary: Long, val localization: String,
     val organization: OrganizationResponse, val skills: Set<DesiredSkill>
-) {
-    companion object {
-        fun fromOffer(offer: Offer): OfferResponse {
-            return OfferResponse(
-                offer.id,
-                offer.name,
-                offer.description.characterStream.readText(),
-                offer.position,
-                offer.minSalary,
-                offer.maxSalary,
-                offer.localization,
-                offer.getOrganizationResponse(),
-                offer.skills
-            )
-        }
-    }
-}
+)
+
+fun Offer.toOfferResponse() = OfferResponse(
+    this.id,
+    this.name,
+    this.description.characterStream.readText(),
+    this.position,
+    this.minSalary,
+    this.maxSalary,
+    this.localization,
+    this.getOrganizationResponse(),
+    this.skills
+)
 
 data class OrganizationResponse(
     val name: String
 )
 
-fun Offer.getOrganizationResponse() = OrganizationResponse(
+private fun Offer.getOrganizationResponse() = OrganizationResponse(
     this.creator.organization.name
 )

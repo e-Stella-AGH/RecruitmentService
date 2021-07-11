@@ -62,7 +62,7 @@ class OrganizationIntegration : BaseIntegration() {
     @Order(5)
     fun `should delete organization`() {
         val organization = getOrganizations().find { it.user.mail == mail }!!
-        println(organization)
+
         val response = httpRequest(
             path = "/api/organizations/${organization.id.toString()}",
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
