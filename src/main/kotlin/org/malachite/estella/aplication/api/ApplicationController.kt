@@ -2,6 +2,7 @@ package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
 import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
+import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.services.ApplicationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,10 +30,9 @@ class ApplicationController(
 
     @CrossOrigin
     @PostMapping("/apply/{offerId}/no-user")
-    fun applyForAnOffer(@PathVariable offerId: Int, @RequestBody applicationPayload: ApplicationNoUserPayload): ResponseEntity<Void> {
-        val saved = applicationService.insertApplicationWithoutUser(offerId, applicationPayload)
-        return ResponseEntity.created(URI("/api/applications/" + saved.id)).build()
-    }
+    fun applyForAnOffer(@PathVariable offerId: Int, @RequestBody applicationPayload: ApplicationNoUserPayload): SuccessMessage =
+        applicationService.insertApplicationWithoutUser(offerId, applicationPayload).let { SuccessMessage }
+
 
     @CrossOrigin
     @GetMapping("/{applicationId}")

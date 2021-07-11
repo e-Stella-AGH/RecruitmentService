@@ -48,3 +48,9 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.register<Copy>("installGitHook") {
+    from(File(rootProject.rootDir,"pre-commit"))
+    into(File(rootProject.rootDir,".git/hooks"))
+}
+tasks.getByPath(":build").dependsOn("installGitHook")
