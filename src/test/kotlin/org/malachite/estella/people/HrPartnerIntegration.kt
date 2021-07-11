@@ -3,16 +3,23 @@ package org.malachite.estella.people
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.util.EmailServiceStub
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNotEqualTo
 import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class HrPartnerIntegration : BaseIntegration() {
+
+    @Autowired
+    private lateinit var hrPartnerRepository: HrPartnerRepository
 
     @Test
     @Order(1)
@@ -37,6 +44,21 @@ class HrPartnerIntegration : BaseIntegration() {
     fun `should return Bad Request with corresponding message, when user already exists`() {
         val response = addHrpartner(organizationMail)
         withStatusAndMessage(response, "Address already in use!", HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(4)
+    fun `should delete hrPartner`() {
+        val partner = getHrPartners().first { it.user.mail == hrpartnerMail }
+        hrPartnerRepository.save(partner.copy(user = partner.user.also { it.password = "a" }))
+        val response = httpRequest(
+            path = "/api/hrpartners/${partner.id}",
+            method = HttpMethod.DELETE,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrpartnerMail, "a"))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val deletedPartner = getHrPartners().firstOrNull { it.user.mail == hrpartnerMail }
+        expectThat(deletedPartner).isEqualTo(null)
     }
 
     private fun withStatusAndMessage(response: Response, message: String, status: HttpStatus) {
@@ -80,6 +102,21 @@ class HrPartnerIntegration : BaseIntegration() {
         )
     }
 
+    private fun getHrPartners(): List<HrPartner> {
+        val response = httpRequest(
+            path = "/api/hrpartners",
+            method = HttpMethod.GET
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let {
+            it as MutableIterable<Map<String, Any>>
+            it.map {
+                it as Map<String, Any>
+                it.toHrPartner()
+            }.toList()
+        }
+    }
+
     private fun loginUser(userMail: String = hrpartnerMail, userPassword: String = password): Response {
         return httpRequest(
             path = "/api/users/login",
@@ -91,8 +128,8 @@ class HrPartnerIntegration : BaseIntegration() {
         )
     }
 
-    private fun getAuthToken(mail:String = hrpartnerMail):String =
-        loginUser(mail).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
+    private fun getAuthToken(mail:String = hrpartnerMail, userPassword: String = password):String =
+        loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
 
     private val name = "name"
     private val organizationMail = "organization@hrpartner.pl"

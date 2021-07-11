@@ -4,18 +4,14 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
-import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
-import javax.servlet.http.Cookie
-import javax.servlet.http.HttpServletResponse
 
 @Service
 class SecurityService(
@@ -94,7 +90,6 @@ class SecurityService(
         return Pair(authJWT, refreshJWT)
     }
 
-
     fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
         val authUser = userService.getUser(userId)
@@ -105,6 +100,12 @@ class SecurityService(
 
     fun checkUserRights(jwt: String?, userId: Int): Boolean =
         getUserFromJWT(jwt)?.let { it.id == userId } ?: false
+
+    fun checkJobSeekerRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getJobSeekerFromJWT(jwt) != null
+
+    fun checkHrRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
 
     private fun User.getUserType(): String =
         jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:

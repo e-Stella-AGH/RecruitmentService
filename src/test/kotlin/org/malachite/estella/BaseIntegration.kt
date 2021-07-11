@@ -2,6 +2,7 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.springframework.boot.test.context.SpringBootTest
@@ -87,5 +88,11 @@ class BaseIntegration {
             (this["user"] as Map<String,Any>).toUser(),
             this["verified"] as Boolean
         )
+
+    fun Map<String, Any>.toHrPartner() = HrPartner(
+        this["id"] as Int?,
+        (this["organization"] as Map<String, Any>).toOrganization(),
+        (this["user"] as Map<String, Any>).toUser()
+    )
 
 }

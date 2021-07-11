@@ -1,5 +1,8 @@
 package org.malachite.estella.people.api
 
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
@@ -14,7 +17,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/jobseekers")
 class JobSeekerController(
-    @Autowired private val jobSeekerService: JobSeekerService
+    @Autowired private val jobSeekerService: JobSeekerService,
+    @Autowired private val securityService: SecurityService
 ) {
 
     @CrossOrigin
@@ -42,10 +46,15 @@ class JobSeekerController(
 
     @CrossOrigin
     @DeleteMapping("/{jobSeekerId}")
-    fun deleteJobSeeker(@PathVariable("jobSeekerId") jobSeekerId: Int) =
-        jobSeekerService.deleteJobSeeker(jobSeekerId).let {
+    fun deleteJobSeeker(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable("jobSeekerId") jobSeekerId: Int
+    ): ResponseEntity<Message> {
+        if (!securityService.checkJobSeekerRights(jwt, jobSeekerId)) return OwnResponses.UNAUTH
+        return jobSeekerService.deleteJobSeeker(jobSeekerId).let {
             ResponseEntity(SuccessMessage, HttpStatus.OK)
         }
+    }
 
     //TODO - add endpoint to insert files?
 }
@@ -56,6 +65,7 @@ data class JobSeekerRequest(
     val firstName: String,
     val lastName: String
 )
+
 fun JobSeekerRequest.toJobSeeker() = JobSeeker(
     null,
     User(null, firstName, lastName, mail, password),
