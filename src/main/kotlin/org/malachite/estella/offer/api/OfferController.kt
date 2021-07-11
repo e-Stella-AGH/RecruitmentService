@@ -67,9 +67,9 @@ class OfferController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int
     ): ResponseEntity<Message> {
-        val hrPartner = getHrPartnerFromJWT(jwt)
+        getHrPartnerFromJWT(jwt)
         offerService.deleteOffer(offerId)
-        return ResponseEntity(SuccessMessage, HttpStatus.OK)
+        return OwnResponses.SUCCESS
     }
 
     private fun getHrPartnerFromJWT(jwt: String?) =
