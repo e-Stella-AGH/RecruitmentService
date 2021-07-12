@@ -4,10 +4,13 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.SkillLevel
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
+import org.malachite.estella.people.domain.HrPartnerPayloads
+import org.malachite.estella.people.domain.UserDTO
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.*
@@ -134,4 +137,18 @@ class BaseIntegration {
             else -> null
         }
     }
+
+    fun Map<String, Any>.toHrPartnerResponse() =
+        HrPartnerPayloads.HrPartnerResponse(
+            this["organizationName"] as String,
+            (this["user"] as Map<String, Any>).toUserDTO()
+        )
+
+    fun Map<String, Any>.toUserDTO() =
+        UserDTO(
+            this["id"] as Int,
+            this["firstName"] as String,
+            this["lastName"] as String,
+            this["mail"] as String
+        )
 }
