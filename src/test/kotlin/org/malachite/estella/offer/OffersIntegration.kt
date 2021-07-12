@@ -37,7 +37,7 @@ class OffersIntegration: BaseIntegration() {
         setNewPassword("password123")
 
         val response = httpRequest(
-            path = "/api/offers/addoffer",
+            path = "/api/offers",
             method = HttpMethod.POST,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
             body = mapOf(
@@ -76,7 +76,7 @@ class OffersIntegration: BaseIntegration() {
         }!!
         val hrPartner = getHrPartner()
         val response = httpRequest(
-            path = "/api/offers/update/${offer.id}",
+            path = "/api/offers/${offer.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
             body = mapOf(

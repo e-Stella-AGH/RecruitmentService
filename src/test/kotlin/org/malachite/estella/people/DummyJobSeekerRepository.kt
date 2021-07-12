@@ -21,10 +21,8 @@ class DummyJobSeekerRepository: JobSeekerRepository {
         return jobSeekers
     }
 
-    override fun deleteById(id: Int): Optional<JobSeeker> {
-        val jobSeeker = findByUserId(id)
-        jobSeekers.remove(jobSeeker.get())
-        return jobSeeker
+    override fun deleteById(id: Int) {
+        jobSeekers.remove(jobSeekers.find { it.id == id })
     }
 
     fun size() = jobSeekers.size

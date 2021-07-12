@@ -96,12 +96,6 @@ class BaseIntegration {
             this["verified"] as Boolean
         )
 
-    fun Map<String, Any>.toHrPartner() = HrPartner(
-        this["id"] as Int?,
-        (this["organization"] as Map<String, Any>).toOrganization(),
-        (this["user"] as Map<String, Any>).toUser()
-    )
-
     fun Map<String, Any>.toOrganizationResponse() =
         OrganizationResponse(
             this["name"] as String,

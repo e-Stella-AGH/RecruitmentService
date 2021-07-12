@@ -7,5 +7,5 @@ interface JobSeekerRepository {
     fun findByUserId(user_id: Int): Optional<JobSeeker>
     fun save(updatedJobSeeker: JobSeeker): JobSeeker
     fun findAll(): MutableIterable<JobSeeker>
-    fun deleteById(id: Int): Optional<JobSeeker>
+    fun deleteById(id: Int)
 }

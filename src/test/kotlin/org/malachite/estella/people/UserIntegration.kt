@@ -120,11 +120,12 @@ class UserIntegration : BaseIntegration() {
     @Test
     @Order(10)
     fun `should return user type of hr in jwt`() {
-        val decoded = getJWTFor("principus@roma.com")
+        println(getUsers())
+        val decoded = getJWTFor("alea@iacta.est")
         expect {
-            that(decoded.firstName).isEqualTo("Octavian")
-            that(decoded.lastName).isEqualTo("Augustus")
-            that(decoded.mail).isEqualTo("principus@roma.com")
+            that(decoded.firstName).isEqualTo("Gaius")
+            that(decoded.lastName).isEqualTo("Caesar")
+            that(decoded.mail).isEqualTo("alea@iacta.est")
             that(decoded.userType).isEqualTo("hr")
         }
     }
@@ -138,6 +139,7 @@ class UserIntegration : BaseIntegration() {
                 "password" to "a"
             )
         )
+        println(response)
         val authHeader = response.headers?.get("X-Auth-Token")
         expectThat(authHeader).isNotNull()
         val decoded = decodeJwt(authHeader?.get(0) ?: "")
