@@ -12,7 +12,7 @@ data class Offer(
         val minSalary:Long, val maxSalary:Long, val localization: String,
         @ManyToOne @JoinColumn(name = "hr_partners_id") val creator: HrPartner,
         @ManyToMany val skills:Set<DesiredSkill>,
-        @OneToOne(mappedBy="offer", cascade = [CascadeType.ALL])
-        @PrimaryKeyJoinColumn
+        @OneToOne(mappedBy="offer", cascade = [CascadeType.REMOVE])
+        @PrimaryKeyJoinColumn()
             val recruitmentProcess: RecruitmentProcess?
 )

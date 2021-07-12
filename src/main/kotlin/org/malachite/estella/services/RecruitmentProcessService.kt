@@ -1,11 +1,15 @@
 package org.malachite.estella.services
 
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.process.domain.RecruitmentProcessRepository
 import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.sql.Date
+import java.time.LocalDate
 
 @Service
 class RecruitmentProcessService(@Autowired private val recruitmentProcessRepository: RecruitmentProcessRepository) {
@@ -32,6 +36,18 @@ class RecruitmentProcessService(@Autowired private val recruitmentProcessReposit
 //    }
 
     fun deleteProcess(id: Int) = recruitmentProcessRepository.deleteById(id)
+
+    fun addBasicProcess(offer: Offer) {
+        val recruitmentProcess = RecruitmentProcess(
+            null,
+            Date.valueOf(LocalDate.now()),
+            null,
+            offer,
+            listOf(RecruitmentStage(null, StageType.APPLIED)),
+            setOf(), setOf()
+        )
+        recruitmentProcessRepository.save(recruitmentProcess)
+    }
 
     fun getProcessFromStage(recruitmentProcessStage: RecruitmentStage): RecruitmentProcess {
         return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!

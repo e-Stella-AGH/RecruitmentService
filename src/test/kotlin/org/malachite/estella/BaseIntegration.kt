@@ -4,19 +4,20 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.SkillLevel
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.http.*
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import org.springframework.http.RequestEntity
 import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
-import wiremock.org.antlr.v4.runtime.misc.OrderedHashSet
 import java.net.URI
 import java.util.*
 
@@ -38,7 +39,7 @@ class BaseIntegration {
         body: Map<String, Any> = mapOf()
     ): Response {
         val httpHeaders = HttpHeaders().also {
-            headers.forEach{ (key, value) -> it.add(key, value) }
+            headers.forEach { (key, value) -> it.add(key, value) }
         }
         val uri = URI.create("http://localhost:8080$path")
 
@@ -48,11 +49,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody,response.headers)
+            Response(statusCode, responseBody, response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody,exception.responseHeaders)
+            Response(statusCode, responseBody, exception.responseHeaders)
         }
     }
 
@@ -91,7 +92,7 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
+            (this["user"] as Map<String, Any>).toUser(),
             this["verified"] as Boolean
         )
 
@@ -134,4 +135,10 @@ class BaseIntegration {
             else -> null
         }
     }
+
+    fun Map<String, Any>.toHrPartner() = HrPartner(
+        this["id"] as Int?,
+        (this["organization"] as Map<String, Any>).toOrganization(),
+        (this["user"] as Map<String, Any>).toUser()
+    )
 }

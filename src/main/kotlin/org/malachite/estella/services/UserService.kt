@@ -1,5 +1,6 @@
 package org.malachite.estella.services
 
+import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
@@ -15,13 +16,9 @@ import kotlin.NoSuchElementException
 class UserService(
     @Autowired private val userRepository: UserRepository,
     @Autowired private val mailService: MailService
-) {
-    private fun withUserNotFound(fn: () -> Any) =
-        try {
-            fn()
-        } catch (ex: NoSuchElementException) {
-            throw UserNotFoundException()
-        }
+): EStellaService() {
+
+    override val throwable: Exception = UserNotFoundException()
 
     fun generatePassword(length:Int = 15):String {
         val alphanumeric = ('A'..'Z') + ('a'..'z') + ('0'..'9')
@@ -31,13 +28,13 @@ class UserService(
     }
 
     fun getUsers(): MutableIterable<User> =
-        withUserNotFound { userRepository.findAll() } as MutableIterable<User>
+        userRepository.findAll()
 
     fun getUser(id: Int): User =
-        withUserNotFound { userRepository.findById(id).get() } as User
+        withExceptionThrower { userRepository.findById(id).get() } as User
 
     fun addUser(user: User): User =
-        withUserNotFound {
+        withExceptionThrower {
             try {
                 userRepository.save(user)
             } catch (ex: DataIntegrityViolationException) {
@@ -55,7 +52,7 @@ class UserService(
         updated.password = user.password
     }
 
-    fun deleteUser(id: Int) = withUserNotFound { userRepository.deleteById(id) } as Optional<User>
+    fun deleteUser(id: Int) = withExceptionThrower { userRepository.deleteById(id) } as Optional<User>
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
 

@@ -37,7 +37,6 @@ class OrganizationService(
     fun verifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, true)
 
-
     fun deverifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, false)
 

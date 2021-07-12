@@ -8,6 +8,7 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.toOfferResponse
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OfferService
 import org.malachite.estella.services.OrganizationService
@@ -48,7 +49,7 @@ class HrPartnerController(
 
         return offerService.getOffers()
             .filter { offer -> offer.creator == hrPartner }
-            .map { offer -> OfferResponse.fromOffer(offer) }
+            .map { offer -> offer.toOfferResponse() }
             .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
     }
 
