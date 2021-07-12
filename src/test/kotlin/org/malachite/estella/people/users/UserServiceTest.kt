@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll

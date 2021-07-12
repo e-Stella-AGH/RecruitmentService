@@ -1,7 +1,6 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
 import com.beust.klaxon.Klaxon
-import io.netty.handler.codec.base64.Base64Decoder
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test

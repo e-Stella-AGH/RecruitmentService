@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.seekers
 
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.people.domain.JobSeekerRepository

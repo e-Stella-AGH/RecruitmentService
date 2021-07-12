@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
@@ -140,5 +141,11 @@ class BaseIntegration {
         this["id"] as Int?,
         (this["organization"] as Map<String, Any>).toOrganization(),
         (this["user"] as Map<String, Any>).toUser()
+    )
+
+    fun Map<String, Any>.toJobSeeker() = JobSeeker(
+        this["id"] as Int?,
+        (this["user"] as Map<String, Any>).toUser(),
+        setOf()
     )
 }

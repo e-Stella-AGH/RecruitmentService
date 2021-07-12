@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.UserRepository

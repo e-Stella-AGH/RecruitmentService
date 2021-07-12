@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.seekers
 
 import io.mockk.every
 import io.mockk.mockk
@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.people.users.DummyUserRepository
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.MailService
 import org.malachite.estella.services.UserService
