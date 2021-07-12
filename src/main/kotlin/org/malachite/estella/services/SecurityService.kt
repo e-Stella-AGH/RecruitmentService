@@ -4,7 +4,10 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.organization.domain.OrganizationRepository
+import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
@@ -20,6 +23,7 @@ class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
+    @Autowired val organizationRepository: OrganizationRepository,
     @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
@@ -81,6 +85,10 @@ class SecurityService(
 
     fun getHrPartnerFromJWT(jwt: String?): HrPartner? {
         return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
+    }
+
+    fun getOrganizationFromJWT(jwt: String?): Organization? {
+        return getUserFromJWT(jwt)?.let { organizationRepository.findByUser(it).orElse(null)}
     }
 
 

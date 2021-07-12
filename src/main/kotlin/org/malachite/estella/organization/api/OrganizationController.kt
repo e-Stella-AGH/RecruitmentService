@@ -4,8 +4,11 @@ import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
@@ -20,7 +23,8 @@ import java.util.*
 @RequestMapping("/api/organizations")
 class OrganizationController(
     @Autowired private val organizationService: OrganizationService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val hrPartnerService: HrPartnerService
 ) {
 
     @CrossOrigin
@@ -63,6 +67,17 @@ class OrganizationController(
     ): ResponseEntity<Message> {
         if (!checkOrganizationUserRights(organizationId,jwt)) return OwnResponses.UNAUTH
         return organizationService.deleteOrganization(organizationId.toId()).let { OwnResponses.SUCCESS }
+    }
+
+    @CrossOrigin
+    @GetMapping("/hrpartners")
+    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<HrPartnerResponse>> {
+        val organization = securityService.getOrganizationFromJWT(jwt)
+
+        return hrPartnerService.getHrPartners()
+            .filter { it.organization == organization }
+            .map { HrPartnerResponse.fromHrPartner(it) }
+            .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
     }
 
     private fun checkOrganizationUserRights(organizationId: OrganizationID, jwt:String?):Boolean =

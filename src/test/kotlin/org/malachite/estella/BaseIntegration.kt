@@ -9,6 +9,8 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
+import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.people.domain.UserDTO
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpHeaders
@@ -49,11 +51,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody, response.headers)
+            Response(statusCode, responseBody,response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody, exception.responseHeaders)
+            Response(statusCode, responseBody,exception.responseHeaders)
         }
     }
 
@@ -92,7 +94,7 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String, Any>).toUser(),
+            (this["user"] as Map<String,Any>).toUser(),
             this["verified"] as Boolean
         )
 
@@ -141,4 +143,18 @@ class BaseIntegration {
         (this["organization"] as Map<String, Any>).toOrganization(),
         (this["user"] as Map<String, Any>).toUser()
     )
+
+    fun Map<String, Any>.toHrPartnerResponse() =
+        HrPartnerResponse(
+            this["organizationName"] as String,
+            (this["user"] as Map<String, Any>).toUserDTO()
+        )
+
+    fun Map<String, Any>.toUserDTO() =
+        UserDTO(
+            this["id"] as Int,
+            this["firstName"] as String,
+            this["lastName"] as String,
+            this["mail"] as String
+        )
 }
