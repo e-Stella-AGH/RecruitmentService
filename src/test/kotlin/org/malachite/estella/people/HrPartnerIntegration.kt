@@ -1,10 +1,15 @@
 package org.malachite.estella.people
 
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.hrPartners
@@ -17,6 +22,9 @@ import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class HrPartnerIntegration : BaseIntegration() {
+
+    @Autowired
+    private lateinit var hrPartnerRepository: HrPartnerRepository
 
     @Test
     @Order(1)
@@ -55,6 +63,21 @@ class HrPartnerIntegration : BaseIntegration() {
         }
     }
 
+    @Test
+    @Order(5)
+    fun `should delete hrPartner`() {
+        val partner = getHrPartners().first { it.user.mail == hrpartnerMail }
+        hrPartnerRepository.save(partner.copy(user = partner.user.also { it.password = "a" }))
+        val response = httpRequest(
+            path = "/api/hrpartners/${partner.id}",
+            method = HttpMethod.DELETE,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrpartnerMail, "a"))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val deletedPartner = getHrPartners().firstOrNull { it.user.mail == hrpartnerMail }
+        expectThat(deletedPartner).isEqualTo(null)
+    }
+
     private fun getPartnersOffers(mail: String, password: String): List<OfferResponse> {
         return httpRequest(
             path = "/api/hrpartners/offers",
@@ -67,8 +90,6 @@ class HrPartnerIntegration : BaseIntegration() {
             }
         }
     }
-
-
 
     private fun withStatusAndMessage(response: Response, message: String, status: HttpStatus) {
         expectThat(response.statusCode).isEqualTo(status)
@@ -109,6 +130,21 @@ class HrPartnerIntegration : BaseIntegration() {
                 "password" to password,
             )
         )
+    }
+
+    private fun getHrPartners(): List<HrPartner> {
+        val response = httpRequest(
+            path = "/api/hrpartners",
+            method = HttpMethod.GET
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let {
+            it as MutableIterable<Map<String, Any>>
+            it.map {
+                it as Map<String, Any>
+                it.toHrPartner()
+            }.toList()
+        }
     }
 
     private fun loginUser(userMail: String = hrpartnerMail, userPassword: String = password): Response {

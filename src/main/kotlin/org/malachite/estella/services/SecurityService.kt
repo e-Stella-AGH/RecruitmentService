@@ -5,21 +5,21 @@ import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
+import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
-import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
-import javax.servlet.http.Cookie
-import javax.servlet.http.HttpServletResponse
 
 @Service
 class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
+    @Autowired val organizationRepository: OrganizationRepository,
     @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
@@ -31,6 +31,7 @@ class SecurityService(
     private val mailKey = "mail"
     private val firstNameKey = "firstName"
     private val lastNameKey = "lastName"
+    private val userTypeKey = "userType"
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
@@ -41,6 +42,7 @@ class SecurityService(
             .claim(mailKey, user.mail)
             .claim(firstNameKey, user.firstName)
             .claim(lastNameKey, user.lastName)
+            .claim(userTypeKey, user.getUserType())
             .signWith(SignatureAlgorithm.HS512, authSecret)
             .compact()
     }
@@ -83,14 +85,12 @@ class SecurityService(
         return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
     }
 
-
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)
         val authJWT = getAuthenticateToken(user)
         if (refreshJWT == null || authJWT == null) return null
         return Pair(authJWT, refreshJWT)
     }
-
 
     fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
@@ -103,7 +103,18 @@ class SecurityService(
     fun checkUserRights(jwt: String?, userId: Int): Boolean =
         getUserFromJWT(jwt)?.let { it.id == userId } ?: false
 
+    fun checkJobSeekerRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getJobSeekerFromJWT(jwt) != null
+
+    fun checkHrRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
+
+    private fun User.getUserType(): String =
+        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
+        hrPartnerRepository.findById(this.id).orElse(null)?.let { "hr" } ?:
+        organizationRepository.findByUser(this).orElse(null)?.let { "organization" } ?:
+        throw InvalidUserException()
+
     fun isCorrectApiKey(apiKey:String?):Boolean =
         apiKey!=null && apiKey == API_KEY
-
 }

@@ -75,6 +75,8 @@ class UserController(
             ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
     }
 
+    @Deprecated("Endpoint is depreceted as we shouldn't be able to add user directly - it should be one of jobSeeker, " +
+            "hr or organization.")
     @CrossOrigin
     @PostMapping("/adduser")
     fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
@@ -101,6 +103,7 @@ class UserController(
         return OwnResponses.SUCCESS
     }
 
+    @Deprecated("We shouldn't be able to delete user directly")
     @CrossOrigin
     @DeleteMapping("/{userId}")
     fun deleteUser(
