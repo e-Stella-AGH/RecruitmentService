@@ -49,14 +49,6 @@ class JobSeekerServiceTest {
     }
 
     @Test
-    fun `should be able to add job seekers`() {
-        testUsers.forEach {
-            service.addJobSeeker(it)
-        }
-        expectThat(service.getJobSeekers()).isEqualTo(testUsers as MutableIterable<JobSeeker>)
-    }
-
-    @Test
     fun `should be able to register jobSeekers and send mails to them`() {
         testUsers.forEach {
             service.registerJobSeeker(it)

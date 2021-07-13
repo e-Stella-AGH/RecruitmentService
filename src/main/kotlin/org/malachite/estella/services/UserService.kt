@@ -34,14 +34,12 @@ class UserService(
         withExceptionThrower { userRepository.findById(id).get() } as User
 
     fun addUser(user: User): User =
-        withExceptionThrower {
-            try {
-                userRepository.save(user)
-            } catch (ex: DataIntegrityViolationException) {
-                ex.printStackTrace()
-                throw UserAlreadyExistsException()
-            }
-        } as User
+        try {
+            userRepository.save(user)
+        } catch (ex: DataIntegrityViolationException) {
+            ex.printStackTrace()
+            throw UserAlreadyExistsException()
+        }
 
     fun updateUser(id: Int, user: User) {
         val currUser: User = getUser(id)

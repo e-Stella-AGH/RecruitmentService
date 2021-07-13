@@ -37,7 +37,7 @@ class JobSeekerController(
 
     @CrossOrigin
     @PostMapping()
-    fun addJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest) =
+    fun registerJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest) =
         jobSeekerRequest.toJobSeeker().let {
             jobSeekerService.registerJobSeeker(it)
         }.let {
