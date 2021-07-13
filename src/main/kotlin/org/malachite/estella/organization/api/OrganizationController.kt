@@ -8,6 +8,7 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.people.domain.toResponse
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
@@ -76,7 +77,7 @@ class OrganizationController(
 
         return hrPartnerService.getHrPartners()
             .filter { it.organization == organization }
-            .map { HrPartnerResponse.fromHrPartner(it) }
+            .map { it.toResponse() }
             .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
     }
 
