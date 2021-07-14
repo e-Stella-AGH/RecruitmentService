@@ -5,7 +5,7 @@ import java.util.*
 
 interface HrPartnerRepository {
     fun findAll(): MutableIterable<HrPartner>
-    fun findById(id: Int): Optional<HrPartner>
+    fun findByUserId(id: Int): Optional<HrPartner>
     fun save(hrPartner: HrPartner): HrPartner
     fun deleteById(id: Int): Optional<HrPartner>
 }

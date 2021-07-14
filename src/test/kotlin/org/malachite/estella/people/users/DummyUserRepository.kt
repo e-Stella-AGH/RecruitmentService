@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.UserRepository
@@ -19,10 +19,8 @@ class DummyUserRepository: UserRepository {
         return user
     }
 
-    override fun deleteById(id: Int): Optional<User> {
-        val user = findById(id).get()
-        users.remove(user)
-        return Optional.ofNullable(user)
+    override fun deleteById(id: Int) {
+        users.remove(findById(id).get())
     }
 
     fun size(): Int = users.size

@@ -1,5 +1,6 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
+import com.beust.klaxon.Klaxon
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -10,9 +11,12 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
+import java.util.*
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class UserIntegration : BaseIntegration() {
@@ -90,7 +94,7 @@ class UserIntegration : BaseIntegration() {
     fun `should delete user`() {
         val user = getUsers().find { it.mail == mail }!!
         val response = httpRequest(
-            path = "/api/users/${user.id}",
+            path = "/api/jobseekers/${user.id}",
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
             method = HttpMethod.DELETE
         )
@@ -100,9 +104,64 @@ class UserIntegration : BaseIntegration() {
         withStatusAndMessage(deletedUserResponse, "There is no such user", HttpStatus.BAD_REQUEST)
     }
 
+    @Test
+    @Order(9)
+    fun `should return user type of job seeker in jwt`() {
+        val decoded = getJWTFor("carthago@delenda.est")
+        expect {
+            that(decoded.firstName).isEqualTo("Marcus")
+            that(decoded.lastName).isEqualTo("Cato")
+            that(decoded.mail).isEqualTo("carthago@delenda.est")
+            that(decoded.userType).isEqualTo("job_seeker")
+        }
+    }
+
+    @Test
+    @Order(10)
+    fun `should return user type of hr in jwt`() {
+        println(getUsers())
+        val decoded = getJWTFor("alea@iacta.est")
+        expect {
+            that(decoded.firstName).isEqualTo("Gaius")
+            that(decoded.lastName).isEqualTo("Caesar")
+            that(decoded.mail).isEqualTo("alea@iacta.est")
+            that(decoded.userType).isEqualTo("hr")
+        }
+    }
+
+    private fun getJWTFor(mail: String): UserDataFromJWT {
+        val response = httpRequest(
+            path = "/api/users/login",
+            method = HttpMethod.POST,
+            body = mapOf(
+                "mail" to mail,
+                "password" to "a"
+            )
+        )
+        println(response)
+        val authHeader = response.headers?.get("X-Auth-Token")
+        expectThat(authHeader).isNotNull()
+        val decoded = decodeJwt(authHeader?.get(0) ?: "")
+        expectThat(decoded).isNotNull()
+        return decoded!!
+    }
+
+    private fun decodeJwt(jwt: String): UserDataFromJWT? {
+        val parts = jwt.split(".")
+        expectThat(parts.size).isGreaterThanOrEqualTo(2)
+        return Klaxon().parse(String(Base64.getDecoder().decode(parts[1])))
+    }
+
+    private data class UserDataFromJWT(
+        val firstName: String,
+        val lastName: String,
+        val userType: String,
+        val mail: String
+    )
+
     private fun addUser(): Response {
         return httpRequest(
-            path = "/api/users/adduser",
+            path = "/api/jobseekers",
             method = HttpMethod.POST,
             body = mapOf(
                 "firstName" to firstName,

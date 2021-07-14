@@ -31,8 +31,7 @@ class DemoApplication {
     ): CommandLineRunner {
         return CommandLineRunner {
             if (offerRepository.findAll().count() == 0) {
-                val organizationUsers = userRepository.saveAll(FakeUsers.organizationUsers).toList()
-                val companies = FakeOrganizations.getCompanies(organizationUsers).map { organizationRepository.save(it) }
+                val companies = FakeOrganizations.getCompanies(FakeUsers.organizationUsers).map { organizationRepository.save(it) }
 
                 jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
 

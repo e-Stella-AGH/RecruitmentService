@@ -23,9 +23,9 @@ import java.net.URI
 @RequestMapping("/api/hrpartners")
 class HrPartnerController(
     @Autowired private val hrPartnerService: HrPartnerService,
-    @Autowired private val offerService: OfferService,
     @Autowired private val organizationService: OrganizationService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val offerService: OfferService
 ) {
     @CrossOrigin
     @GetMapping
@@ -55,16 +55,31 @@ class HrPartnerController(
 
     @CrossOrigin
     @PostMapping("/addHrPartner")
-    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest, @RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Message> {
+    fun addHrPartner(
+        @RequestBody hrPartnerRequest: HrPartnerRequest,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+    ): ResponseEntity<Message> {
         val organizationUser = securityService.getUserFromJWT(jwt)
-            ?:return OwnResponses.UNAUTH
+            ?: return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
         val saved: HrPartner = hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(organization))
         return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
     }
+
+    @CrossOrigin
+    @DeleteMapping("/{hrPartnerId}")
+    fun deleteHrPartner(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable("hrPartnerId") hrId: Int
+    ): ResponseEntity<Message> {
+        if (!securityService.checkHrRights(jwt, hrId)) return OwnResponses.UNAUTH
+        return hrPartnerService.deleteHrPartner(hrId).let {
+            ResponseEntity(SuccessMessage, HttpStatus.OK)
+        }
+    }
 }
 
-data class HrPartnerRequest(val mail:String){
-    fun toHrPartner(organization: Organization):HrPartner =
-        HrPartner(null,organization, User(null,"","",mail))
+data class HrPartnerRequest(val mail: String) {
+    fun toHrPartner(organization: Organization): HrPartner =
+        HrPartner(null, organization, User(null, "", "", mail))
 }

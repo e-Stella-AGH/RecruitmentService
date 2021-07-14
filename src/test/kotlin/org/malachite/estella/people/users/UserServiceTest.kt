@@ -1,4 +1,4 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -17,7 +17,7 @@ import strikt.assertions.isEqualTo
 class UserServiceTest {
 
     private val repository = DummyUserRepository()
-    private val userService = UserService(repository, MailService("/email"))
+    private val userService = UserService(repository)
 
     companion object {
         @BeforeAll

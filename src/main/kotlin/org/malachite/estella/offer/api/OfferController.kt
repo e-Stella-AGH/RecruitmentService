@@ -39,7 +39,7 @@ class OfferController(
             .let { ResponseEntity(it.toOfferResponse(), HttpStatus.OK) }
 
     @CrossOrigin
-    @PostMapping("/addoffer")
+    @PostMapping()
     fun addOffer(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody offer: OfferRequest
@@ -50,7 +50,7 @@ class OfferController(
     }
 
     @CrossOrigin
-    @PutMapping("/update/{offerId}")
+    @PutMapping("/{offerId}")
     fun updateOffer(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int,
