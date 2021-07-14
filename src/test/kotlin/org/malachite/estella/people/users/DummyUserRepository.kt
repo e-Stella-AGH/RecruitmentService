@@ -19,10 +19,8 @@ class DummyUserRepository: UserRepository {
         return user
     }
 
-    override fun deleteById(id: Int): Optional<User> {
-        val user = findById(id).get()
-        users.remove(user)
-        return Optional.ofNullable(user)
+    override fun deleteById(id: Int) {
+        users.remove(findById(id).get())
     }
 
     fun size(): Int = users.size

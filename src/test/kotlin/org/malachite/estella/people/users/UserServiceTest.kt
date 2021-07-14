@@ -17,7 +17,7 @@ import strikt.assertions.isEqualTo
 class UserServiceTest {
 
     private val repository = DummyUserRepository()
-    private val userService = UserService(repository, MailService("/email"))
+    private val userService = UserService(repository)
 
     companion object {
         @BeforeAll

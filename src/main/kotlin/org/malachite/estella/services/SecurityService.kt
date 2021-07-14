@@ -4,6 +4,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
@@ -82,7 +83,11 @@ class SecurityService(
     }
 
     fun getHrPartnerFromJWT(jwt: String?): HrPartner? {
-        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
+        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
+    }
+
+    fun getOrganizationFromJWT(jwt: String?): Organization? {
+        return getUserFromJWT(jwt)?.let { organizationRepository.findByUser(it).orElse(null)}
     }
 
     fun getTokens(user: User): Pair<String, String>? {
@@ -111,7 +116,7 @@ class SecurityService(
 
     private fun User.getUserType(): String =
         jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
-        hrPartnerRepository.findById(this.id).orElse(null)?.let { "hr" } ?:
+        hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
         organizationRepository.findByUser(this).orElse(null)?.let { "organization" } ?:
         throw InvalidUserException()
 

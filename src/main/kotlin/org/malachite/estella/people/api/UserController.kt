@@ -75,16 +75,6 @@ class UserController(
             ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
     }
 
-    @Deprecated("Endpoint is depreceted as we shouldn't be able to add user directly - it should be one of jobSeeker, " +
-            "hr or organization.")
-    @CrossOrigin
-    @PostMapping("/adduser")
-    fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
-        userService.registerUser(user.toUser())
-            .let {
-                ResponseEntity(Message("User Registered"), HttpStatus.CREATED)
-            }
-
     @CrossOrigin
     @GetMapping("/{userId}")
     fun getUser(@PathVariable userId: Int): ResponseEntity<User> =
@@ -101,18 +91,6 @@ class UserController(
         if (!securityService.checkUserRights(jwt, userId)) return OwnResponses.UNAUTH
         userService.updateUser(userId, user.toUser())
         return OwnResponses.SUCCESS
-    }
-
-    @Deprecated("We shouldn't be able to delete user directly")
-    @CrossOrigin
-    @DeleteMapping("/{userId}")
-    fun deleteUser(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @PathVariable("userId") userId: Int
-    ): ResponseEntity<Message> {
-        if (!securityService.checkUserRights(jwt, userId)) return OwnResponses.UNAUTH
-        userService.deleteUser(userId)
-        return ResponseEntity(SuccessMessage, HttpStatus.OK)
     }
 
 }

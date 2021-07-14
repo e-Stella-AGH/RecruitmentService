@@ -3,8 +3,11 @@ package org.malachite.estella.organization
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.loader.FakeOrganizations
+import org.malachite.estella.commons.loader.FakeUsers.organizationUsers
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.HrPartnerResponse
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
@@ -60,6 +63,30 @@ class OrganizationIntegration : BaseIntegration() {
 
     @Test
     @Order(5)
+    fun `should return ok with list of hrpartners`() {
+        val response = getOrganizationsPartners(legitOrganizationUser.mail, legitOrganizationPassword)
+        response.forEach{
+            it.let {
+                expectThat(it.organizationName).isEqualTo(legitOrganizationName)
+            }
+        }
+    }
+
+    private fun getOrganizationsPartners(mail: String, password: String): List<HrPartnerResponse> {
+        return httpRequest(
+            path = "/api/organizations/hrpartners",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password))
+        ).let { response ->
+            response.body as List<Map<String, Any>>
+            response.body.map {
+                it.toHrPartnerResponse()
+            }
+        }
+    }
+
+    @Test
+    @Order(6)
     fun `should delete organization`() {
         val organization = getOrganizations().find { it.user.mail == mail }!!
 
@@ -155,12 +182,19 @@ class OrganizationIntegration : BaseIntegration() {
     private fun getAuthToken():String =
         loginUser().headers!![EStellaHeaders.authToken]!![0]
 
+    private fun getAuthToken(mail: String, password: String) =
+        loginUser(mail, password).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
+
     private val name = "name"
     private val mail = "examplemail@organization.pl"
     private val password = "123"
 
     private val randomMail = "randommail@user.pl"
     private val randomPassword = "random-password"
+
+    private val legitOrganizationUser = organizationUsers[0]
+    private val legitOrganizationName = FakeOrganizations.getCompanies(organizationUsers)[0].name
+    private val legitOrganizationPassword = "a"
 
     private val newName = "newName"
 

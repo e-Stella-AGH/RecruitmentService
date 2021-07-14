@@ -34,8 +34,8 @@ class JobSeekerServiceTest {
     private val jobSeekerRepository = DummyJobSeekerRepository()
     private val userRepository = DummyUserRepository()
     private val mailServiceMock = mockk<MailService>()
-    private val userService = UserService(userRepository, mailServiceMock)
-    private val service = JobSeekerService(jobSeekerRepository, userService)
+    private val userService = UserService(userRepository)
+    private val service = JobSeekerService(jobSeekerRepository, userService, mailServiceMock)
 
     @BeforeEach
     fun setup() {

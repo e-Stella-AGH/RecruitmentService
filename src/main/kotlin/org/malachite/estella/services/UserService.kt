@@ -14,8 +14,7 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository,
-    @Autowired private val mailService: MailService
+    @Autowired private val userRepository: UserRepository
 ): EStellaService() {
 
     override val throwable: Exception = UserNotFoundException()
@@ -50,15 +49,8 @@ class UserService(
         updated.password = user.password
     }
 
-    fun deleteUser(id: Int) = withExceptionThrower { userRepository.deleteById(id) } as Optional<User>
+    fun deleteUser(id: Int) = withExceptionThrower { userRepository.deleteById(id) }
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
-
-    fun registerUser(user:User):User =
-        addUser(user).let {
-            mailService.sendRegisterMail(user)
-            user
-        }
-
 
 }

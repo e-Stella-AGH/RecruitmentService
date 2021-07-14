@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service
 @Service
 class JobSeekerService(
     @Autowired private val jobSeekerRepository: JobSeekerRepository,
-    @Autowired private val userService: UserService
+    @Autowired private val userService: UserService,
+    @Autowired private val mailService: MailService
 ): EStellaService() {
 
     override val throwable: Exception = UserNotFoundException()
@@ -22,10 +23,12 @@ class JobSeekerService(
     fun getJobSeeker(id: Int): JobSeeker = withExceptionThrower { jobSeekerRepository.findByUserId(id).get() } as JobSeeker
 
     fun registerJobSeeker(jobSeeker: JobSeeker): JobSeeker =
-        userService.registerUser(jobSeeker.user).let {
-            jobSeeker.copy(user = it)
-        }.let {
-            jobSeekerRepository.save(it)
+        try {
+            jobSeekerRepository.save(jobSeeker).also {
+                mailService.sendRegisterMail(it.user)
+            }
+        } catch(e: DataIntegrityViolationException) {
+            throw UserAlreadyExistsException()
         }
 
     fun deleteJobSeeker(id: Int) = jobSeekerRepository.deleteById(id)
