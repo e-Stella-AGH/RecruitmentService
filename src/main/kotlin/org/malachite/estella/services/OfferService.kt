@@ -35,12 +35,11 @@ class OfferService(
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
 
-    fun addOffer(offer: OfferRequest, hrPartner: HrPartner) {
-        val saved: Offer = this.addOffer(offer.toOffer(hrPartner, desiredSkillService))
-        recruitmentProcessService.addBasicProcess(saved)
-    }
+    fun addOffer(offer: OfferRequest, hrPartner: HrPartner):Offer =
+        this.addOffer(offer.toOffer(hrPartner, desiredSkillService))
+            .also {  recruitmentProcessService.addBasicProcess(it) }
 
-    fun addOffer(offer: Offer): Offer = withExceptionThrower { offerRepository.save(offer) } as Offer
+    fun addOffer(offer: Offer): Offer = offerRepository.save(offer)
 
     fun updateOffer(id: Int, offer: Offer) {
         val currOffer: Optional<Offer> = offerRepository.findById(id)

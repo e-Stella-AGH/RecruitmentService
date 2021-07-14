@@ -103,7 +103,7 @@ class OrganizationIntegration : BaseIntegration() {
 
     private fun addOrganization(): Response {
         return httpRequest(
-            path = "/api/organizations/addorganization",
+            path = "/api/organizations",
             method = HttpMethod.POST,
             body = mapOf(
                 "name" to name,

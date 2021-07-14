@@ -7,5 +7,5 @@ interface RecruitmentProcessRepository {
     fun save(process: RecruitmentProcess): RecruitmentProcess
     fun findAll(): MutableIterable<RecruitmentProcess>
     fun findById(id: Int): Optional<RecruitmentProcess>
-    fun deleteById(id: Int): Any
+    fun deleteById(id: Int)
 }

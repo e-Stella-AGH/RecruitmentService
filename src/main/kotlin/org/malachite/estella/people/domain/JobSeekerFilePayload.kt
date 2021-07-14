@@ -21,7 +21,7 @@ data class JobSeekerFilePayload(
 
 data class JobSeekerFileDTO(
         val fileName: String,
-        val file_base64: String
+        val fileBase64: String
 ){
     companion object {
         fun fromJobSeekerFile(jobSeekerFile: JobSeekerFile) = JobSeekerFileDTO(

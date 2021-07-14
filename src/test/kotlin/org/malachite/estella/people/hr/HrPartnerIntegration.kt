@@ -41,7 +41,7 @@ class HrPartnerIntegration : BaseIntegration() {
     @Order(2)
     fun `should not add hrpartner, because not login as organization`() {
         val response = addHrpartner(hrpartnerMail)
-        withStatusAndMessage(response, "Unauthenticated", HttpStatus.BAD_REQUEST)
+        withStatusAndMessage(response, "Unauthenticated", HttpStatus.UNAUTHORIZED)
     }
 
     @Test
@@ -99,7 +99,7 @@ class HrPartnerIntegration : BaseIntegration() {
 
     private fun addHrpartner(mail: String): Response {
         return httpRequest(
-            path = "/api/hrpartners/addHrPartner",
+            path = "/api/hrpartners",
             method = HttpMethod.POST,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail)),
             body = mapOf(
@@ -122,7 +122,7 @@ class HrPartnerIntegration : BaseIntegration() {
 
     private fun addOrganization(): Response {
         return httpRequest(
-            path = "/api/organizations/addorganization",
+            path = "/api/organizations",
             method = HttpMethod.POST,
             body = mapOf(
                 "name" to name,

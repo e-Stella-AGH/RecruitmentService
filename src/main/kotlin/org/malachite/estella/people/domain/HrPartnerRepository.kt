@@ -7,5 +7,5 @@ interface HrPartnerRepository {
     fun findAll(): MutableIterable<HrPartner>
     fun findByUserId(id: Int): Optional<HrPartner>
     fun save(hrPartner: HrPartner): HrPartner
-    fun deleteById(id: Int): Optional<HrPartner>
+    fun deleteById(id: Int)
 }

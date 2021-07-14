@@ -10,6 +10,9 @@ import org.malachite.estella.services.HrPartnerService
 import java.util.HashSet
 import javax.sql.rowset.serial.SerialClob
 
+
+
+
 data class OfferRequest(
     val name: String, val description: String, val position: String,
     val minSalary: Long, val maxSalary: Long, val localization: String,
