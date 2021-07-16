@@ -21,7 +21,6 @@ object FakeOffers {
         }
     }
 
-
     fun getOffers(hrPartners: List<HrPartner>, desiredSkills: List<DesiredSkill>): List<Offer> {
         val payloads = listOf<OfferPayload>(
             OfferPayload(

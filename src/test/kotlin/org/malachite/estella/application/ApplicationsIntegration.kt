@@ -5,9 +5,13 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
+import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.UnauthenticatedMessage
+import org.malachite.estella.commons.models.offers.ApplicationStatus
+import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
@@ -17,6 +21,7 @@ import org.malachite.estella.services.ApplicationService
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
+import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -149,6 +154,62 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(applications.size).isGreaterThanOrEqualTo(1)
     }
 
+    @Test
+    @Order(6)
+    fun `should be able to change stage to next`() {
+        val offer = getOffer()
+        val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
+        expectThat(application.stage.type).isEqualTo(StageType.APPLIED)
+        val response = httpRequest(
+            path = "/api/applications/${application.id}/next",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
+            body = mapOf(
+                "files" to setOf<JobSeekerFilePayload>()
+            )
+        )
+        println(response.headers)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedApplication = getApplication(application.id);
+        expectThat(updatedApplication.stage.type).isEqualTo(StageType.HR_INTERVIEW)
+    }
+
+    @Test
+    @Order(7)
+    fun `should be able to change status to ended`() {
+        val offer = getOffer()
+        val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
+        expectThat(application.stage.type).isEqualTo(StageType.HR_INTERVIEW)
+        expectThat(application.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
+        val response = httpRequest(
+            path = "/api/applications/${application.id}/next",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedApplication = getApplication(application.id);
+        expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
+        expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
+
+    }
+
+    @Test
+    @Order(8)
+    fun `should be able to change status to rejected`() {
+        val offer = getOffer()
+        val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == applicationMail }!!
+        expectThat(application.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
+        val response = httpRequest(
+            path = "/api/applications/${application.id}/reject",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedApplication = getApplication(application.id);
+        expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.REJECTED)
+
+    }
+
     private fun getApplications() =
         httpRequest(
             path = "/api/applications/",
@@ -159,6 +220,29 @@ class ApplicationsIntegration : BaseIntegration() {
             it as List<Map<String, Any>>
             it.map { it.toApplicationDTO() }
         }
+
+    private fun getOfferApplications(offer: Offer): List<ApplicationDTO> {
+        val response = httpRequest(
+            path = "/api/applications/offer/${offer.id}",
+            method = HttpMethod.GET
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let {
+            it as List<Map<String, Any>>
+        }.map { it.toApplicationDTO() }
+    }
+
+    private fun getApplication(id: Int?): ApplicationDTO {
+        val response = httpRequest(
+            path = "/api/applications/${id}",
+            method = HttpMethod.GET
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let {
+            it as Map<String, Any>
+        }.let { it.toApplicationDTO() }
+
+    }
 
     private fun loginUser(userMail: String, userPassword: String = password): BaseIntegration.Response {
         return httpRequest(
@@ -175,10 +259,11 @@ class ApplicationsIntegration : BaseIntegration() {
         loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
 
     private fun getJobSeeker() = jobSeekerRepository.findAll().first()
-    private fun getOffer() = offerRepository.findAll().first()
+    private fun getOffer() = offerRepository.findAll().first { it.creator.user.mail == hrPartner.user.mail}
 
     private val applicationMail = "examplemail@application.pl"
     private val password = "123"
+    private val hrPartner = hrPartners[0]
 
 
 }

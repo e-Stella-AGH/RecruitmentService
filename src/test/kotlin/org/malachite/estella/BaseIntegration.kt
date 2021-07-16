@@ -191,5 +191,4 @@ class BaseIntegration {
             this["lastName"] as String,
             this["mail"] as String
         )
-
 }

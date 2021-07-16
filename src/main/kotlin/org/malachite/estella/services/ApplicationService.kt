@@ -5,9 +5,6 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.offer.domain.OfferNotFoundException
-import org.malachite.estella.offer.domain.OfferRepository
-import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.UnsupportedOperationException
@@ -65,7 +62,7 @@ class ApplicationService(
             .stages
             .sortedBy { it.id }
         val index = recruitmentProcessStages.indexOf(application.stage)
-        if (index == recruitmentProcessStages.lastIndex)
+        if (index == recruitmentProcessStages.lastIndex - 1)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1], status = ApplicationStatus.ACCEPTED))
         else if (index + 1 < recruitmentProcessStages.size)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))

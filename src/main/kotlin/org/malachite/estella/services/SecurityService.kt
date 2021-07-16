@@ -119,17 +119,7 @@ class SecurityService(
         checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
 
     fun checkOrganizationRights(jwt: String?, id: Int) =
-            checkUserRights(jwt, id) && getOrganizationFromJWT(jwt) != null
-
-
-        private fun User.getUserType(): String =
-        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
-        hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
-        organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" } ?:
-        throw InvalidUserException()
-
-    fun isCorrectApiKey(apiKey:String?):Boolean =
-        apiKey!=null && apiKey == API_KEY
+        checkUserRights(jwt, id) && getOrganizationFromJWT(jwt) != null
 
     fun checkOfferRights(offer: Offer, jwt: String?): Boolean {
         getUserFromJWT(jwt).let {
@@ -143,4 +133,15 @@ class SecurityService(
             }
         }
     }
+
+    private fun User.getUserType(): String =
+        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" }
+            ?: hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" }
+            ?: organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" }
+            ?: throw InvalidUserException()
+
+    fun isCorrectApiKey(apiKey: String?): Boolean =
+        apiKey != null && apiKey == API_KEY
+
+
 }
