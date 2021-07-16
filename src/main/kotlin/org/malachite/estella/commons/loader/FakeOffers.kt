@@ -1,9 +1,10 @@
 package org.malachite.estella.commons.loader
 
-import org.malachite.estella.commons.models.offers.DesiredSkill
-import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import java.sql.Clob
+import java.sql.Date
+import java.util.*
 import javax.sql.rowset.serial.SerialClob
 
 object FakeOffers {
@@ -53,6 +54,18 @@ object FakeOffers {
 
         return payloads.mapIndexed { index, offerPayload ->
             offerPayload.toOffer(hrPartners[index % hrPartners.size])
+        }
+    }
+
+    fun getOffersWithProcesses(hrPartners: List<HrPartner>, desiredSkills: List<DesiredSkill>): List<Offer> {
+        return getOffers(hrPartners, desiredSkills).map {
+                val stages = listOf(
+                        RecruitmentStage(null, StageType.APPLIED),
+                        RecruitmentStage(null, StageType.TECHNICAL_INTERVIEW),
+                        RecruitmentStage(null, StageType.ENDED),
+                )
+                val process = RecruitmentProcess(null, Date(System.currentTimeMillis()), null, it, stages, null, null)
+                it.copy(recruitmentProcess = process)
         }
     }
 }
