@@ -2,6 +2,8 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -13,6 +15,7 @@ import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.IllegalArgumentException
 import java.util.*
 
 @Service
@@ -114,7 +117,11 @@ class SecurityService(
     fun checkHrRights(jwt: String?, id: Int) =
         checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
 
-    private fun User.getUserType(): String =
+    fun checkOrganizationRights(jwt: String?, id: Int) =
+            checkUserRights(jwt, id) && getOrganizationFromJWT(jwt) != null
+
+
+        private fun User.getUserType(): String =
         jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
         hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
         organizationRepository.findByUser(this).orElse(null)?.let { "organization" } ?:
@@ -122,4 +129,17 @@ class SecurityService(
 
     fun isCorrectApiKey(apiKey:String?):Boolean =
         apiKey!=null && apiKey == API_KEY
+
+    fun checkOfferRights(offer: Offer, jwt: String?): Boolean {
+        getUserFromJWT(jwt).let {
+            return when (it!!.getUserType()) {
+                "organization" ->
+                    checkOrganizationRights(jwt, offer.creator.organization.user.id!!)
+                "hr" ->
+                    checkHrRights(jwt, offer.creator.user.id!!)
+                else ->
+                    false
+            }
+        }
+    }
 }
