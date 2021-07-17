@@ -1,9 +1,6 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -30,7 +27,7 @@ class HrPartnerController(
     @CrossOrigin
     @GetMapping
     fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> {
-        return ResponseEntity(hrPartnerService.getHrPartners(), HttpStatus.OK)
+        return ResponseEntity.ok(hrPartnerService.getHrPartners())
     }
 
     @CrossOrigin
@@ -38,7 +35,7 @@ class HrPartnerController(
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> {
         val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
 
-        return ResponseEntity(partner, HttpStatus.OK)
+        return ResponseEntity.ok(partner)
     }
 
     @CrossOrigin
@@ -54,16 +51,17 @@ class HrPartnerController(
     }
 
     @CrossOrigin
-    @PostMapping("/addHrPartner")
+    @PostMapping()
     fun addHrPartner(
         @RequestBody hrPartnerRequest: HrPartnerRequest,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
-    ): ResponseEntity<Message> {
+    ): ResponseEntity<Any>{
         val organizationUser = securityService.getUserFromJWT(jwt)
             ?: return OwnResponses.UNAUTH
         val organization = organizationService.getOrganizationByUser(organizationUser)
-        val saved: HrPartner = hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(organization))
-        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
+        return hrPartnerService
+            .registerHrPartner(hrPartnerRequest.toHrPartner(organization))
+            .let { OwnResponses.CREATED(it)}
     }
 
     @CrossOrigin
@@ -71,10 +69,10 @@ class HrPartnerController(
     fun deleteHrPartner(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("hrPartnerId") hrId: Int
-    ): ResponseEntity<Message> {
+    ): ResponseEntity<Any> {
         if (!securityService.checkHrRights(jwt, hrId)) return OwnResponses.UNAUTH
         return hrPartnerService.deleteHrPartner(hrId).let {
-            ResponseEntity(SuccessMessage, HttpStatus.OK)
+            OwnResponses.SUCCESS
         }
     }
 }

@@ -82,13 +82,14 @@ class SecurityService(
         return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
     }
 
-    fun getHrPartnerFromJWT(jwt: String?): HrPartner? {
-        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
-    }
+    fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
+        getUserFromJWT(jwt)
+            ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
-    fun getOrganizationFromJWT(jwt: String?): Organization? {
-        return getUserFromJWT(jwt)?.let { organizationRepository.findByUser(it).orElse(null)}
-    }
+    fun getOrganizationFromJWT(jwt: String?): Organization? =
+        getUserFromJWT(jwt)
+            ?.let { it.id }
+            ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)
@@ -117,7 +118,7 @@ class SecurityService(
     private fun User.getUserType(): String =
         jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
         hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
-        organizationRepository.findByUser(this).orElse(null)?.let { "organization" } ?:
+        organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" } ?:
         throw InvalidUserException()
 
     fun isCorrectApiKey(apiKey:String?):Boolean =

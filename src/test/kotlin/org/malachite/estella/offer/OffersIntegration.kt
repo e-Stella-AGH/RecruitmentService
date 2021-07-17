@@ -51,7 +51,7 @@ class OffersIntegration: BaseIntegration() {
                 "skills" to emptyList<Skill>()
             )
         )
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val offers = getOffers()
         offers.find { it.name == name }.let {
             expectThat(it).isNotNull()
