@@ -1,5 +1,6 @@
 package org.malachite.estella.services
 
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
@@ -12,7 +13,11 @@ import java.sql.Date
 import java.time.LocalDate
 
 @Service
-class RecruitmentProcessService(@Autowired private val recruitmentProcessRepository: RecruitmentProcessRepository) {
+class RecruitmentProcessService(
+    @Autowired private val recruitmentProcessRepository: RecruitmentProcessRepository,
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val recruitmentStageService: RecruitmentStageService
+) {
 
     fun getProcesses(): MutableIterable<RecruitmentProcess> =
         recruitmentProcessRepository.findAll()
@@ -52,5 +57,20 @@ class RecruitmentProcessService(@Autowired private val recruitmentProcessReposit
     fun getProcessFromStage(recruitmentProcessStage: RecruitmentStage): RecruitmentProcess {
         return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!
     }
+
+    fun updateStagesList(jwt: String?, processId: Int, stagesList: List<String>) {
+        val userFromJWT = securityService.getUserFromJWT(jwt)
+        val process = getProcess(processId)
+        if(process.offer.creator.user.id != userFromJWT?.id) throw UnauthenticatedException()
+        val updated = process.copy(stages = stagesList.toListOfStageType().map { it.toRecruitmentStage() })
+        recruitmentProcessRepository.save(updated)
+    }
+
+    private fun List<String>.toListOfStageType() =
+        this.toMutableList()
+            .map { StageType.valueOf(it) }
+
+    private fun StageType.toRecruitmentStage() =
+        recruitmentStageService.findOrCreate(this)
 
 }
