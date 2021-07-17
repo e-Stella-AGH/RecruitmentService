@@ -75,7 +75,7 @@ class UserController(
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
                     .body(SuccessMessage)
             }
-            ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
+            ?: ResponseEntity.status(404).body((Message("Failed during refreshing; user not found")))
     }
 
 
@@ -83,7 +83,7 @@ class UserController(
     @PutMapping()
     fun updateUser(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @RequestBody user: UserRequest
+        @RequestBody userRequest: UserRequest
     ): ResponseEntity<Any> =
         securityService.getUserFromJWT(jwt)
             ?.let {  userService.updateUser(it.id!!, it) }

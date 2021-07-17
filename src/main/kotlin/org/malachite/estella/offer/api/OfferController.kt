@@ -7,14 +7,9 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
 import org.malachite.estella.services.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import java.net.URI
-import java.sql.Date
-import java.time.LocalDate
-import java.util.*
 
 @RestController
 @Transactional
@@ -42,10 +37,10 @@ class OfferController(
     @PostMapping()
     fun addOffer(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @RequestBody offer: OfferRequest
+        @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<OfferResponse> =
         getHrPartnerFromJWT(jwt)
-            .let { offerService.addOffer(offer, it) }
+            .let { offerService.addOffer(offerRequest, it) }
             .let(Offer::toOfferResponse)
             .let { OwnResponses.CREATED(it) }
 
@@ -54,10 +49,10 @@ class OfferController(
     fun updateOffer(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int,
-        @RequestBody offer: OfferRequest
+        @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<Any> =
         getHrPartnerFromJWT(jwt)
-            .let { offerService.updateOffer(offerId, offer, it) }
+            .let { offerService.updateOffer(offerId, offerRequest, it) }
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin

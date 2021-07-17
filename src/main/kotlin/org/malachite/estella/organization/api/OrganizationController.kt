@@ -1,10 +1,7 @@
 package org.malachite.estella.organization.api
 
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.SuccessMessage
-import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
@@ -12,12 +9,10 @@ import org.malachite.estella.people.domain.toResponse
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
-import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.net.URI
 import java.util.*
 
 @RestController
@@ -42,19 +37,19 @@ class OrganizationController(
 
     @CrossOrigin
     @PostMapping()
-    fun addOrganization(@RequestBody organization: OrganizationRequest): ResponseEntity<Organization> =
-        organizationService.addOrganization(organization.toOrganization())
-            .let { ResponseEntity(it,HttpStatus.CREATED) }
+    fun addOrganization(@RequestBody organizationRequest: OrganizationRequest): ResponseEntity<Organization> =
+        organizationService.addOrganization(organizationRequest.toOrganization())
+            .let { OwnResponses.CREATED(it) }
 
     @CrossOrigin
     @PutMapping("/{organizationId}")
     fun updateOrganization(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("organizationId") organizationId: OrganizationID,
-        @RequestBody organization: OrganizationRequest
+        @RequestBody organizationRequest: OrganizationRequest
     ): ResponseEntity<Any> {
         if (!checkOrganizationUserRights(organizationId, jwt)) return OwnResponses.UNAUTH
-        return organizationService.updateOrganization(organizationId.toId(), organization.toOrganization())
+        return organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization())
             .let { OwnResponses.SUCCESS }
     }
 

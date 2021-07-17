@@ -1,22 +1,14 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
-import org.malachite.estella.commons.UnauthenticatedException
-import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferRequest
-import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import java.sql.Date
-import java.time.LocalDate
 import java.util.*
-import kotlin.NoSuchElementException
 
 @Service
 class OfferService(
@@ -35,8 +27,8 @@ class OfferService(
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
 
-    fun addOffer(offer: OfferRequest, hrPartner: HrPartner):Offer =
-        this.addOffer(offer.toOffer(hrPartner, desiredSkillService))
+    fun addOffer(offerRequest: OfferRequest, hrPartner: HrPartner):Offer =
+        this.addOffer(offerRequest.toOffer(hrPartner, desiredSkillService))
             .also {  recruitmentProcessService.addBasicProcess(it) }
 
     fun addOffer(offer: Offer): Offer = offerRepository.save(offer)
@@ -59,8 +51,8 @@ class OfferService(
         }
     }
 
-    fun updateOffer(id: Int, offer: OfferRequest, hrPartner: HrPartner) {
-        this.updateOffer(id, offer.toOffer(hrPartner, desiredSkillService))
+    fun updateOffer(id: Int, offerRequest: OfferRequest, hrPartner: HrPartner) {
+        this.updateOffer(id, offerRequest.toOffer(hrPartner, desiredSkillService))
     }
 
     fun deleteOffer(id: Int) = offerRepository.deleteById(id)

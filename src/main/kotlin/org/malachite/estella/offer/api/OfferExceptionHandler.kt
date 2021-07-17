@@ -12,13 +12,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 class OfferExceptionHandler {
 
     @ExceptionHandler(OfferNotFoundException::class)
-    fun handleNoSuchElementException(ex: OfferNotFoundException): ResponseEntity<Any> {
-        return ResponseEntity("We couldn't find this offer", HttpStatus.NOT_FOUND)
-    }
+    fun handleNoSuchElementException(ex: OfferNotFoundException): ResponseEntity<Any> =
+        ResponseEntity("We couldn't find this offer", HttpStatus.NOT_FOUND)
 
     @ExceptionHandler(UnauthenticatedException::class)
-    fun handleUnauthenticated(ex: UnauthenticatedException): ResponseEntity<Any> {
-        return OwnResponses.UNAUTH
-    }
-
+    fun handleUnauthenticated(ex: UnauthenticatedException): ResponseEntity<Any> =
+        OwnResponses.UNAUTH
 }
