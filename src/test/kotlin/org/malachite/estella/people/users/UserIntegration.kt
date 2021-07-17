@@ -72,40 +72,23 @@ class UserIntegration : BaseIntegration() {
     @Test
     @Order(6)
     fun `should update created User`() {
-        val user = getUsers().find { it.mail == mail }!!
-
-        val response = updateUser(user.id!!)
+        val response = updateUser()
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val updatedUser = getUserById(user.id!!)
+        val updatedUser = getUserById()
         expectThat(updatedUser.firstName == newName)
     }
 
     @Test
     @Order(7)
     fun `should return Bad Request with message that user is unauthenticated`() {
-        val response = updateUser(1000000)
-        withStatusAndMessage(response, "Unauthenticated", HttpStatus.BAD_REQUEST)
+        val response = updateUser("123456")
+        withStatusAndMessage(response, "Unauthenticated", HttpStatus.UNAUTHORIZED)
     }
 
     @Test
     @Order(8)
-    fun `should delete user`() {
-        val user = getUsers().find { it.mail == mail }!!
-        val response = httpRequest(
-            path = "/api/jobseekers/${user.id}",
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
-            method = HttpMethod.DELETE
-        )
-        withStatusAndMessage(response, "Success", HttpStatus.OK)
-
-        val deletedUserResponse = getUserAsResponse(user.id!!)
-        withStatusAndMessage(deletedUserResponse, "There is no such user", HttpStatus.BAD_REQUEST)
-    }
-
-    @Test
-    @Order(9)
     fun `should return user type of job seeker in jwt`() {
         val decoded = getJWTFor("carthago@delenda.est")
         expect {
@@ -117,7 +100,7 @@ class UserIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(10)
+    @Order(9)
     fun `should return user type of hr in jwt`() {
         println(getUsers())
         val decoded = getJWTFor("alea@iacta.est")
@@ -138,7 +121,6 @@ class UserIntegration : BaseIntegration() {
                 "password" to "a"
             )
         )
-        println(response)
         val authHeader = response.headers?.get("X-Auth-Token")
         expectThat(authHeader).isNotNull()
         val decoded = decodeJwt(authHeader?.get(0) ?: "")
@@ -172,11 +154,11 @@ class UserIntegration : BaseIntegration() {
         )
     }
 
-    private fun updateUser(id: Int): Response {
+    private fun updateUser(authToken:String = getAuthToken()): Response {
         return httpRequest(
-            path = "/api/users/$id",
+            path = "/api/users",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
+            headers = mapOf(EStellaHeaders.jwtToken to authToken),
             body = mapOf(
                 "firstName" to newName,
                 "lastName" to lastName,
@@ -198,8 +180,8 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserById(userId: Int): User {
-        val response = getUserAsResponse(userId)
+    private fun getUserById(): User {
+        val response = getUserAsResponse()
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body.let {
             it as Map<String, Any>
@@ -207,10 +189,11 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserAsResponse(userId: Int): Response {
+    private fun getUserAsResponse(): Response {
         return httpRequest(
-            path = "/api/users/$userId",
-            method = HttpMethod.GET
+            path = "/api/users/loggedInUser",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken())
         )
     }
 

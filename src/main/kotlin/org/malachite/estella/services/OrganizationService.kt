@@ -30,7 +30,10 @@ class OrganizationService(
     }
 
     fun getOrganizationByUser(user: User): Organization =
-        organizationRepository.findByUser(user).get()
+        (user.id
+            ?.let { organizationRepository.findByUserId(it) }
+            ?: Optional.empty<Organization>())
+            .get()
 
     fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
 

@@ -25,7 +25,7 @@ class AdminController(
     @PostMapping("/verify/{organizationUUID}")
     fun verifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: String): ResponseEntity<Message> =
+        @PathVariable organizationUUID: String): ResponseEntity<Any> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
                 .verifyOrganization(organizationUUID)
@@ -38,7 +38,7 @@ class AdminController(
     @PostMapping("/deverify/{organizationUUID}")
     fun deverifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: String): ResponseEntity<Message> =
+        @PathVariable organizationUUID: String): ResponseEntity<Any> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
                 .deverifyOrganization(organizationUUID)

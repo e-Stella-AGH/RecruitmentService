@@ -24,35 +24,30 @@ class JobSeekerController(
     @CrossOrigin
     @GetMapping
     fun getJobSeekers(): ResponseEntity<MutableIterable<JobSeeker>> =
-        jobSeekerService.getJobSeekers().let {
-            ResponseEntity(it, HttpStatus.OK)
-        }
+        jobSeekerService.getJobSeekers().let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @GetMapping("/{jobseekerId}")
     fun getJobSeekerById(@PathVariable("jobseekerId") jobSeekerId: Int): ResponseEntity<JobSeeker> =
-        jobSeekerService.getJobSeeker(jobSeekerId).let {
-            ResponseEntity(it, HttpStatus.OK)
-        }
+        jobSeekerService.getJobSeeker(jobSeekerId)
+            .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @PostMapping()
-    fun registerJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest) =
-        jobSeekerRequest.toJobSeeker().let {
-            jobSeekerService.registerJobSeeker(it)
-        }.let {
-            ResponseEntity(SuccessMessage, HttpStatus.CREATED)
-        }
+    fun registerJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest):ResponseEntity<JobSeeker> =
+        jobSeekerRequest.toJobSeeker()
+            .let { jobSeekerService.registerJobSeeker(it) }
+            .let {OwnResponses.CREATED(it) }
 
     @CrossOrigin
     @DeleteMapping("/{jobSeekerId}")
     fun deleteJobSeeker(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("jobSeekerId") jobSeekerId: Int
-    ): ResponseEntity<Message> {
+    ): ResponseEntity<Any> {
         if (!securityService.checkJobSeekerRights(jwt, jobSeekerId)) return OwnResponses.UNAUTH
         return jobSeekerService.deleteJobSeeker(jobSeekerId).let {
-            ResponseEntity(SuccessMessage, HttpStatus.OK)
+            ResponseEntity.ok(SuccessMessage)
         }
     }
 
