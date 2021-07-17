@@ -26,9 +26,9 @@ class HrPartnerController(
 ) {
     @CrossOrigin
     @GetMapping
-    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> {
-        return ResponseEntity.ok(hrPartnerService.getHrPartners())
-    }
+    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> =
+        ResponseEntity.ok(hrPartnerService.getHrPartners())
+
 
     @CrossOrigin
     @GetMapping("/{hrPartnerId}")
