@@ -49,7 +49,7 @@ data class Skill(
 data class OfferResponse(
     val id: Int?, val name: String, val description: String, val position: String,
     val minSalary: Long, val maxSalary: Long, val localization: String,
-    val organization: OrganizationResponse, val skills: Set<DesiredSkill>
+    val organization: OrganizationResponse, val skills: Set<DesiredSkill>, val creator: HrPartner
 )
 
 fun Offer.toOfferResponse() = OfferResponse(
@@ -61,7 +61,8 @@ fun Offer.toOfferResponse() = OfferResponse(
     this.maxSalary,
     this.localization,
     this.getOrganizationResponse(),
-    this.skills
+    this.skills,
+    this.creator
 )
 
 data class OrganizationResponse(

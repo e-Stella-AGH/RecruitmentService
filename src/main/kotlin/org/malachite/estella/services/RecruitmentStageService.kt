@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service
 class RecruitmentStageService(
     @Autowired private val repository: RecruitmentStageRepository
 ) {
-    fun findOrCreate(stageType: StageType): RecruitmentStage {
-        val optionalType = repository.findByType(stageType)
-        if(optionalType.isPresent) return optionalType.get()
-        return repository.save(RecruitmentStage(type = stageType, id = null))
-    }
+
+    fun save(stage: RecruitmentStage) = repository.save(stage)
+
+    fun save(type: StageType) = repository.save(RecruitmentStage(null, type))
+
+    fun delete(stage: RecruitmentStage) = stage.id?.let { repository.deleteById(it) }
+
 }

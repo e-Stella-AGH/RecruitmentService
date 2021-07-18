@@ -7,4 +7,6 @@ import java.util.*
 interface RecruitmentStageRepository {
     fun save(stage: RecruitmentStage): RecruitmentStage
     fun findByType(type: StageType): Optional<RecruitmentStage>
+    fun findById(id: Int): Optional<RecruitmentStage>
+    fun deleteById(id: Int)
 }
