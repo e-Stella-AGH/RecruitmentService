@@ -62,7 +62,7 @@ class OfferController(
         @PathVariable("offerId") offerId: Int
     ): ResponseEntity<Any> =
         getHrPartnerFromJWT(jwt)
-            .let { offerService.deleteOffer(offerId) }
+            .let { offerService.deleteOffer(offerId, it) }
             .let { OwnResponses.SUCCESS }
 
     private fun getHrPartnerFromJWT(jwt: String?) =

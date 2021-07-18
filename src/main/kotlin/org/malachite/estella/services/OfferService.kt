@@ -1,7 +1,9 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
-import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.offers.DesiredSkill
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRepository
@@ -14,7 +16,7 @@ import java.util.*
 class OfferService(
     @Autowired private val offerRepository: OfferRepository,
     @Autowired private val desiredSkillService: DesiredSkillService,
-    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService
 ) : EStellaService() {
 
     override val throwable: Exception = OfferNotFoundException()
@@ -33,27 +35,33 @@ class OfferService(
 
     fun addOffer(offer: Offer): Offer = offerRepository.save(offer)
 
-    fun updateOffer(id: Int, offer: Offer) {
-        val currOffer: Optional<Offer> = offerRepository.findById(id)
-        if (currOffer.isPresent) {
-            val updated: Offer = currOffer.get().copy(
-                name = offer.name,
-                description = offer.description,
-                position = offer.position,
-                minSalary = offer.minSalary,
-                maxSalary = offer.maxSalary,
-                localization = offer.localization,
-                skills = offer.skills
-            )
-            offerRepository.save(updated)
-        } else {
-            throw OfferNotFoundException()
-        }
+    private fun updateOffer(oldOffer: Offer, newOffer: Offer) {
+        val updated: Offer = oldOffer.copy(
+            name = newOffer.name,
+            description = newOffer.description,
+            position = newOffer.position,
+            minSalary = newOffer.minSalary,
+            maxSalary = newOffer.maxSalary,
+            localization = newOffer.localization,
+            skills = newOffer.skills
+        )
+        offerRepository.save(updated)
     }
 
     fun updateOffer(id: Int, offerRequest: OfferRequest, hrPartner: HrPartner) {
-        this.updateOffer(id, offerRequest.toOffer(hrPartner, desiredSkillService))
+        val currentOffer = this.getOffer(id)
+        if(!checkHrPartnerRightsForOffer(currentOffer, hrPartner)) throw UnauthenticatedException()
+        this.updateOffer(currentOffer, offerRequest.toOffer(hrPartner, desiredSkillService))
     }
 
-    fun deleteOffer(id: Int) = offerRepository.deleteById(id)
+    fun deleteOffer(id: Int, hrPartner: HrPartner) {
+        val offer = this.getOffer(id)
+        if(!checkHrPartnerRightsForOffer(offer, hrPartner)) throw UnauthenticatedException()
+        deleteOffer(id)
+    }
+
+    private fun deleteOffer(id: Int) = offerRepository.deleteById(id)
+
+    private fun checkHrPartnerRightsForOffer(offer: Offer, hrPartner: HrPartner) =
+        offer.creator.id == hrPartner.id
 }
