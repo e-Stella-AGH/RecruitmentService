@@ -15,14 +15,14 @@ class OfferService(
     @Autowired private val offerRepository: OfferRepository,
     @Autowired private val desiredSkillService: DesiredSkillService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
-) : EStellaService() {
+) : EStellaService<Offer>() {
 
     override val throwable: Exception = OfferNotFoundException()
 
     fun getOffers(): MutableIterable<Offer> =
         offerRepository.findByOrderByIdDesc()
 
-    fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() } as Offer
+    fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() }
 
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()

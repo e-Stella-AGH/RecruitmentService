@@ -2,8 +2,8 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
-import org.malachite.estella.commons.models.offers.DesiredSkill
-import org.malachite.estella.commons.models.offers.SkillLevel
+import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -11,6 +11,7 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.people.domain.JobSeekerDTO
 import org.malachite.estella.people.domain.UserDTO
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -22,7 +23,11 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
-import java.util.*
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.UUID
+import java.sql.Date
+
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -128,6 +133,24 @@ class BaseIntegration {
             (this["level"] as String).toSkillLevel()!!
         )
 
+    var simpleDateFormat: DateFormat = SimpleDateFormat("yyyy-MM-dd")
+
+    fun Map<String, Any>.toApplicationDTO() =
+        ApplicationDTO(
+            this["id"] as Int,
+            Date.valueOf(this["applicationDate"] as String),
+            ApplicationStatus.valueOf(this["status"] as String),
+            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
+            setOf()
+        )
+
+    fun Map<String,Any>.toRecruitmentStage() =
+        RecruitmentStage(
+            this["id"] as Int?,
+            StageType.valueOf(this["type"] as String)
+        )
+
     fun String.toSkillLevel(): SkillLevel? {
         return when (this) {
             "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
@@ -150,6 +173,9 @@ class BaseIntegration {
         (this["user"] as Map<String, Any>).toUser(),
         setOf()
     )
+
+    fun Map<String, Any>.toJobSeekerDTO() =
+        JobSeekerDTO((this["user"] as Map<String, Any>).toUserDTO())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
