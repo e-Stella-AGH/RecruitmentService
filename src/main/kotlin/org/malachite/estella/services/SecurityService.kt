@@ -87,8 +87,7 @@ class SecurityService(
             ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
     fun getOrganizationFromJWT(jwt: String?): Organization? =
-        getUserFromJWT(jwt)
-            ?.let { it.id }
+        getUserFromJWT(jwt)?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {

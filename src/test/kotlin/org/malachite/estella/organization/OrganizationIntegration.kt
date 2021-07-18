@@ -56,9 +56,9 @@ class OrganizationIntegration : BaseIntegration() {
 
     @Test
     @Order(4)
-    fun `should return Bad Request with message when organization wasn't found`() {
+    fun `should return Unauthorized with message when organization uuid is not the same as the uuid of issuer`() {
         val response = updateOrganization(UUID.randomUUID())
-        withStatusAndMessage(response, "No resource with such id", HttpStatus.BAD_REQUEST)
+        withStatusAndMessage(response, "Unauthenticated", HttpStatus.UNAUTHORIZED)
     }
 
     @Test
@@ -98,7 +98,7 @@ class OrganizationIntegration : BaseIntegration() {
         withStatusAndMessage(response, "Success", HttpStatus.OK)
 
         val deletedUserResponse = getOrganizationAsResponse(organization.id!!)
-        withStatusAndMessage(deletedUserResponse, "No resource with such id", HttpStatus.BAD_REQUEST)
+        withStatusAndMessage(deletedUserResponse, "No organization with such id", HttpStatus.BAD_REQUEST)
     }
 
     private fun addOrganization(): Response {
