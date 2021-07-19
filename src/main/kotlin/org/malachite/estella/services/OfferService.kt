@@ -3,9 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
-import org.malachite.estella.offer.domain.OfferNotFoundException
-import org.malachite.estella.offer.domain.OfferRepository
-import org.malachite.estella.offer.domain.OfferRequest
+import org.malachite.estella.offer.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -27,9 +25,9 @@ class OfferService(
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
 
-    fun addOffer(offerRequest: OfferRequest, hrPartner: HrPartner):Offer =
+    fun addOffer(offerRequest: OfferRequest, hrPartner: HrPartner): Offer =
         this.addOffer(offerRequest.toOffer(hrPartner, desiredSkillService))
-            .also {  recruitmentProcessService.addBasicProcess(it) }
+            .also { recruitmentProcessService.addBasicProcess(it) }
 
     fun addOffer(offer: Offer): Offer = offerRepository.save(offer)
 
@@ -54,6 +52,10 @@ class OfferService(
     fun updateOffer(id: Int, offerRequest: OfferRequest, hrPartner: HrPartner) {
         this.updateOffer(id, offerRequest.toOffer(hrPartner, desiredSkillService))
     }
+
+    fun getHrPartnerOffers(hrPartner: HrPartner): List<OfferResponse> = getOffers()
+            .filter { offer -> offer.creator == hrPartner }
+            .map { offer -> offer.toOfferResponse() }
 
     fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 }

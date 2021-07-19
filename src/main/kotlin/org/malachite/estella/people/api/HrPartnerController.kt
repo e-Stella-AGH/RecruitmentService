@@ -26,55 +26,45 @@ class HrPartnerController(
 ) {
     @CrossOrigin
     @GetMapping
-    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> {
-        return ResponseEntity.ok(hrPartnerService.getHrPartners())
-    }
+    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> =
+        ResponseEntity.ok(hrPartnerService.getHrPartners())
+
 
     @CrossOrigin
     @GetMapping("/{hrPartnerId}")
-    fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> {
-        val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
+    fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
+        hrPartnerService.getHrPartner(hrPartnerId).let { ResponseEntity.ok(it) }
 
-        return ResponseEntity.ok(partner)
-    }
 
     @CrossOrigin
     @GetMapping("/offers")
-    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<OfferResponse>> {
-        val hrPartner = securityService.getHrPartnerFromJWT(jwt)
-            ?: return ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
+    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> =
+        securityService.getHrPartnerFromJWT(jwt)
+            ?.let { offerService.getHrPartnerOffers(it) }
+            ?.let { ResponseEntity(it, HttpStatus.OK) }
+            ?: ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
 
-        return offerService.getOffers()
-            .filter { offer -> offer.creator == hrPartner }
-            .map { offer -> offer.toOfferResponse() }
-            .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
-    }
 
     @CrossOrigin
     @PostMapping()
     fun addHrPartner(
         @RequestBody hrPartnerRequest: HrPartnerRequest,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
-    ): ResponseEntity<Any>{
-        val organizationUser = securityService.getUserFromJWT(jwt)
-            ?: return OwnResponses.UNAUTH
-        val organization = organizationService.getOrganizationByUser(organizationUser)
-        return hrPartnerService
-            .registerHrPartner(hrPartnerRequest.toHrPartner(organization))
-            .let { OwnResponses.CREATED(it)}
-    }
+    ): ResponseEntity<Any> =
+        securityService.getUserFromJWT(jwt)
+            ?.let { organizationService.getOrganizationByUser(it) }
+            ?.let { hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(it)) }
+            ?.let { OwnResponses.CREATED(it) }
+            ?: OwnResponses.UNAUTH
 
     @CrossOrigin
     @DeleteMapping("/{hrPartnerId}")
     fun deleteHrPartner(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("hrPartnerId") hrId: Int
-    ): ResponseEntity<Any> {
-        if (!securityService.checkHrRights(jwt, hrId)) return OwnResponses.UNAUTH
-        return hrPartnerService.deleteHrPartner(hrId).let {
-            OwnResponses.SUCCESS
-        }
-    }
+    ): ResponseEntity<Any> =
+        if (!securityService.checkHrRights(jwt, hrId)) OwnResponses.UNAUTH
+        else hrPartnerService.deleteHrPartner(hrId).let { OwnResponses.SUCCESS }
 }
 
 data class HrPartnerRequest(val mail: String) {
