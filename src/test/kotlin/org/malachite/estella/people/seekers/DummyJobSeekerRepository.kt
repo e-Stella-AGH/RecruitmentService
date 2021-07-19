@@ -23,8 +23,7 @@ class DummyJobSeekerRepository: JobSeekerRepository {
 
     override fun findByUserMail(mail: String): Optional<JobSeeker> =
         jobSeekers.firstOrNull { it.user.mail == mail }
-            ?.let { Optional.of(it) }
-            ?: Optional.empty()
+            .let { Optional.ofNullable(it) }
 
     override fun deleteById(id: Int) {
         jobSeekers.remove(jobSeekers.find { it.id == id })

@@ -71,7 +71,7 @@ class ApplicationsIntegration : BaseIntegration() {
 
     @Test
     @Order(2)
-    fun `should not be able to apply for offer as not logged in user`() {
+    fun `should not be able to apply for offer with bad jwt`() {
 
         val offer = getOffer()
 

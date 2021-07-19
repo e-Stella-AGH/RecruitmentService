@@ -7,5 +7,5 @@ import javax.persistence.*
 data class JobSeeker(
         @Id @Column(name = "id") val id: Int?,
         @OneToOne(cascade = [CascadeType.ALL]) @MapsId @JoinColumn(name = "id") val user: User,
-        @OneToMany(cascade = [CascadeType.ALL]) @JoinColumn(name="job_seeker_id") val files: Set<JobSeekerFile>
+        @OneToMany(cascade = [CascadeType.ALL],fetch = FetchType.EAGER) @JoinColumn(name="job_seeker_id") val files: Set<JobSeekerFile>
 )

@@ -9,6 +9,7 @@ import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.lang.UnsupportedOperationException
 import java.util.*
 
 @Service
@@ -37,7 +38,7 @@ class ApplicationService(
                     .let { jobSeekerService.updateJobSeekerFiles(jobSeeker, it) }
             mailService.sendApplicationConfirmationMail(offer, application)
             application
-        } ?: throw throwable
+        } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
     fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application {

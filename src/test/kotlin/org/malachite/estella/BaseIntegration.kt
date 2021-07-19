@@ -12,6 +12,7 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.malachite.estella.people.domain.JobSeekerDTO
+import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.people.domain.UserDTO
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -175,7 +176,7 @@ class BaseIntegration {
     )
 
     fun Map<String, Any>.toJobSeekerDTO() =
-        JobSeekerDTO((this["user"] as Map<String, Any>).toUserDTO())
+        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO(),listOf<JobSeekerFileDTO>())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
