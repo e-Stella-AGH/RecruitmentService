@@ -20,7 +20,6 @@ data class OfferRequest(
 ) {
 
     fun toOffer(hrPartner: HrPartner, desiredSkillService: DesiredSkillService): Offer {
-
         val skillSet = toDesiredSkillSet(desiredSkillService)
             .map { if (it.id != null) it else desiredSkillService.addDesiredSkill(it) }.toSet()
 

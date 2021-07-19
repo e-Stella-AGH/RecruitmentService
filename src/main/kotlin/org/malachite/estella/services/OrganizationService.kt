@@ -69,8 +69,6 @@ class OrganizationService(
 
     fun checkRights(id: UUID, jwt: String?) {
         val issuerId = securityService.getOrganizationFromJWT(jwt)?.id
-        println(id)
-        println(issuerId)
         issuerId?.let { if(it != id) throw UnauthenticatedException() } ?: throw UnauthenticatedException()
     }
 }
