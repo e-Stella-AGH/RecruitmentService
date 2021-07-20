@@ -18,13 +18,13 @@ class HrPartnerService(
     @Autowired private val mailService: MailService,
     @Autowired private val userService: UserService,
     @Autowired private val securityService: SecurityService
-): EStellaService() {
+): EStellaService<HrPartner>() {
 
     override val throwable: Exception = UserNotFoundException()
 
     fun getHrPartners(): MutableIterable<HrPartner> = hrPartnerRepository.findAll()
 
-    fun getHrPartner(id: Int): HrPartner = withExceptionThrower { hrPartnerRepository.findByUserId(id).get() } as HrPartner
+    fun getHrPartner(id: Int): HrPartner = withExceptionThrower { hrPartnerRepository.findByUserId(id).get() }
 
     private fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
 

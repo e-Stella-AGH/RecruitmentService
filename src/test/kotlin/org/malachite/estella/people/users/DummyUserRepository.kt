@@ -24,9 +24,9 @@ class DummyUserRepository: UserRepository {
         return user
     }
 
-    override fun deleteById(id: Int) {
-        users.remove(findById(id).get())
-    }
+    override fun deleteById(id: Int): User =
+        findById(id).get()
+            .also { users.remove(it) }
 
     fun size(): Int = users.size
 

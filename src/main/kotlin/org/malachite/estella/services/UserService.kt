@@ -19,7 +19,7 @@ import kotlin.NoSuchElementException
 class UserService(
     @Autowired private val userRepository: UserRepository,
     @Autowired private val securityService: SecurityService
-) : EStellaService() {
+) : EStellaService<User>() {
 
     override val throwable: Exception = UserNotFoundException()
 

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
@@ -101,7 +102,6 @@ class UserIntegration : BaseIntegration() {
     @Test
     @Order(9)
     fun `should return user type of hr in jwt`() {
-        println(getUsers())
         val decoded = getJWTFor("alea@iacta.est")
         expect {
             that(decoded.firstName).isEqualTo("Gaius")
@@ -109,6 +109,14 @@ class UserIntegration : BaseIntegration() {
             that(decoded.mail).isEqualTo("alea@iacta.est")
             that(decoded.userType).isEqualTo("hr")
         }
+    }
+
+    @Test
+    @Order(10)
+    fun `expired jwt token`() {
+        val response = getUserAsResponse(expiredJWT)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+        expectThat((response.body as Map<String,Any>)["message"]).isEqualTo("Your token is expired please refresh it or login again")
     }
 
     private fun getJWTFor(mail: String): UserDataFromJWT {
@@ -188,11 +196,11 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserAsResponse(): Response {
+    private fun getUserAsResponse(jwt:String = getAuthToken()): Response {
         return httpRequest(
             path = "/api/users/loggedInUser",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken())
+            headers = mapOf(EStellaHeaders.jwtToken to jwt)
         )
     }
 
@@ -220,5 +228,7 @@ class UserIntegration : BaseIntegration() {
     private val randomPassword = "random-password"
 
     private val newName = "newName"
+
+    private val expiredJWT = "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiI1IiwiaWF0IjoxNjI2NTI2NjY3LCJleHAiOjE2MjY1Mjc1NjcsIm1haWwiOiJwcmluY2lwdXNAcm9tYS5jb20iLCJmaXJzdE5hbWUiOiJPY3RhdmlhbiIsImxhc3ROYW1lIjoiQXVndXN0dXMiLCJ1c2VyVHlwZSI6ImhyIn0.DN9JnPkTzvlHFOOH8zjYrXkeenY4qUYDnoy5o320ZcIQkgwDVVqfNd4LEzlEtGxbStjaG_XcykvJsLtT3guIZg"
 
 }

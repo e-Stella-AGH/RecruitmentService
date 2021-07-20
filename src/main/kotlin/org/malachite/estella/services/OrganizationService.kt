@@ -18,13 +18,13 @@ class OrganizationService(
     @Autowired private val userService: UserService,
     @Autowired private val mailService: MailService,
     @Autowired private val securityService: SecurityService
-): EStellaService() {
+): EStellaService<Organization>() {
 
     override val throwable: Exception = OrganizationNotFoundException()
 
     fun getOrganizations(): MutableIterable<Organization> = organizationRepository.findAll()
 
-    fun getOrganization(id: UUID): Organization = withExceptionThrower { organizationRepository.findById(id).get() } as Organization
+    fun getOrganization(id: UUID): Organization = withExceptionThrower { organizationRepository.findById(id).get() }
 
     fun addOrganization(organization: Organization): Organization {
         val user = userService.addUser(organization.user)
@@ -44,7 +44,7 @@ class OrganizationService(
         deleteOrganization(id)
     }
 
-    private fun deleteOrganization(id: UUID) = withExceptionThrower { organizationRepository.deleteById(id) }
+    private fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
 
     fun verifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, true)

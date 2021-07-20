@@ -7,5 +7,5 @@ data class HrPartnerResponse(val organizationName: String, val user: UserDTO) {
 
 fun HrPartner.toResponse() = HrPartnerResponse(
     this.organization.name,
-    UserDTO.fromUser(this.user)
+    this.user.toUserDTO()
 )

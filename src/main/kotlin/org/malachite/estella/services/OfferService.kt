@@ -7,13 +7,9 @@ import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.offer.domain.OfferNotFoundException
-import org.malachite.estella.offer.domain.OfferRepository
-import org.malachite.estella.offer.domain.OfferRequest
-import org.malachite.estella.offer.domain.toOfferResponse
+import org.malachite.estella.offer.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class OfferService(
@@ -21,14 +17,14 @@ class OfferService(
     @Autowired private val desiredSkillService: DesiredSkillService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val securityService: SecurityService
-) : EStellaService() {
+) : EStellaService<Offer>() {
 
     override val throwable: Exception = OfferNotFoundException()
 
     fun getOffers(): MutableIterable<Offer> =
         offerRepository.findByOrderByIdDesc()
 
-    fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() } as Offer
+    fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() }
 
     fun getOffers(jwt: String?): MutableList<Offer> =
         this.getOffers()
@@ -96,4 +92,9 @@ class OfferService(
         }
         return permissions
     }
+
+    fun getHrPartnerOffers(jwt: String?): List<OfferResponse> =
+        getOffers()
+            .filter { offer -> offer.creator == securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException() }
+            .map { offer -> offer.toOfferResponse() }
 }

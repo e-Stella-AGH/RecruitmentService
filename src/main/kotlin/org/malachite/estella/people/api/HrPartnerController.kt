@@ -28,6 +28,7 @@ class HrPartnerController(
         ResponseEntity.ok(hrPartnerService.getHrPartners().toList())
 
 
+
     @CrossOrigin
     @GetMapping("/{hrPartnerId}")
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
@@ -37,8 +38,7 @@ class HrPartnerController(
     @CrossOrigin
     @GetMapping("/offers")
     fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> {
-        return offerService.getOffers(jwt)
-            .map { it.toOfferResponse() }
+        return offerService.getHrPartnerOffers(jwt)
             .let { ResponseEntity.ok(it) }
     }
 
