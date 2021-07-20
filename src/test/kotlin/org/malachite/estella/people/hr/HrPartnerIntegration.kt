@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerRepository
@@ -30,7 +31,7 @@ class HrPartnerIntegration : BaseIntegration() {
     @Order(1)
     fun `should add hrPartner to database`() {
         EmailServiceStub.stubForSendEmail()
-        addOrganization()
+        addOrganizationAndVerify()
         val response = addHrpartner(organizationMail)
         expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val users = getUsers()
@@ -120,8 +121,8 @@ class HrPartnerIntegration : BaseIntegration() {
         }
     }
 
-    private fun addOrganization(): Response {
-        return httpRequest(
+    private fun addOrganizationAndVerify(): Response {
+        httpRequest(
             path = "/api/organizations",
             method = HttpMethod.POST,
             body = mapOf(
@@ -130,7 +131,21 @@ class HrPartnerIntegration : BaseIntegration() {
                 "password" to password,
             )
         )
+        val organization = getAddedOrganization()
+        val response = httpRequest(
+            path = "/_admin/verify/${organization!!.id}",
+            method = HttpMethod.POST,
+            headers = mapOf(EStellaHeaders.adminApiKey to API_KEY)
+        )
+        return response
     }
+    private fun getAddedOrganization() =
+        httpRequest(path="/api/organizations", method=HttpMethod.GET).let {
+            it.body as List<Map<String, Any>>
+            it.body.map { it.toOrganization() }
+        }.firstOrNull { it.user.mail == organizationMail }
+
+    val API_KEY = "API_KEY"
 
     private fun getHrPartners(): List<HrPartner> {
         val response = httpRequest(

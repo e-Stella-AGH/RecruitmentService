@@ -2,6 +2,7 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -31,21 +32,15 @@ class OrganizationService(
     }
 
     fun updateOrganization(id: UUID, organization: Organization, jwt: String?) {
-        checkRights(id, jwt)
+        if(!checkRights(id, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
         updateOrganization(id, organization)
     }
 
     private fun updateOrganization(id: UUID, organization: Organization) =
         getOrganization(id).copy(name = organization.name, verified = organization.verified).let { organizationRepository.save(it) }
 
-    fun getOrganizationByUser(user: User): Organization =
-        withExceptionThrower { (user.id
-            ?.let { organizationRepository.findByUserId(it) }
-            ?: Optional.empty<Organization>())
-            .get() } as Organization
-
     fun deleteOrganization(id: UUID, jwt: String?) {
-        checkRights(id, jwt)
+        if(!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
         deleteOrganization(id)
     }
 
@@ -57,7 +52,7 @@ class OrganizationService(
     fun deverifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, false)
 
-    fun changeOrganizationVerification(uuid: String, verified: Boolean): Organization {
+    private fun changeOrganizationVerification(uuid: String, verified: Boolean): Organization {
         val organization = addOrganization(
             getOrganization(UUID.fromString(uuid))
                 .copy(verified = verified)
@@ -67,8 +62,12 @@ class OrganizationService(
         return organization
     }
 
-    fun checkRights(id: UUID, jwt: String?) {
-        val issuerId = securityService.getOrganizationFromJWT(jwt)?.id
-        issuerId?.let { if(it != id) throw UnauthenticatedException() } ?: throw UnauthenticatedException()
-    }
+    fun checkRights(id: UUID, jwt: String?): Set<Permission> =
+        if (securityService.isCorrectApiKey(jwt)) Permission.allPermissions()
+        else securityService.getOrganizationFromJWT(jwt)?.id
+            ?.let {
+                if(it == id) Permission.allPermissions()
+                else throw UnauthenticatedException()
+            } ?: throw UnauthenticatedException()
+
 }

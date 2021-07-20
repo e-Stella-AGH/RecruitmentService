@@ -1,18 +1,23 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.Permission
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.people.api.HrPartnerRequest
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class HrPartnerService(
     @Autowired private val hrPartnerRepository: HrPartnerRepository,
     @Autowired private val mailService: MailService,
-    @Autowired private val userService: UserService
+    @Autowired private val userService: UserService,
+    @Autowired private val securityService: SecurityService
 ): EStellaService() {
 
     override val throwable: Exception = UserNotFoundException()
@@ -21,9 +26,14 @@ class HrPartnerService(
 
     fun getHrPartner(id: Int): HrPartner = withExceptionThrower { hrPartnerRepository.findByUserId(id).get() } as HrPartner
 
-    fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
+    private fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
 
-    fun registerHrPartner(hrPartner: HrPartner): HrPartner {
+    fun registerHrPartner(hrPartnerRequest: HrPartnerRequest, jwt: String?): HrPartner {
+        getPermissions(null, jwt).let {
+            if(!it.contains(Permission.CREATE)) throw UnauthenticatedException()
+        }
+        val organization = securityService.getOrganizationFromJWT(jwt) ?: throw UnauthenticatedException()
+        val hrPartner = hrPartnerRequest.toHrPartner(organization)
         val password = userService.generatePassword()
         hrPartner.user.password = password
         val user = userService.addUser(hrPartner.user)
@@ -32,7 +42,12 @@ class HrPartnerService(
         return hrPartner
     }
 
-    fun updateHrPartner(id: Int, hrPartner: HrPartner) {
+    fun updateHrPartner(id: Int, hrPartner: HrPartner, jwt: String?) {
+        if(!getPermissions(id, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
+        updateHrPartner(id, hrPartner)
+    }
+
+    private fun updateHrPartner(id: Int, hrPartner: HrPartner) {
         val currPartner: HrPartner = this.getHrPartner(id)
         val updated: HrPartner = currPartner.copy(
             organization = hrPartner.organization,
@@ -41,5 +56,34 @@ class HrPartnerService(
         hrPartnerRepository.save(updated)
     }
 
-    fun deleteHrPartner(id: Int) = hrPartnerRepository.deleteById(id)
+    fun getHrsByOrganizationId(id: UUID?) =
+        this.getHrPartners()
+            .filter { it.organization.id == id }
+
+    private fun getHrsIdsByOrganizationId(id: UUID?) =
+        this.getHrsByOrganizationId(id)
+            .map { it.id }
+
+    private fun deleteHrPartner(id: Int) = hrPartnerRepository.deleteById(id)
+
+    fun deleteHrPartner(id: Int, jwt: String?) {
+        if(!getPermissions(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
+        deleteHrPartner(id)
+    }
+
+    fun getPermissions(id: Int?, jwt: String?): Set<Permission> {
+        if(securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
+        val permissions = mutableSetOf(Permission.READ)
+        val user = securityService.getHrPartnerFromJWT(jwt) ?: securityService.getOrganizationFromJWT(jwt) ?: throw UnauthenticatedException()
+        if(user is HrPartner && user.id == id) {
+            permissions.addAll(Permission.allPermissions())
+        }
+        if(user is Organization && getHrsIdsByOrganizationId(user.id).contains(id) && user.verified) {
+            permissions.addAll(Permission.allPermissions())
+        }
+        if(user is Organization && id == null) {
+            permissions.add(Permission.CREATE)
+        }
+        return permissions
+    }
 }

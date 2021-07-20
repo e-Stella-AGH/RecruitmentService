@@ -10,6 +10,7 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferRequest
+import org.malachite.estella.offer.domain.toOfferResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -28,6 +29,11 @@ class OfferService(
         offerRepository.findByOrderByIdDesc()
 
     fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() } as Offer
+
+    fun getOffers(jwt: String?): MutableList<Offer> =
+        this.getOffers()
+            .filter { offer -> offer.creator == securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException() }
+            .toMutableList()
 
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
@@ -78,16 +84,16 @@ class OfferService(
     private fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 
     private fun checkAuth(offer: Offer, jwt: String?): Set<Permission> {
+        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
         val user = securityService.getHrPartnerFromJWT(jwt) ?: securityService.getOrganizationFromJWT(jwt)
         ?: throw UnauthenticatedException()
-        val permissions = mutableSetOf<Permission>()
-        if (user is HrPartner && offer.creator.id == user.id) {
+        val permissions = mutableSetOf(Permission.READ)
+        if (user is HrPartner && offer.creator.id == user.id && user.organization.verified) {
             permissions.addAll(Permission.allPermissions())
         }
-        if (user is Organization && offer.creator.organization.id == user.id) {
+        if (user is Organization && offer.creator.organization.id == user.id && user.verified) {
             permissions.addAll(setOf(Permission.UPDATE, Permission.DELETE))
         }
-        if (securityService.isCorrectApiKey(jwt)) permissions.addAll(Permission.allPermissions())
         return permissions
     }
 }
