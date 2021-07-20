@@ -13,10 +13,7 @@ import java.sql.Date
 import java.time.LocalDate
 import java.util.*
 
-////////
-//// PAYLOADS TO CREATE APPLICATIONS
-////////
-//TODO: This solution with separate payloads is temporary
+//TODO: This solution with separate payloads is good enough for now
 data class ApplicationLoggedInPayload(val files: Set<JobSeekerFilePayload>) {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker) = Application(
         applicationDate = Date.valueOf(LocalDate.now()),
