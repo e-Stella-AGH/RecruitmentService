@@ -33,7 +33,7 @@ class JobSeekerController(
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
-    @PostMapping()
+    @PostMapping
     fun registerJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest):ResponseEntity<JobSeeker> =
         jobSeekerRequest.toJobSeeker()
             .let { jobSeekerService.registerJobSeeker(it) }
@@ -44,12 +44,10 @@ class JobSeekerController(
     fun deleteJobSeeker(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("jobSeekerId") jobSeekerId: Int
-    ): ResponseEntity<Any> {
-        if (!securityService.checkJobSeekerRights(jwt, jobSeekerId)) return OwnResponses.UNAUTH
-        return jobSeekerService.deleteJobSeeker(jobSeekerId).let {
+    ): ResponseEntity<Any> =
+        jobSeekerService.deleteJobSeeker(jobSeekerId, jwt).let {
             ResponseEntity.ok(SuccessMessage)
         }
-    }
 
     //TODO - add endpoint to insert files?
 }

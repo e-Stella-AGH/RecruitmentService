@@ -10,6 +10,7 @@ import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.people.users.DummyUserRepository
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.MailService
+import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.malachite.estella.util.dev.`null`.mailServiceResponse
 import org.malachite.estella.util.jobSeekers
@@ -34,8 +35,8 @@ class JobSeekerServiceTest {
     private val jobSeekerRepository = DummyJobSeekerRepository()
     private val userRepository = DummyUserRepository()
     private val mailServiceMock = mockk<MailService>()
-    private val userService = UserService(userRepository)
-    private val service = JobSeekerService(jobSeekerRepository, userService, mailServiceMock)
+    private val securityServiceMock = mockk<SecurityService>()
+    private val service = JobSeekerService(jobSeekerRepository, mailServiceMock, securityServiceMock)
 
     @BeforeEach
     fun setup() {
