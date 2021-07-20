@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
+import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRepository
@@ -55,12 +56,18 @@ class ApplicationService(
 
     fun setNextStageOfApplication(applicationId: Int) {
         val application = applicationRepository.findById(applicationId).get()
+
+        if (application.status != ApplicationStatus.IN_PROGRESS)
+            throw UnsupportedOperationException("Cannot change stage of resolved application!")
+
         val recruitmentProcessStages = recruitmentProcessService
             .getProcessFromStage(application.stage)
             .stages
             .sortedBy { it.id }
         val index = recruitmentProcessStages.indexOf(application.stage)
-        if (index + 1 < recruitmentProcessStages.size)
+        if (index == recruitmentProcessStages.lastIndex)
+            applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1], status = ApplicationStatus.ACCEPTED))
+        else if (index + 1 < recruitmentProcessStages.size)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))
     }
 
@@ -90,4 +97,11 @@ class ApplicationService(
 
     fun deleteApplication(applicationId: Int) =
         applicationRepository.deleteById(applicationId)
+
+    fun rejectApplication(applicationId: Int) {
+        applicationRepository.findById(applicationId).let {
+            applicationRepository.save(it.get().copy(status = ApplicationStatus.REJECTED))
+        }
+    }
+
 }

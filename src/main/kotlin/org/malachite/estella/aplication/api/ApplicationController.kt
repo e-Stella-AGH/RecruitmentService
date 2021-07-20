@@ -14,6 +14,7 @@ import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.services.ApplicationService
+import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -27,6 +28,7 @@ import java.net.URI
 @RequestMapping("/api/applications")
 class ApplicationController(
     @Autowired private val applicationService: ApplicationService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val securityService: SecurityService
 ) {
 
@@ -82,4 +84,28 @@ class ApplicationController(
             ?: UNAUTH
 
 
+    @CrossOrigin
+    @PutMapping("/{applicationId}/next")
+    fun updateApplicationStage(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?, @PathVariable applicationId: Int): ResponseEntity<Any> =
+        applicationService.getApplicationById(applicationId)
+            .let {
+                recruitmentProcessService.getProcessFromStage(it.stage)
+            }
+            .let {
+                if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+                return applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
+            }
+
+
+    @CrossOrigin
+    @PutMapping("/{applicationId}/reject")
+    fun rejectApplication(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?, @PathVariable applicationId: Int): ResponseEntity<Any> {
+        applicationService.getApplicationById(applicationId).let {
+            recruitmentProcessService.getProcessFromStage(it.stage).let {
+                if (!securityService.checkOfferRights(it.offer, jwt)) return OwnResponses.UNAUTH
+                return applicationService.rejectApplication(applicationId).let { OwnResponses.SUCCESS }
+
+            }
+        }
+    }
 }
