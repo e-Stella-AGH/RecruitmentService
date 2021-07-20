@@ -15,6 +15,11 @@ class DummyUserRepository: UserRepository {
     override fun findById(id: Int): Optional<User> = Optional.ofNullable(users.firstOrNull { it.id == id })
 
     override fun save(user: User): User {
+        if(user.id == null) return user.copy(id = this.users.size).also { users.add(it) }
+        if(user.id!! < users.size) {
+            users[user.id!!] = user
+            return user
+        }
         users.add(user)
         return user
     }

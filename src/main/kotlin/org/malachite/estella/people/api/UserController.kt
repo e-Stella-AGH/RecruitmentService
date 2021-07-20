@@ -85,10 +85,8 @@ class UserController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody userRequest: UserRequest
     ): ResponseEntity<Any> =
-        securityService.getUserFromJWT(jwt)
-            ?.let {  userService.updateUser(it.id!!, it) }
-            ?.let { OwnResponses.SUCCESS }
-            ?: OwnResponses.UNAUTH
+        userService.updateUser(userRequest, jwt)
+            .let { OwnResponses.SUCCESS }
 
 }
 
@@ -97,8 +95,6 @@ data class UserRequest(
     val lastName: String,
     val mail: String,
     val password: String
-) {
-    fun toUser() = User(null, firstName, lastName, mail, password)
-}
+)
 
 data class LoginRequest(val mail: String, val password: String)

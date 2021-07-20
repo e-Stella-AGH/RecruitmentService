@@ -11,7 +11,7 @@ data class User(
     val firstName: String, val lastName: String,
     @Column(unique = true) val mail: String
 ) {
-    public constructor(id: Int?, firstName: String, lastName: String, mail: String, password: String?) : this(
+    constructor(id: Int?, firstName: String, lastName: String, mail: String, password: String?) : this(
         id,
         firstName,
         lastName,
@@ -27,6 +27,7 @@ data class User(
             val passwordEncoder = BCryptPasswordEncoder()
             field = passwordEncoder.encode(value)
         }
+
 
     fun comparePassword(password: String): Boolean =
         BCryptPasswordEncoder().matches(password, this.password)
