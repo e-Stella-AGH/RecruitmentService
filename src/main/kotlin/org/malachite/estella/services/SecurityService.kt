@@ -2,23 +2,29 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
+import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
-import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.IllegalArgumentException
 import java.util.*
-import javax.servlet.http.Cookie
-import javax.servlet.http.HttpServletResponse
 
 @Service
 class SecurityService(
     @Autowired val userService: UserService,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
-    @Autowired val hrPartnerRepository: HrPartnerRepository
+    @Autowired val hrPartnerRepository: HrPartnerRepository,
+    @Autowired val organizationRepository: OrganizationRepository,
+    @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
     private val authSecret = "secret"
@@ -29,6 +35,7 @@ class SecurityService(
     private val mailKey = "mail"
     private val firstNameKey = "firstName"
     private val lastNameKey = "lastName"
+    private val userTypeKey = "userType"
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
@@ -39,6 +46,7 @@ class SecurityService(
             .claim(mailKey, user.mail)
             .claim(firstNameKey, user.firstName)
             .claim(lastNameKey, user.lastName)
+            .claim(userTypeKey, user.getUserType())
             .signWith(SignatureAlgorithm.HS512, authSecret)
             .compact()
     }
@@ -77,10 +85,14 @@ class SecurityService(
         return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
     }
 
-    fun getHrPartnerFromJWT(jwt: String?): HrPartner? {
-        return getUserFromJWT(jwt)?.let { hrPartnerRepository.findById(it.id!!).orElse(null) }
-    }
+    fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
+        getUserFromJWT(jwt)
+            ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
+    fun getOrganizationFromJWT(jwt: String?): Organization? =
+        getUserFromJWT(jwt)
+            ?.let { it.id }
+            ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)
@@ -88,7 +100,6 @@ class SecurityService(
         if (refreshJWT == null || authJWT == null) return null
         return Pair(authJWT, refreshJWT)
     }
-
 
     fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
@@ -100,5 +111,37 @@ class SecurityService(
 
     fun checkUserRights(jwt: String?, userId: Int): Boolean =
         getUserFromJWT(jwt)?.let { it.id == userId } ?: false
+
+    fun checkJobSeekerRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getJobSeekerFromJWT(jwt) != null
+
+    fun checkHrRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
+
+    fun checkOrganizationRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getOrganizationFromJWT(jwt) != null
+
+    fun checkOfferRights(offer: Offer, jwt: String?): Boolean {
+        getUserFromJWT(jwt).let {
+            return when (it!!.getUserType()) {
+                "organization" ->
+                    checkOrganizationRights(jwt, offer.creator.organization.user.id!!)
+                "hr" ->
+                    checkHrRights(jwt, offer.creator.user.id!!)
+                else ->
+                    false
+            }
+        }
+    }
+
+    private fun User.getUserType(): String =
+        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" }
+            ?: hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" }
+            ?: organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" }
+            ?: throw InvalidUserException()
+
+    fun isCorrectApiKey(apiKey: String?): Boolean =
+        apiKey != null && apiKey == API_KEY
+
 
 }

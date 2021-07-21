@@ -1,18 +1,23 @@
-package org.malachite.estella.people
+package org.malachite.estella.people.users
 
+import com.beust.klaxon.Klaxon
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
+import java.util.*
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class UserIntegration : BaseIntegration() {
@@ -68,41 +73,85 @@ class UserIntegration : BaseIntegration() {
     @Test
     @Order(6)
     fun `should update created User`() {
-        val user = getUsers().find { it.mail == mail }!!
-
-        val response = updateUser(user.id!!)
+        val response = updateUser()
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val updatedUser = getUserById(user.id!!)
+        val updatedUser = getUserById()
         expectThat(updatedUser.firstName == newName)
     }
 
     @Test
     @Order(7)
     fun `should return Bad Request with message that user is unauthenticated`() {
-        val response = updateUser(1000000)
-        withStatusAndMessage(response, "Unauthenticated", HttpStatus.BAD_REQUEST)
+        val response = updateUser("123456")
+        withStatusAndMessage(response, "Unauthenticated", HttpStatus.UNAUTHORIZED)
     }
 
     @Test
     @Order(8)
-    fun `should delete user`() {
-        val user = getUsers().find { it.mail == mail }!!
-        val response = httpRequest(
-            path = "/api/users/${user.id}",
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
-            method = HttpMethod.DELETE
-        )
-        withStatusAndMessage(response, "Success", HttpStatus.OK)
-
-        val deletedUserResponse = getUserAsResponse(user.id!!)
-        withStatusAndMessage(deletedUserResponse, "There is no such user", HttpStatus.BAD_REQUEST)
+    fun `should return user type of job seeker in jwt`() {
+        val decoded = getJWTFor("carthago@delenda.est")
+        expect {
+            that(decoded.firstName).isEqualTo("Marcus")
+            that(decoded.lastName).isEqualTo("Cato")
+            that(decoded.mail).isEqualTo("carthago@delenda.est")
+            that(decoded.userType).isEqualTo("job_seeker")
+        }
     }
+
+    @Test
+    @Order(9)
+    fun `should return user type of hr in jwt`() {
+        val decoded = getJWTFor("alea@iacta.est")
+        expect {
+            that(decoded.firstName).isEqualTo("Gaius")
+            that(decoded.lastName).isEqualTo("Caesar")
+            that(decoded.mail).isEqualTo("alea@iacta.est")
+            that(decoded.userType).isEqualTo("hr")
+        }
+    }
+
+    @Test
+    @Order(10)
+    fun `expired jwt token`() {
+        val response = getUserAsResponse(expiredJWT)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+        expectThat((response.body as Map<String,Any>)["message"]).isEqualTo("Your token is expired please refresh it or login again")
+    }
+
+    private fun getJWTFor(mail: String): UserDataFromJWT {
+        val response = httpRequest(
+            path = "/api/users/login",
+            method = HttpMethod.POST,
+            body = mapOf(
+                "mail" to mail,
+                "password" to "a"
+            )
+        )
+        val authHeader = response.headers?.get("X-Auth-Token")
+        expectThat(authHeader).isNotNull()
+        val decoded = decodeJwt(authHeader?.get(0) ?: "")
+        expectThat(decoded).isNotNull()
+        return decoded!!
+    }
+
+    private fun decodeJwt(jwt: String): UserDataFromJWT? {
+        val parts = jwt.split(".")
+        expectThat(parts.size).isGreaterThanOrEqualTo(2)
+        return Klaxon().parse(String(Base64.getDecoder().decode(parts[1])))
+    }
+
+    private data class UserDataFromJWT(
+        val firstName: String,
+        val lastName: String,
+        val userType: String,
+        val mail: String
+    )
 
     private fun addUser(): Response {
         return httpRequest(
-            path = "/api/users/adduser",
+            path = "/api/jobseekers",
             method = HttpMethod.POST,
             body = mapOf(
                 "firstName" to firstName,
@@ -113,11 +162,11 @@ class UserIntegration : BaseIntegration() {
         )
     }
 
-    private fun updateUser(id: Int): Response {
+    private fun updateUser(authToken:String = getAuthToken()): Response {
         return httpRequest(
-            path = "/api/users/$id",
+            path = "/api/users",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
+            headers = mapOf(EStellaHeaders.jwtToken to authToken),
             body = mapOf(
                 "firstName" to newName,
                 "lastName" to lastName,
@@ -139,8 +188,8 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserById(userId: Int): User {
-        val response = getUserAsResponse(userId)
+    private fun getUserById(): User {
+        val response = getUserAsResponse()
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body.let {
             it as Map<String, Any>
@@ -148,10 +197,11 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserAsResponse(userId: Int): Response {
+    private fun getUserAsResponse(jwt:String = getAuthToken()): Response {
         return httpRequest(
-            path = "/api/users/$userId",
-            method = HttpMethod.GET
+            path = "/api/users/loggedInUser",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to jwt)
         )
     }
 
@@ -179,5 +229,7 @@ class UserIntegration : BaseIntegration() {
     private val randomPassword = "random-password"
 
     private val newName = "newName"
+
+    private val expiredJWT = "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiI1IiwiaWF0IjoxNjI2NTI2NjY3LCJleHAiOjE2MjY1Mjc1NjcsIm1haWwiOiJwcmluY2lwdXNAcm9tYS5jb20iLCJmaXJzdE5hbWUiOiJPY3RhdmlhbiIsImxhc3ROYW1lIjoiQXVndXN0dXMiLCJ1c2VyVHlwZSI6ImhyIn0.DN9JnPkTzvlHFOOH8zjYrXkeenY4qUYDnoy5o320ZcIQkgwDVVqfNd4LEzlEtGxbStjaG_XcykvJsLtT3guIZg"
 
 }

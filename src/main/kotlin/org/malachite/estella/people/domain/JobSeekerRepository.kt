@@ -6,4 +6,7 @@ import java.util.*
 interface JobSeekerRepository {
     fun findByUserId(user_id: Int): Optional<JobSeeker>
     fun save(updatedJobSeeker: JobSeeker): JobSeeker
+    fun findAll(): MutableIterable<JobSeeker>
+    fun findByUserMail(mail:String):Optional<JobSeeker>
+    fun deleteById(id: Int)
 }

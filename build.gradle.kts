@@ -20,6 +20,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -34,6 +35,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.mockk:mockk:1.9.3")
     testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
+    testImplementation("org.apache.httpcomponents:httpclient:4.5.13")
+
 
 }
 
@@ -47,3 +50,9 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.register<Copy>("installGitHook") {
+    from(File(rootProject.rootDir,"pre-commit"))
+    into(File(rootProject.rootDir,".git/hooks"))
+}
+tasks.getByPath(":build").dependsOn("installGitHook")

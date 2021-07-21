@@ -22,7 +22,8 @@ class UserController(
     @Autowired private val securityService: SecurityService
 ) {
 
-    private val loginExposedHeaders: String = arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
+    private val loginExposedHeaders: String =
+        arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
 
     @CrossOrigin
     @GetMapping()
@@ -65,52 +66,29 @@ class UserController(
     fun refresh(
         @PathVariable userId: Int,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
-    ): ResponseEntity<Message> {
+    ): ResponseEntity<Any> {
         jwt ?: return OwnResponses.UNAUTH
         return securityService.refreshToken(jwt, userId)
-            ?.let { ResponseEntity.ok()
+            ?.let {
+                ResponseEntity.ok()
                     .header(EStellaHeaders.authToken, it)
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
-                    .body(SuccessMessage) }
-            ?: ResponseEntity.status(404).body((Message("Failed during refreshing not found user")))
+                    .body(SuccessMessage)
+            }
+            ?: ResponseEntity.status(404).body((Message("Failed during refreshing; user not found")))
     }
 
-    @CrossOrigin
-    @PostMapping("/adduser")
-    fun addUser(@RequestBody user: UserRequest): ResponseEntity<Message> =
-        userService.registerUser(user.toUser())
-            .let {
-                ResponseEntity(Message("User Registered"), HttpStatus.CREATED)
-            }
 
     @CrossOrigin
-    @GetMapping("/{userId}")
-    fun getUser(@PathVariable userId: Int): ResponseEntity<User> =
-        ResponseEntity(userService.getUser(userId), HttpStatus.OK)
-
-
-    @CrossOrigin
-    @PutMapping("/{userId}")
+    @PutMapping()
     fun updateUser(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @PathVariable("userId") userId: Int,
-        @RequestBody user: UserRequest
-    ): ResponseEntity<Message> {
-        if (!securityService.checkUserRights(jwt, userId)) return OwnResponses.UNAUTH
-        userService.updateUser(userId, user.toUser())
-        return OwnResponses.SUCCESS
-    }
-
-    @CrossOrigin
-    @DeleteMapping("/{userId}")
-    fun deleteUser(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @PathVariable("userId") userId: Int
-    ): ResponseEntity<Message> {
-        if (!securityService.checkUserRights(jwt, userId)) return OwnResponses.UNAUTH
-        userService.deleteUser(userId)
-        return ResponseEntity(SuccessMessage, HttpStatus.OK)
-    }
+        @RequestBody userRequest: UserRequest
+    ): ResponseEntity<Any> =
+        securityService.getUserFromJWT(jwt)
+            ?.let {  userService.updateUser(it.id!!, it) }
+            ?.let { OwnResponses.SUCCESS }
+            ?: OwnResponses.UNAUTH
 
 }
 

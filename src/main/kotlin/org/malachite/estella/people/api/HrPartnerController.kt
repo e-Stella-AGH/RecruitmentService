@@ -1,13 +1,13 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
+import org.malachite.estella.offer.domain.toOfferResponse
 import org.malachite.estella.services.HrPartnerService
+import org.malachite.estella.services.OfferService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,37 +18,56 @@ import java.net.URI
 
 @RestController
 @RequestMapping("/api/hrpartners")
-class HrPartnerController(@Autowired private val hrPartnerService: HrPartnerService,
-                          @Autowired private val organizationService: OrganizationService,
-                          @Autowired private val securityService:SecurityService
+class HrPartnerController(
+    @Autowired private val hrPartnerService: HrPartnerService,
+    @Autowired private val organizationService: OrganizationService,
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val offerService: OfferService
 ) {
     @CrossOrigin
     @GetMapping
-    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> {
-        return ResponseEntity(hrPartnerService.getHrPartners(), HttpStatus.OK)
-    }
+    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> =
+        ResponseEntity.ok(hrPartnerService.getHrPartners())
+
 
     @CrossOrigin
     @GetMapping("/{hrPartnerId}")
-    fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> {
-        val partner: HrPartner = hrPartnerService.getHrPartner(hrPartnerId)
+    fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
+        hrPartnerService.getHrPartner(hrPartnerId).let { ResponseEntity.ok(it) }
 
-        return ResponseEntity(partner, HttpStatus.OK)
-    }
 
     @CrossOrigin
-    @PostMapping("/addHrPartner")
-    fun addHrPartner(@RequestBody hrPartnerRequest: HrPartnerRequest,
-                     @RequestHeader(EStellaHeaders.jwtToken) jwt:String?): ResponseEntity<Message> {
-        val organizationUser = securityService.getUserFromJWT(jwt)
-            ?:return OwnResponses.UNAUTH
-        val organization = organizationService.getOrganizationByUser(organizationUser)
-        val saved: HrPartner = hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(organization))
-        return ResponseEntity.created(URI("/api/hrpartners/" + saved.id)).body(SuccessMessage)
-    }
+    @GetMapping("/offers")
+    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> =
+        securityService.getHrPartnerFromJWT(jwt)
+            ?.let { offerService.getHrPartnerOffers(it) }
+            ?.let { ResponseEntity(it, HttpStatus.OK) }
+            ?: ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
+
+
+    @CrossOrigin
+    @PostMapping()
+    fun addHrPartner(
+        @RequestBody hrPartnerRequest: HrPartnerRequest,
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+    ): ResponseEntity<Any> =
+        securityService.getUserFromJWT(jwt)
+            ?.let { organizationService.getOrganizationByUser(it) }
+            ?.let { hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(it)) }
+            ?.let { OwnResponses.CREATED(it) }
+            ?: OwnResponses.UNAUTH
+
+    @CrossOrigin
+    @DeleteMapping("/{hrPartnerId}")
+    fun deleteHrPartner(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable("hrPartnerId") hrId: Int
+    ): ResponseEntity<Any> =
+        if (!securityService.checkHrRights(jwt, hrId)) OwnResponses.UNAUTH
+        else hrPartnerService.deleteHrPartner(hrId).let { OwnResponses.SUCCESS }
 }
 
-data class HrPartnerRequest(val mail:String){
-    fun toHrPartner(organization: Organization):HrPartner =
-        HrPartner(null,organization, User(null,"","",mail))
+data class HrPartnerRequest(val mail: String) {
+    fun toHrPartner(organization: Organization): HrPartner =
+        HrPartner(null, organization, User(null, "", "", mail))
 }

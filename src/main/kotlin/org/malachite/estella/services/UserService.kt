@@ -1,5 +1,6 @@
 package org.malachite.estella.services
 
+import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
@@ -13,15 +14,10 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository,
-    @Autowired private val mailService: MailService
-) {
-    private fun withUserNotFound(fn: () -> Any) =
-        try {
-            fn()
-        } catch (ex: NoSuchElementException) {
-            throw UserNotFoundException()
-        }
+    @Autowired private val userRepository: UserRepository
+): EStellaService<User>() {
+
+    override val throwable: Exception = UserNotFoundException()
 
     fun generatePassword(length:Int = 15):String {
         val alphanumeric = ('A'..'Z') + ('a'..'z') + ('0'..'9')
@@ -31,20 +27,18 @@ class UserService(
     }
 
     fun getUsers(): MutableIterable<User> =
-        withUserNotFound { userRepository.findAll() } as MutableIterable<User>
+        userRepository.findAll()
 
     fun getUser(id: Int): User =
-        withUserNotFound { userRepository.findById(id).get() } as User
+        withExceptionThrower { userRepository.findById(id).get() } as User
 
     fun addUser(user: User): User =
-        withUserNotFound {
-            try {
-                userRepository.save(user)
-            } catch (ex: DataIntegrityViolationException) {
-                ex.printStackTrace()
-                throw UserAlreadyExistsException()
-            }
-        } as User
+        try {
+            userRepository.save(user)
+        } catch (ex: DataIntegrityViolationException) {
+            ex.printStackTrace()
+            throw UserAlreadyExistsException()
+        }
 
     fun updateUser(id: Int, user: User) {
         val currUser: User = getUser(id)
@@ -55,15 +49,8 @@ class UserService(
         updated.password = user.password
     }
 
-    fun deleteUser(id: Int) = withUserNotFound { userRepository.deleteById(id) } as Optional<User>
+    fun deleteUser(id: Int) = withExceptionThrower { userRepository.deleteById(id) }
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
-
-    fun registerUser(user:User):User =
-        addUser(user).let {
-            mailService.sendRegisterMail(user)
-            user
-        }
-
 
 }

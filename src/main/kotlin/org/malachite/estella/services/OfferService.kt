@@ -1,40 +1,61 @@
 package org.malachite.estella.services
 
-import org.malachite.estella.commons.models.offers.DesiredSkill
-import org.malachite.estella.commons.models.offers.Offer
-import org.malachite.estella.offer.domain.OfferRepository
-import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
+import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.offer.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class OfferService(@Autowired private val offerRepository: OfferRepository) {
+class OfferService(
+    @Autowired private val offerRepository: OfferRepository,
+    @Autowired private val desiredSkillService: DesiredSkillService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+) : EStellaService<Offer>() {
 
-    fun getOffers(): MutableIterable<Offer> = offerRepository.findByOrderByIdDesc()
+    override val throwable: Exception = OfferNotFoundException()
 
-    fun getOffer(id: Int): Offer = offerRepository.findById(id).get()
+    fun getOffers(): MutableIterable<Offer> =
+        offerRepository.findByOrderByIdDesc()
 
-    fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> = getOffer(id).skills.toMutableSet()
+    fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() }
+
+    fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
+        getOffer(id).skills.toMutableSet()
+
+    fun addOffer(offerRequest: OfferRequest, hrPartner: HrPartner): Offer =
+        this.addOffer(offerRequest.toOffer(hrPartner, desiredSkillService))
+            .also { recruitmentProcessService.addBasicProcess(it) }
 
     fun addOffer(offer: Offer): Offer = offerRepository.save(offer)
 
     fun updateOffer(id: Int, offer: Offer) {
         val currOffer: Optional<Offer> = offerRepository.findById(id)
         if (currOffer.isPresent) {
-            val updated: Offer = currOffer.get().copy(name = offer.name,
-                    description = offer.description,
-                    position = offer.position,
-                    minSalary = offer.minSalary,
-                    maxSalary = offer.maxSalary,
-                    localization = offer.localization,
-                    skills = offer.skills
+            val updated: Offer = currOffer.get().copy(
+                name = offer.name,
+                description = offer.description,
+                position = offer.position,
+                minSalary = offer.minSalary,
+                maxSalary = offer.maxSalary,
+                localization = offer.localization,
+                skills = offer.skills
             )
-
             offerRepository.save(updated)
+        } else {
+            throw OfferNotFoundException()
         }
     }
 
-    fun deleteOffer(id: Int) = offerRepository.deleteById(id)
+    fun updateOffer(id: Int, offerRequest: OfferRequest, hrPartner: HrPartner) {
+        this.updateOffer(id, offerRequest.toOffer(hrPartner, desiredSkillService))
+    }
 
+    fun getHrPartnerOffers(hrPartner: HrPartner): List<OfferResponse> = getOffers()
+            .filter { offer -> offer.creator == hrPartner }
+            .map { offer -> offer.toOfferResponse() }
+
+    fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 }
