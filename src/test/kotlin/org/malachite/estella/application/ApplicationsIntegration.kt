@@ -265,5 +265,4 @@ class ApplicationsIntegration : BaseIntegration() {
     private val password = "123"
     private val hrPartner = hrPartners[0]
 
-
 }

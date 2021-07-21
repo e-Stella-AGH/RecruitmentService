@@ -5,6 +5,9 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.offer.domain.OfferNotFoundException
+import org.malachite.estella.offer.domain.OfferRepository
+import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.UnsupportedOperationException
