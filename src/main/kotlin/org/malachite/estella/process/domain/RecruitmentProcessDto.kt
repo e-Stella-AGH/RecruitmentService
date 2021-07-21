@@ -18,14 +18,14 @@ data class RecruitmentProcessDto(
     val quizzes: Set<Quiz>,
     val tasks: Set<TaskDto>
 )
-fun RecruitmentProcess.toDto() = RecruitmentProcessDto(
+fun RecruitmentProcess.toRecruitmentProcessDto() = RecruitmentProcessDto(
     id,
     startDate,
     endDate,
     offer.toOfferResponse(),
     stages,
     quizzes,
-    tasks.map { it.toDto() }.toSet()
+    tasks.map { it.toTaskDto() }.toSet()
 )
 
 data class TaskDto(
@@ -35,7 +35,7 @@ data class TaskDto(
     val timeLimit: Int,
     val deadline: Timestamp
 )
-fun Task.toDto() = TaskDto(
+fun Task.toTaskDto() = TaskDto(
     id,
     tests.toString(),
     description.toString(),

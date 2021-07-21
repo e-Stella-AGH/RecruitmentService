@@ -12,6 +12,7 @@ import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
@@ -28,7 +29,7 @@ class ProcessIntegration: BaseIntegration() {
         val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(process).isNotNull()
         process!!
-        val newStages = listOf("APPLIED", "HR_INTERVIEW", "HR_INTERVIEW", "HR_INTERVIEW", "TECHNICAL_INTERVIEW")
+        val newStages = listOf("APPLIED", "HR_INTERVIEW", "HR_INTERVIEW", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
         val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
         expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.OK)
         val newProcess = getProcesses().firstOrNull { it.id == process.id }
@@ -39,6 +40,7 @@ class ProcessIntegration: BaseIntegration() {
             StageType.HR_INTERVIEW,
             StageType.HR_INTERVIEW,
             StageType.TECHNICAL_INTERVIEW,
+            StageType.ENDED
         ))
     }
 
@@ -48,7 +50,7 @@ class ProcessIntegration: BaseIntegration() {
         val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(process).isNotNull()
         process!!
-        val newStages = listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW")
+        val newStages = listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
         val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
         expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.OK)
         val newProcess = getProcesses().firstOrNull { it.id == process.id }
@@ -57,11 +59,87 @@ class ProcessIntegration: BaseIntegration() {
             StageType.APPLIED,
             StageType.HR_INTERVIEW,
             StageType.TECHNICAL_INTERVIEW,
+            StageType.ENDED
         ))
     }
 
+    @Test
+    @Order(3)
+    fun `should throw exception, when first stage is not applied`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val newStages = listOf("HR_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
+        val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
+        expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        expect {
+            val message = (updatedResponse.body as Map<String, Any>)["message"]
+            that(message).isEqualTo("Stages list must start with APPLIED and end with ENDED")
+        }
+    }
+
+    @Test
+    @Order(4)
+    fun `should throw exception, when last stage is not ended`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val newStages = listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW")
+        val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
+        expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        expect {
+            val message = (updatedResponse.body as Map<String, Any>)["message"]
+            that(message).isEqualTo("Stages list must start with APPLIED and end with ENDED")
+        }
+    }
+
+    @Test
+    @Order(5)
+    fun `should throw exception, when there's no applied, nor ended in list`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val newStages = listOf("HR_INTERVIEW", "TECHNICAL_INTERVIEW")
+        val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
+        expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        expect {
+            val message = (updatedResponse.body as Map<String, Any>)["message"]
+            that(message).isEqualTo("Stages list must start with APPLIED and end with ENDED")
+        }
+    }
+
+    @Test
+    @Order(6)
+    fun `should throw exception, when there's more than one applied`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val newStages = listOf("APPLIED", "HR_INTERVIEW", "APPLIED", "TECHNICAL_INTERVIEW", "ENDED")
+        val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
+        expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        expect {
+            val message = (updatedResponse.body as Map<String, Any>)["message"]
+            that(message).isEqualTo("There must be only one APPLIED and ENDED stage")
+        }
+    }
+
+    @Test
+    @Order(6)
+    fun `should throw exception, when there's more than one ended`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val newStages = listOf("APPLIED", "HR_INTERVIEW", "ENDED", "TECHNICAL_INTERVIEW", "ENDED")
+        val updatedResponse = updateProcesses(process.id, newStages, process.offer.creator.user.mail)
+        expectThat(updatedResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        expect {
+            val message = (updatedResponse.body as Map<String, Any>)["message"]
+            that(message).isEqualTo("There must be only one APPLIED and ENDED stage")
+        }
+    }
+
     private fun getHrPartnerMail() =
-        hrRepository.findAll().toList()[0].user.mail
+        hrRepository.findAll().toList()[1].user.mail
 
     private fun getProcesses(): List<RecruitmentProcessDto> {
         val response = httpRequest(
