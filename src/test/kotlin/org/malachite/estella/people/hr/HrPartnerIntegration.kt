@@ -181,7 +181,7 @@ class HrPartnerIntegration : BaseIntegration() {
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
 
-    private val legitHrPartner = hrPartners[1]
+    private val legitHrPartner = hrPartners[0]
     private val legitHrPartnerPassword = "a"
 
     private val randomMail = "randommail@user.pl"

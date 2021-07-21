@@ -34,12 +34,12 @@ class OffersIntegration: BaseIntegration() {
         EmailServiceStub.stubForSendEmail()
 
         val hrPartner = getHrPartner()
-        setNewPassword("password123")
+//        setNewPassword("password123")
 
         val response = httpRequest(
             path = "/api/offers",
             method = HttpMethod.POST,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPartnerPassword)),
             body = mapOf(
                 "name" to name,
                 "description" to description,
@@ -78,7 +78,7 @@ class OffersIntegration: BaseIntegration() {
         val response = httpRequest(
             path = "/api/offers/${offer.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPartnerPassword)),
             body = mapOf(
                 "name" to name,
                 "description" to description,
@@ -117,19 +117,12 @@ class OffersIntegration: BaseIntegration() {
         val response = httpRequest(
             path = "/api/offers/${offer.id}",
             method = HttpMethod.DELETE,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123"))
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPartnerPassword))
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         println(getOffers())
         val deletedOffer = getOffers().firstOrNull { it.id == offer.id }
         expectThat(deletedOffer).isNull()
-    }
-
-    private fun setNewPassword(password: String) {
-        getHrPartner().user.let {
-            it.password = password
-            userRepository.save(it)
-        }
     }
 
     private fun getHrPartner() = hrPartnerService.getHrPartners().first()
@@ -164,6 +157,7 @@ class OffersIntegration: BaseIntegration() {
     private val organizationMail = "organization@hrpartner.pl"
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
+    private val hrPartnerPassword = "a"
 
     private val description = "description"
     private val position = "position"
