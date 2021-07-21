@@ -31,18 +31,18 @@ class OrganizationService(
         return organization.copy(user = user).let { organizationRepository.save(it) }
     }
 
-    fun updateOrganization(id: UUID, organization: Organization, jwt: String?) {
+    fun updateOrganization(id: UUID, organization: Organization, jwt: String?) =
         if(!checkRights(id, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        updateOrganization(id, organization)
-    }
+        else updateOrganization(id, organization)
+
 
     private fun updateOrganization(id: UUID, organization: Organization) =
         getOrganization(id).copy(name = organization.name, verified = organization.verified).let { organizationRepository.save(it) }
 
-    fun deleteOrganization(id: UUID, jwt: String?) {
+    fun deleteOrganization(id: UUID, jwt: String?) =
         if(!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        deleteOrganization(id)
-    }
+        else deleteOrganization(id)
+
 
     private fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
 

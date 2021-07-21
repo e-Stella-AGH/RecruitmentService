@@ -47,9 +47,8 @@ class JobSeekerService(
         securityService.getJobSeekerFromJWT(jwt)
             ?.let {
                 if(id == it.id) return Permission.allPermissions()
-                else throw UnauthenticatedException()
-            }
-            ?: throw UnauthenticatedException()
+                else null
+            } ?: throw UnauthenticatedException()
     }
 
     fun getOrCreateJobSeeker(jobSeeker: JobSeeker):JobSeeker =

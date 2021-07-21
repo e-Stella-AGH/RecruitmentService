@@ -26,11 +26,6 @@ class OfferService(
 
     fun getOffer(id: Int): Offer = withExceptionThrower { offerRepository.findById(id).get() }
 
-    fun getOffers(jwt: String?): MutableList<Offer> =
-        this.getOffers()
-            .filter { offer -> offer.creator == securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException() }
-            .toMutableList()
-
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
 

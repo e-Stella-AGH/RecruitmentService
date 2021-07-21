@@ -212,7 +212,7 @@ class UserIntegration : BaseIntegration() {
                 "mail" to userMail,
                 "password" to userPassword
             )
-        ).also { println(it) }
+        )
     }
 
     private fun getAuthToken():String =

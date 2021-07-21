@@ -63,12 +63,12 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/hrpartners")
-    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<HrPartnerResponse>> =
+    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<HrPartnerResponse>> =
         hrPartnerService.getHrPartners()
             .filter { it.organization == securityService.getOrganizationFromJWT(jwt) }
             .map { it.toResponse() }
-            .toMutableList()
-            .let { ResponseEntity(it, HttpStatus.OK) }
+            .toList()
+            .let { ResponseEntity.ok(it) }
 
     fun OrganizationRequest.toOrganization() = Organization(
         null, name,

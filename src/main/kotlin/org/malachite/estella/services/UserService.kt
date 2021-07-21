@@ -44,10 +44,10 @@ class UserService(
             throw UserAlreadyExistsException()
         }
 
-    fun updateUser(user: UserRequest, jwt: String?) {
+    fun updateUser(userRequest: UserRequest, jwt: String?) {
         val originalUser = securityService.getUserFromJWT(jwt) ?: throw UnauthenticatedException()
         if (!getPermissions(originalUser.id!!, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        updateUser(originalUser.id, user)
+        updateUser(originalUser.id, userRequest)
     }
 
     private fun updateUser(id: Int, user: UserRequest) {
