@@ -7,7 +7,9 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
@@ -17,10 +19,13 @@ import strikt.assertions.isNotNull
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ProcessIntegration: BaseIntegration() {
 
+    @Autowired
+    private lateinit var hrRepository: HrPartnerRepository
+
     @Test
     @Order(1)
     fun `should be able to update list of stages`() {
-        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == "alea@iacta.est" }
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(process).isNotNull()
         process!!
         val newStages = listOf("APPLIED", "HR_INTERVIEW", "HR_INTERVIEW", "HR_INTERVIEW", "TECHNICAL_INTERVIEW")
@@ -40,7 +45,7 @@ class ProcessIntegration: BaseIntegration() {
     @Test
     @Order(2)
     fun `should be able to delete stage`() {
-        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == "alea@iacta.est" }
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(process).isNotNull()
         process!!
         val newStages = listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW")
@@ -54,6 +59,9 @@ class ProcessIntegration: BaseIntegration() {
             StageType.TECHNICAL_INTERVIEW,
         ))
     }
+
+    private fun getHrPartnerMail() =
+        hrRepository.findAll().toList()[0].user.mail
 
     private fun getProcesses(): List<RecruitmentProcessDto> {
         val response = httpRequest(
