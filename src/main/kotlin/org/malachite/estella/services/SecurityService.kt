@@ -143,5 +143,4 @@ class SecurityService(
     fun isCorrectApiKey(apiKey: String?): Boolean =
         apiKey != null && apiKey == API_KEY
 
-
 }

@@ -3,8 +3,6 @@ package org.malachite.estella.commons.loader
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import java.sql.Clob
-import java.sql.Date
-import java.util.*
 import javax.sql.rowset.serial.SerialClob
 
 object FakeOffers {
@@ -21,6 +19,7 @@ object FakeOffers {
             )
         }
     }
+
 
     fun getOffers(hrPartners: List<HrPartner>, desiredSkills: List<DesiredSkill>): List<Offer> {
         val payloads = listOf<OfferPayload>(
@@ -55,5 +54,4 @@ object FakeOffers {
             offerPayload.toOffer(hrPartners[index % hrPartners.size])
         }
     }
-
 }
