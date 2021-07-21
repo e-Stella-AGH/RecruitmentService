@@ -17,10 +17,10 @@ data class RecruitmentProcess(
                 name = "recruitment_process_quizes",
                 joinColumns = [JoinColumn(name = "recruitment_processes_id")],
                 inverseJoinColumns = [JoinColumn(name = "quizes_id")]
-        ) val quizzes: Set<Quiz>?,
+        ) val quizzes: Set<Quiz>,
         @ManyToMany @JoinTable(
                 name = "recruitment_process_tasks",
                 joinColumns = [JoinColumn(name = "recruitment_processes_id")],
                 inverseJoinColumns = [JoinColumn(name = "tasks_id")]
-        ) val tasks: Set<Task>?,
+        ) val tasks: Set<Task>,
 )

@@ -20,11 +20,6 @@ val offersWithNullProcess = FakeOffers.getOffers(hrPartners, desiredSkills)
         offer.copy(id = index)
     }
 
-val offersWithProcess = FakeOffers.getOffersWithProcesses(hrPartners, desiredSkills)
-        .mapIndexed { index, offer ->
-            offer.copy(id = index)
-        }
-
 val users = FakeUsers.users.mapIndexed { index, user -> user.copy(id = index) }
 
 val jobSeekers = FakeLoader.getFakeJobSeekers()

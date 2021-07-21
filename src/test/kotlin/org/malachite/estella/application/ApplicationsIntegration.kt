@@ -168,7 +168,6 @@ class ApplicationsIntegration : BaseIntegration() {
                 "files" to setOf<JobSeekerFilePayload>()
             )
         )
-        println(response.headers)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.HR_INTERVIEW)

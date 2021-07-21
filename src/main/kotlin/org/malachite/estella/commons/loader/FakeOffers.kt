@@ -56,15 +56,4 @@ object FakeOffers {
         }
     }
 
-    fun getOffersWithProcesses(hrPartners: List<HrPartner>, desiredSkills: List<DesiredSkill>): List<Offer> {
-        return getOffers(hrPartners, desiredSkills).map {
-                val stages = listOf(
-                        RecruitmentStage(null, StageType.APPLIED),
-                        RecruitmentStage(null, StageType.TECHNICAL_INTERVIEW),
-                        RecruitmentStage(null, StageType.ENDED),
-                )
-                val process = RecruitmentProcess(null, Date(System.currentTimeMillis()), null, it, stages, null, null)
-                it.copy(recruitmentProcess = process)
-        }
-    }
 }
