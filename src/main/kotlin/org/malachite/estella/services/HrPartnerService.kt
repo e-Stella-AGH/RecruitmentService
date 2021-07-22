@@ -36,5 +36,7 @@ class HrPartnerService(
 
     }
 
+
+
     fun deleteHrPartner(id: Int) = hrPartnerRepository.deleteById(id)
 }

@@ -5,13 +5,12 @@ import org.malachite.estella.commons.models.people.User
 data class UserDTO(val id: Int,
                    val firstName: String,
                    val lastName: String,
-                   val mail: String) {
-    companion object {
-        fun fromUser(user: User) = UserDTO(
-                user.id!!,
-                user.firstName,
-                user.lastName,
-                user.mail
-        )
-    }
-}
+                   val mail: String)
+
+fun User.toUserDTO():UserDTO =
+    UserDTO(
+        this.id!!,
+        this.firstName,
+        this.lastName,
+        this.mail
+    )

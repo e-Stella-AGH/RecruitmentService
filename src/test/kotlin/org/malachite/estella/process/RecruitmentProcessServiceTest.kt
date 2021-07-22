@@ -10,11 +10,13 @@ import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.process.domain.InvalidStagesListException
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.RecruitmentStageService
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.util.offersWithNullProcess
 import strikt.api.expectThat
+import strikt.api.expectThrows
 import strikt.assertions.isEqualTo
 
 class RecruitmentProcessServiceTest {
@@ -43,12 +45,12 @@ class RecruitmentProcessServiceTest {
         service.updateStagesList(
             null,
             process.id!!,
-            listOf("APPLIED", "HR_INTERVIEW", "HR_INTERVIEW"))
+            listOf("APPLIED", "HR_INTERVIEW", "ENDED"))
         val updatedProcess = service.getProcess(process.id!!)
         expectThat(updatedProcess.stages).isEqualTo(listOf(
             RecruitmentStage(0, StageType.APPLIED),
             RecruitmentStage(1, StageType.HR_INTERVIEW),
-            RecruitmentStage(2, StageType.HR_INTERVIEW)
+            RecruitmentStage(2, StageType.ENDED)
         ))
         expectThat(updatedProcess.stages.size).isEqualTo(3)
     }
@@ -58,16 +60,17 @@ class RecruitmentProcessServiceTest {
         service.updateStagesList(
             null,
             process.id!!,
-            listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "TECHNICAL_INTERVIEW")
+            listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
         )
         val updatedProcess = service.getProcess(process.id!!)
         expectThat(updatedProcess.stages).isEqualTo(listOf(
             RecruitmentStage(0, StageType.APPLIED),
             RecruitmentStage(1, StageType.HR_INTERVIEW),
             RecruitmentStage(2, StageType.TECHNICAL_INTERVIEW),
-            RecruitmentStage(3, StageType.TECHNICAL_INTERVIEW)
+            RecruitmentStage(3, StageType.TECHNICAL_INTERVIEW),
+            RecruitmentStage(4, StageType.ENDED)
         ))
-        expectThat(updatedProcess.stages.size).isEqualTo(4)
+        expectThat(updatedProcess.stages.size).isEqualTo(5)
     }
 
     @Test
@@ -75,14 +78,47 @@ class RecruitmentProcessServiceTest {
         service.updateStagesList(
             null,
             process.id!!,
-            listOf("APPLIED", "HR_INTERVIEW")
+            listOf("APPLIED", "ENDED")
         )
         val updatedProcess = service.getProcess(process.id!!)
         expectThat(updatedProcess.stages).isEqualTo(listOf(
             RecruitmentStage(0, StageType.APPLIED),
-            RecruitmentStage(1, StageType.HR_INTERVIEW)
+            RecruitmentStage(1, StageType.ENDED)
         ))
         expectThat(updatedProcess.stages.size).isEqualTo(2)
+    }
+
+    @Test
+    fun `should throw exception, when there's no APPLIED stage`() {
+        expectThrows<InvalidStagesListException> {
+            service.updateStagesList(
+                null,
+                process.id!!,
+                listOf("HR_INTERVIEW", "ENDED")
+            )
+        }
+    }
+
+    @Test
+    fun `should throw exception, when there's no ENDED stage`() {
+        expectThrows<InvalidStagesListException> {
+            service.updateStagesList(
+                null,
+                process.id!!,
+                listOf("APPLIED", "HR_INTERVIEW")
+            )
+        }
+    }
+
+    @Test
+    fun `should throw exception, when there's more than one APPLIED or ENDED stage`() {
+        expectThrows<InvalidStagesListException> {
+            service.updateStagesList(
+                null,
+                process.id!!,
+                listOf("APPLIED", "ENDED", "HR_INTERVIEW", "APPLIED", "ENDED")
+            )
+        }
     }
 
     private val process = getProcesses(offersWithNullProcess)[0].let {

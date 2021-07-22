@@ -1,57 +1,56 @@
 package org.malachite.estella.services
 
-import org.malachite.estella.aplication.domain.ApplicationDTO
-import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
-import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
-import org.malachite.estella.aplication.domain.ApplicationRepository
+import org.malachite.estella.aplication.domain.*
+import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.lang.UnsupportedOperationException
 import java.util.*
 
 @Service
 class ApplicationService(
     @Autowired private val applicationRepository: ApplicationRepository,
-    @Autowired private val offerRepository: OfferRepository,
-    @Autowired private val jobSeekerRepository: JobSeekerRepository,
+    @Autowired private val offerService: OfferService,
+    @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
-) {
-    fun insertApplicationLoggedInUser(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationLoggedInPayload): Application {
-        val offer = offerRepository.findById(offerId).get()
+) : EStellaService<Application>() {
+
+    override val throwable: Exception = ApplicationNotFoundException()
+
+    fun insertApplicationLoggedInUser(
+        offerId: Int,
+        jobSeeker: JobSeeker,
+        applicationPayload: ApplicationLoggedInPayload
+    ): Application {
+        val offer = offerService.getOffer(offerId)
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
-            val application = applicationRepository.save(
-                applicationPayload.toApplication(it, jobSeeker)
-            )
-            if (application.seekerFiles.isNotEmpty()) {
-                val updatedSeekerFiles = jobSeeker.files.plus(application.seekerFiles)
-                val updatedJobSeeker = jobSeeker.copy(files = updatedSeekerFiles)
-                jobSeekerRepository.save(updatedJobSeeker)
-            }
+            val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker))
+            if (application.seekerFiles.isNotEmpty())
+                jobSeeker.files.plus(application.seekerFiles)
+                    .let { jobSeekerService.updateJobSeekerFiles(jobSeeker, it) }
             mailService.sendApplicationConfirmationMail(offer, application)
             application
-        } ?: throw NoSuchElementException()
+        } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
     fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application {
-        val offer = offerRepository.findById(offerId).get()
-        val jobSeeker = jobSeekerRepository.save(applicationPayload.toJobSeeker())
+        val offer = offerService.getOffer(offerId)
+        val jobSeeker = jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
-        return stage?.let {
-            val application = applicationRepository.save(
-                applicationPayload.toApplication(it, jobSeeker)
-            )
-            mailService.sendApplicationConfirmationMail(offer, application)
-            setNextStageOfApplication(application.id!!)
-            interviewService.createInterview(offer, application)
-            application
-        } ?: throw NoSuchElementException()
-
+        return stage
+            ?.let { applicationRepository.save(applicationPayload.toApplication(it, jobSeeker)) }
+            ?.also {
+                mailService.sendApplicationConfirmationMail(offer, it)
+                interviewService.createInterview(offer, it)
+            } ?: throw throwable
     }
 
     fun setNextStageOfApplication(applicationId: Int) {
@@ -66,28 +65,28 @@ class ApplicationService(
     }
 
     fun getApplicationById(applicationId: Int): ApplicationDTO =
-        ApplicationDTO.fromApplication(
-            applicationRepository.findById(applicationId).get()
-        )
+            withExceptionThrower { applicationRepository.findById(applicationId).get() }
+                .toApplicationDTO()
 
     fun getAllApplications(): List<ApplicationDTO> =
-        applicationRepository.findAll().map { ApplicationDTO.fromApplication(it) }
+        applicationRepository
+            .findAll()
+            .map { it.toApplicationDTO() }
 
-    fun getApplicationsByOffer(offerId: Int): List<ApplicationDTO> {
-        val offer = offerRepository.findById(offerId).get()
-        return offer.recruitmentProcess?.stages?.let { stage ->
-            if (stage.isNotEmpty())
-                applicationRepository.getAllByStageIn(stage).map { ApplicationDTO.fromApplication(it) }
-            else
-                Collections.emptyList()
-        } ?: Collections.emptyList()
-    }
+    fun getApplicationsByOffer(offerId: Int): List<ApplicationDTO> =
+        offerService.getOffer(offerId)
+            .let { it.recruitmentProcess?.stages }
+            ?.let {
+                if (it.isNotEmpty())
+                    applicationRepository.getAllByStageIn(it).map { it.toApplicationDTO() }
+                else
+                    Collections.emptyList()
+            } ?: Collections.emptyList()
 
-    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationDTO> {
-        return applicationRepository.getAllByJobSeekerId(jobSeekerId).map {
-            ApplicationDTO.fromApplication(it)
-        }
-    }
+    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationDTO> =
+        applicationRepository
+            .getAllByJobSeekerId(jobSeekerId)
+            .map { it.toApplicationDTO() }
 
     fun deleteApplication(applicationId: Int) =
         applicationRepository.deleteById(applicationId)

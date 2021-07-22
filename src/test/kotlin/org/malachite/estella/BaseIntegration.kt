@@ -2,10 +2,8 @@ package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
-import org.malachite.estella.commons.models.offers.DesiredSkill
-import org.malachite.estella.commons.models.offers.RecruitmentStage
-import org.malachite.estella.commons.models.offers.SkillLevel
-import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -13,6 +11,8 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.people.domain.JobSeekerDTO
+import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.people.domain.UserDTO
 import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.boot.test.context.SpringBootTest
@@ -26,6 +26,8 @@ import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
 import java.sql.Date
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 @SpringBootTest(
@@ -131,6 +133,18 @@ class BaseIntegration {
             (this["level"] as String).toSkillLevel()!!
         )
 
+    var simpleDateFormat: DateFormat = SimpleDateFormat("yyyy-MM-dd")
+
+    fun Map<String, Any>.toApplicationDTO() =
+        ApplicationDTO(
+            this["id"] as Int,
+            Date.valueOf(this["applicationDate"] as String),
+            ApplicationStatus.valueOf(this["status"] as String),
+            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
+            setOf()
+        )
+
     fun String.toSkillLevel(): SkillLevel? {
         return when (this) {
             "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
@@ -153,6 +167,9 @@ class BaseIntegration {
         (this["user"] as Map<String, Any>).toUser(),
         setOf()
     )
+
+    fun Map<String, Any>.toJobSeekerDTO() =
+        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO(),listOf<JobSeekerFileDTO>())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
