@@ -2,6 +2,7 @@ package org.malachite.estella.organization.api
 
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
@@ -38,9 +39,10 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/organization")
-    fun getOrganizationByUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Organization> =
+    fun getOrganizationByUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
         securityService.getOrganizationFromJWT(jwt)
-            .let { ResponseEntity.ok(it) }
+            ?.let { ResponseEntity.ok(it) }
+            ?: UNAUTH
 
     @CrossOrigin
     @PostMapping()

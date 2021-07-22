@@ -87,6 +87,13 @@ class OrganizationIntegration : BaseIntegration() {
 
     @Test
     @Order(6)
+    fun `should be able to get organization by jwt user`() {
+        val response = getOrganizationByUser(legitOrganizationUser.mail, legitOrganizationPassword)
+        expectThat(response.name).isEqualTo(legitOrganizationName)
+    }
+
+    @Test
+    @Order(7)
     fun `should delete organization`() {
         val organization = getOrganizations().find { it.user.mail == mail }!!
 
@@ -142,6 +149,19 @@ class OrganizationIntegration : BaseIntegration() {
 
     private fun getOrganizationById(organizationId: UUID): Organization {
         val response = getOrganizationAsResponse(organizationId)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        response.body.let {
+            it as Map<String, Any>
+            return it.toOrganization()
+        }
+    }
+
+    private fun getOrganizationByUser(userMail: String, userPassword: String): Organization {
+        val response = httpRequest(
+            path = "/api/organizations/organization",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(userMail, userPassword))
+        )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body.let {
             it as Map<String, Any>
