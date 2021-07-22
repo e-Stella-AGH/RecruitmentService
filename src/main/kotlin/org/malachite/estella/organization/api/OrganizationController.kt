@@ -9,6 +9,7 @@ import org.malachite.estella.people.domain.toResponse
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
+import org.malachite.estella.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,6 +21,7 @@ import java.util.*
 class OrganizationController(
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val securityService: SecurityService,
+    @Autowired private val userService: UserService,
     @Autowired private val hrPartnerService: HrPartnerService
 ) {
 
@@ -34,6 +36,11 @@ class OrganizationController(
     fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> =
         ResponseEntity(organizationService.getOrganization(organizationId.toId()), HttpStatus.OK)
 
+    @CrossOrigin
+    @GetMapping("/organization")
+    fun getOrganizationByUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Organization> =
+        securityService.getOrganizationFromJWT(jwt)
+            .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @PostMapping()
