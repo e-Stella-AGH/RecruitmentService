@@ -34,6 +34,8 @@ class DummyStageRepository : RecruitmentStageRepository {
         stages.removeIf { it.id == id }
     }
 
+    override fun findAll(): MutableIterable<RecruitmentStage> = this.stages
+
     fun getAll() = stages
 
     fun clear() = stages.clear()

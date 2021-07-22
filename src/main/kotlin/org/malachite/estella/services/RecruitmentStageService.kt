@@ -17,4 +17,11 @@ class RecruitmentStageService(
 
     fun delete(stage: RecruitmentStage) = stage.id?.let { repository.deleteById(it) }
 
+    fun getAllStagesTypesInUsage() =
+        repository.findAll()
+            .distinctBy { it.type }
+            .map { it.type }
+
+    fun getAllStagesTypes() = StageType.values()
+
 }
