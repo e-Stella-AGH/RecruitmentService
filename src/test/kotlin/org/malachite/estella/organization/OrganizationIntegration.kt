@@ -7,6 +7,7 @@ import org.malachite.estella.commons.loader.FakeOrganizations
 import org.malachite.estella.commons.loader.FakeUsers.organizationUsers
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -87,13 +88,37 @@ class OrganizationIntegration : BaseIntegration() {
 
     @Test
     @Order(6)
+    fun `should return ok with list of offers`() {
+        val response = getOrganizationsOffers(legitOrganizationUser.mail, legitOrganizationPassword)
+        response.forEach{
+            it.let {
+                expectThat(it.organization.name).isEqualTo(legitOrganizationName)
+            }
+        }
+    }
+
+    private fun getOrganizationsOffers(mail: String, password: String): List<OfferResponse> {
+        return httpRequest(
+            path = "/api/organizations/offers",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password))
+        ).let { response ->
+            response.body as List<Map<String, Any>>
+            response.body.map {
+                it.toOfferResponse()
+            }
+        }
+    }
+
+    @Test
+    @Order(7)
     fun `should be able to get organization by jwt user`() {
         val response = getOrganizationByUser(legitOrganizationUser.mail, legitOrganizationPassword)
         expectThat(response.name).isEqualTo(legitOrganizationName)
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     fun `should delete organization`() {
         val organization = getOrganizations().find { it.user.mail == mail }!!
 

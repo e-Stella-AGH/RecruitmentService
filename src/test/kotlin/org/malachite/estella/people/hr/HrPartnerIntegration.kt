@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.loader.FakeLoader
+import org.malachite.estella.commons.loader.FakeUsers.organizationUsers
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
@@ -78,6 +80,23 @@ class HrPartnerIntegration : BaseIntegration() {
         expectThat(deletedPartner).isEqualTo(null)
     }
 
+    @Test
+    @Order(6)
+    fun `should delete hrPartner by mail`() {
+        addHrpartner(organizationMail)
+        val partner = getHrPartners().first { it.user.mail == hrpartnerMail }
+        hrPartnerRepository.save(partner.copy(user = partner.user.also { it.password = "a" }))
+        val response = httpRequest(
+            path = "/api/hrpartners/mail",
+            method = HttpMethod.DELETE,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(organizationMail, password),
+            EStellaHeaders.hrPartnerMail to hrpartnerMail)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val deletedPartner = getHrPartners().firstOrNull { it.user.mail == hrpartnerMail }
+        expectThat(deletedPartner).isEqualTo(null)
+    }
+
     private fun getPartnersOffers(mail: String, password: String): List<OfferResponse> {
         return httpRequest(
             path = "/api/hrpartners/offers",
@@ -103,7 +122,9 @@ class HrPartnerIntegration : BaseIntegration() {
             method = HttpMethod.POST,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail)),
             body = mapOf(
-                "mail" to hrpartnerMail,
+                "firstName" to hrPartnerFirstName,
+                "lastName" to hrPartnerLastName,
+                "mail" to hrpartnerMail
             )
         )
     }
@@ -163,6 +184,8 @@ class HrPartnerIntegration : BaseIntegration() {
 
     private val name = "name"
     private val organizationMail = "organization@hrpartner.pl"
+    private val hrPartnerFirstName = "John"
+    private val hrPartnerLastName = "Doe"
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
 

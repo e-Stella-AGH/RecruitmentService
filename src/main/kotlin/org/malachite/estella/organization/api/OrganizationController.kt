@@ -7,10 +7,7 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.malachite.estella.people.domain.toResponse
-import org.malachite.estella.services.HrPartnerService
-import org.malachite.estella.services.OrganizationService
-import org.malachite.estella.services.SecurityService
-import org.malachite.estella.services.UserService
+import org.malachite.estella.services.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,8 +19,8 @@ import java.util.*
 class OrganizationController(
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val securityService: SecurityService,
-    @Autowired private val userService: UserService,
-    @Autowired private val hrPartnerService: HrPartnerService
+    @Autowired private val hrPartnerService: HrPartnerService,
+    @Autowired private val offerService: OfferService
 ) {
 
     @CrossOrigin
@@ -43,6 +40,15 @@ class OrganizationController(
         securityService.getOrganizationFromJWT(jwt)
             ?.let { ResponseEntity.ok(it) }
             ?: UNAUTH
+
+    @CrossOrigin
+    @GetMapping("/offers")
+    fun getOrganizationsOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
+        securityService.getOrganizationFromJWT(jwt)
+            ?.let { offerService.getOrganizationOffers(it) }
+            ?.let { ResponseEntity.ok(it) }
+            ?: UNAUTH
+
 
     @CrossOrigin
     @PostMapping()
@@ -72,16 +78,21 @@ class OrganizationController(
         return organizationService.deleteOrganization(organizationId.toId()).let { OwnResponses.SUCCESS }
     }
 
+
     @CrossOrigin
     @GetMapping("/hrpartners")
-    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<MutableList<HrPartnerResponse>> {
-        val organization = securityService.getOrganizationFromJWT(jwt)
+    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
+        securityService.getOrganizationFromJWT(jwt)
+            ?.let{
+            hrPartnerService.getHrPartners()
+                .filter { hr -> hr.organization == it }
+                .map { it.toResponse() }
+                .toMutableList()
+                .let { ResponseEntity.ok(it) }
+        }
+            ?: UNAUTH
 
-        return hrPartnerService.getHrPartners()
-            .filter { it.organization == organization }
-            .map { it.toResponse() }
-            .toMutableList().let { ResponseEntity(it, HttpStatus.OK) }
-    }
+
 
     private fun checkOrganizationUserRights(organizationId: OrganizationID, jwt: String?): Boolean =
         organizationService.getOrganization(organizationId.toId())

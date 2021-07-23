@@ -17,6 +17,8 @@ class HrPartnerService(
 
     fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
 
+    fun getHrPartnerByMail(mail: String?): HrPartner? = getHrPartners().find { it.user.mail == mail }
+
     fun registerHrPartner(hrPartner: HrPartner): HrPartner {
         val password = userService.generatePassword()
         hrPartner.user.password = password
