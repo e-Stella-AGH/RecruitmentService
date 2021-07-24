@@ -14,6 +14,7 @@ import org.malachite.estella.people.domain.HrPartnerResponse
 import org.malachite.estella.people.domain.JobSeekerDTO
 import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.people.domain.UserDTO
+import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpHeaders
@@ -24,19 +25,16 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
+import java.sql.Date
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.UUID
-import java.sql.Date
-
+import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
     properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY"]
 )
 class BaseIntegration {
-
-
 
     private val restTemplate = TestRestTemplate()
     val objectMapper = jacksonObjectMapper()
@@ -120,7 +118,8 @@ class BaseIntegration {
             (this["maxSalary"] as Int).toLong(),
             this["localization"] as String,
             (this["organization"] as Map<String, Any>).toOrganizationResponse(),
-            (this["skills"] as ArrayList<Map<String, Any>>).toDesiredSkillSet()
+            (this["skills"] as ArrayList<Map<String, Any>>).toDesiredSkillSet(),
+            (this["creator"] as Map<String, Any>).toHrPartner()
         )
 
     fun ArrayList<Map<String, Any>>.toDesiredSkillSet() =
@@ -144,12 +143,6 @@ class BaseIntegration {
             (this["stage"] as Map<String,Any>).toRecruitmentStage(),
             (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
             setOf()
-        )
-
-    fun Map<String,Any>.toRecruitmentStage() =
-        RecruitmentStage(
-            this["id"] as Int?,
-            StageType.valueOf(this["type"] as String)
         )
 
     fun String.toSkillLevel(): SkillLevel? {
@@ -191,5 +184,24 @@ class BaseIntegration {
             this["lastName"] as String,
             this["mail"] as String
         )
+
+    fun Map<String, Any>.toRecruitmentProcessDto() =
+        RecruitmentProcessDto(
+            this["id"] as Int?,
+            Date.valueOf(this["startDate"] as String),
+            (this["endDate"] as String?)?.let { Date.valueOf(it) },
+            (this["offer"] as Map<String, Any>).toOfferResponse(),
+            (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
+            setOf(),  //TODO - change it, when it will be implemented
+            setOf()
+        )
+
+    fun List<Map<String, Any>>.toRecruitmentStagesList() =
+        this.map { it.toRecruitmentStage() }
+
+    fun Map<String, Any>.toRecruitmentStage() = RecruitmentStage(
+        this["id"] as Int?,
+        StageType.valueOf(this["type"] as String)
+    )
 
 }
