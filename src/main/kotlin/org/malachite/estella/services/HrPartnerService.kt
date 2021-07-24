@@ -1,9 +1,12 @@
 package org.malachite.estella.services
 
+import org.hibernate.exception.ConstraintViolationException
+import org.malachite.estella.commons.DataViolationException
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.lang.Exception
 
 @Service
 class HrPartnerService(
@@ -38,7 +41,9 @@ class HrPartnerService(
 
     }
 
-
-
-    fun deleteHrPartner(id: Int) = hrPartnerRepository.deleteById(id)
+    fun deleteHrPartner(id: Int) = try {
+        hrPartnerRepository.deleteById(id)
+    } catch (ex: Exception) {
+        throw DataViolationException("This user may have offers assigned to him and cannot be deleted")
+    }
 }
