@@ -54,7 +54,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/applications/apply/${offer.id}/user",
             method = HttpMethod.POST,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, "a")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, password)),
             body = mapOf("files" to setOf<JobSeekerFilePayload>())
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
@@ -146,7 +146,7 @@ class ApplicationsIntegration : BaseIntegration() {
 
         val response = httpRequest(
             path = "/api/applications/offer/${offer.id}",
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, "a")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, password)),
             method = HttpMethod.GET,
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
@@ -160,14 +160,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val offer = getOffer()
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
         expectThat(application.stage.type).isEqualTo(StageType.APPLIED)
-        val response = httpRequest(
-            path = "/api/applications/${application.id}/next",
-            method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
-            body = mapOf(
-                "files" to setOf<JobSeekerFilePayload>()
-            )
-        )
+        val response = updateStage(application)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.HR_INTERVIEW)
@@ -180,11 +173,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
         expectThat(application.stage.type).isEqualTo(StageType.HR_INTERVIEW)
         expectThat(application.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
-        val response = httpRequest(
-            path = "/api/applications/${application.id}/next",
-            method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
-        )
+        val response = updateStage(application)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
@@ -201,7 +190,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/applications/${application.id}/reject",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
@@ -242,6 +231,12 @@ class ApplicationsIntegration : BaseIntegration() {
         }.let { it.toApplicationDTO() }
 
     }
+
+    private fun updateStage(application: ApplicationDTO) = httpRequest(
+        path = "/api/applications/${application.id}/next",
+        method = HttpMethod.PUT,
+        headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
+    )
 
     private fun loginUser(userMail: String, userPassword: String = password): BaseIntegration.Response {
         return httpRequest(

@@ -47,7 +47,6 @@ class ApplicationService(
             ?.let { applicationRepository.save(applicationPayload.toApplication(it, jobSeeker)) }
             ?.also {
                 mailService.sendApplicationConfirmationMail(offer, it)
-                interviewService.createInterview(offer, it)
             } ?: throw throwable
     }
 
