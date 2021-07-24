@@ -70,19 +70,21 @@ class HrPartnerController(
     @DeleteMapping("/mail")
     fun deleteHrPartnerByMail(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
-        @RequestHeader(EStellaHeaders.hrPartnerMail) mail: String?
+        @RequestBody mail: HrPartnerMail
     ): ResponseEntity<Any> =
         securityService.getOrganizationFromJWT(jwt)?.let {
-            hrPartnerService.getHrPartnerByMail(mail).let {
-                if (!securityService.checkOrganizationHrRights(jwt, it!!.user.id!!)) OwnResponses.UNAUTH
-                else {
-                    hrPartnerService.deleteHrPartner(it.id!!)
-                    OwnResponses.SUCCESS
-                }
+            hrPartnerService.getHrPartnerByMail(mail.mail)
+        }?.let {
+            if (!securityService.checkOrganizationHrRights(jwt, it.user.id!!)) OwnResponses.UNAUTH
+            else {
+                hrPartnerService.deleteHrPartner(it.id!!)
+                OwnResponses.SUCCESS
             }
         }
             ?: OwnResponses.UNAUTH
 }
+
+data class HrPartnerMail(val mail: String)
 
 data class HrPartnerRequest(val firstName: String, val lastName: String, val mail: String) {
     fun toHrPartner(organization: Organization): HrPartner =

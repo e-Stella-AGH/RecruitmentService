@@ -11,6 +11,7 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
@@ -90,11 +91,14 @@ class OrganizationIntegration : BaseIntegration() {
     @Order(6)
     fun `should return ok with list of offers`() {
         val response = getOrganizationsOffers(legitOrganizationUser.mail, legitOrganizationPassword)
-        response.forEach{
-            it.let {
-                expectThat(it.organization.name).isEqualTo(legitOrganizationName)
+        expect {
+            response.forEach{
+                it.let {
+                    that(it.organization.name).isEqualTo(legitOrganizationName)
+                }
             }
         }
+
     }
 
     private fun getOrganizationsOffers(mail: String, password: String): List<OfferResponse> {
