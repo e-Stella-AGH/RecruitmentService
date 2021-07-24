@@ -34,12 +34,11 @@ class OffersIntegration: BaseIntegration() {
         EmailServiceStub.stubForSendEmail()
 
         val hrPartner = getHrPartner()
-        setNewPassword("password123")
 
         val response = httpRequest(
             path = "/api/offers",
             method = HttpMethod.POST,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
                 "name" to name,
                 "description" to description,
@@ -78,7 +77,7 @@ class OffersIntegration: BaseIntegration() {
         val response = httpRequest(
             path = "/api/offers/${offer.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123")),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
                 "name" to name,
                 "description" to description,
@@ -117,7 +116,7 @@ class OffersIntegration: BaseIntegration() {
         val response = httpRequest(
             path = "/api/offers/${offer.id}",
             method = HttpMethod.DELETE,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "password123"))
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword))
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         println(getOffers())
@@ -164,6 +163,7 @@ class OffersIntegration: BaseIntegration() {
     private val organizationMail = "organization@hrpartner.pl"
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
+    private val hrPassword = "a"
 
     private val description = "description"
     private val position = "position"
