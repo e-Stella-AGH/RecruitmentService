@@ -28,7 +28,6 @@ import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-@Transactional
 class ApplicationsIntegration : BaseIntegration() {
 
     @Autowired
@@ -172,7 +171,8 @@ class ApplicationsIntegration : BaseIntegration() {
         val response = updateStage(application)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
-        expectThat(updatedApplication.stage.type).isEqualTo(StageType.HR_INTERVIEW)
+        println(updatedApplication)
+        expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
         expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
     }
 

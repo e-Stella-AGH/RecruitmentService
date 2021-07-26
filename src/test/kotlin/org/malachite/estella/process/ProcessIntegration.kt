@@ -19,7 +19,6 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-@Transactional
 class ProcessIntegration: BaseIntegration() {
 
     @Autowired
