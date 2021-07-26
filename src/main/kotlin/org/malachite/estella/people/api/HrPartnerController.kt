@@ -65,9 +65,28 @@ class HrPartnerController(
     ): ResponseEntity<Any> =
         if (!securityService.checkHrRights(jwt, hrId)) OwnResponses.UNAUTH
         else hrPartnerService.deleteHrPartner(hrId).let { OwnResponses.SUCCESS }
+
+    @CrossOrigin
+    @DeleteMapping("/mail")
+    fun deleteHrPartnerByMail(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @RequestBody mail: HrPartnerMail
+    ): ResponseEntity<Any> =
+        securityService.getOrganizationFromJWT(jwt)?.let {
+            hrPartnerService.getHrPartnerByMail(mail.mail)
+        }?.let {
+            if (!securityService.checkOrganizationHrRights(jwt, it.user.id!!)) OwnResponses.UNAUTH
+            else {
+                hrPartnerService.deleteHrPartner(it.id!!)
+                OwnResponses.SUCCESS
+            }
+        }
+            ?: OwnResponses.UNAUTH
 }
 
-data class HrPartnerRequest(val mail: String) {
+data class HrPartnerMail(val mail: String)
+
+data class HrPartnerRequest(val firstName: String, val lastName: String, val mail: String) {
     fun toHrPartner(organization: Organization): HrPartner =
-        HrPartner(null, organization, User(null, "", "", mail))
+        HrPartner(null, organization, User(null, firstName, lastName, mail))
 }

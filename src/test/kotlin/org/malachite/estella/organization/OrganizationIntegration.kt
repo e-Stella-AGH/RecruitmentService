@@ -7,9 +7,11 @@ import org.malachite.estella.commons.loader.FakeOrganizations
 import org.malachite.estella.commons.loader.FakeUsers.organizationUsers
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
@@ -87,6 +89,40 @@ class OrganizationIntegration : BaseIntegration() {
 
     @Test
     @Order(6)
+    fun `should return ok with list of offers`() {
+        val response = getOrganizationsOffers(legitOrganizationUser.mail, legitOrganizationPassword)
+        expect {
+            response.forEach{
+                it.let {
+                    that(it.organization.name).isEqualTo(legitOrganizationName)
+                }
+            }
+        }
+
+    }
+
+    private fun getOrganizationsOffers(mail: String, password: String): List<OfferResponse> {
+        return httpRequest(
+            path = "/api/organizations/offers",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password))
+        ).let { response ->
+            response.body as List<Map<String, Any>>
+            response.body.map {
+                it.toOfferResponse()
+            }
+        }
+    }
+
+    @Test
+    @Order(7)
+    fun `should be able to get organization by jwt user`() {
+        val response = getOrganizationByUser(legitOrganizationUser.mail, legitOrganizationPassword)
+        expectThat(response.name).isEqualTo(legitOrganizationName)
+    }
+
+    @Test
+    @Order(8)
     fun `should delete organization`() {
         val organization = getOrganizations().find { it.user.mail == mail }!!
 
@@ -142,6 +178,19 @@ class OrganizationIntegration : BaseIntegration() {
 
     private fun getOrganizationById(organizationId: UUID): Organization {
         val response = getOrganizationAsResponse(organizationId)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        response.body.let {
+            it as Map<String, Any>
+            return it.toOrganization()
+        }
+    }
+
+    private fun getOrganizationByUser(userMail: String, userPassword: String): Organization {
+        val response = httpRequest(
+            path = "/api/organizations/organization",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(userMail, userPassword))
+        )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body.let {
             it as Map<String, Any>

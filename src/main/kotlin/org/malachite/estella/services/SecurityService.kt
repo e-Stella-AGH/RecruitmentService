@@ -115,6 +115,11 @@ class SecurityService(
     fun checkHrRights(jwt: String?, id: Int) =
         checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
 
+    fun checkOrganizationHrRights(jwt: String?, hrId: Int) =
+        getOrganizationFromJWT(jwt)?.let {
+            it.verified && hrPartnerRepository.findByUserId(hrId).get().organization == it
+        } ?: false
+
     private fun User.getUserType(): String =
         jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
         hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
