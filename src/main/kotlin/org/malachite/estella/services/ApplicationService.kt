@@ -63,7 +63,7 @@ class ApplicationService(
         val index = recruitmentProcessStages.indexOf(application.stage)
         if (index == recruitmentProcessStages.lastIndex - 1)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1], status = ApplicationStatus.ACCEPTED))
-        else if (index + 1 < recruitmentProcessStages.size)
+        else if (index < recruitmentProcessStages.lastIndex)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))
     }
 

@@ -7,7 +7,6 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.offers.Offer
@@ -16,23 +15,20 @@ import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
-import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
-import org.malachite.estella.services.ApplicationService
-import org.malachite.estella.services.JobSeekerService
-import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.transaction.annotation.Transactional
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isGreaterThan
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Transactional
 class ApplicationsIntegration : BaseIntegration() {
 
     @Autowired
@@ -178,7 +174,6 @@ class ApplicationsIntegration : BaseIntegration() {
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
         expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
-
     }
 
     @Test

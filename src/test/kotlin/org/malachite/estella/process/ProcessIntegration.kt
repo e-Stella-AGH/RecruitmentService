@@ -12,12 +12,14 @@ import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.transaction.annotation.Transactional
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Transactional
 class ProcessIntegration: BaseIntegration() {
 
     @Autowired
