@@ -8,6 +8,7 @@ import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.RecruitmentStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -25,6 +26,7 @@ class RecruitmentProcessController(
             .toList()
             .let { ResponseEntity.ok(it) }
 
+    @Transactional
     @CrossOrigin
     @GetMapping("/{processId}")
     fun getProcessById(@PathVariable("processId") processId: Int) =

@@ -12,4 +12,8 @@ class ExceptionsHandler {
     fun returnUnauthenticatedMessage(ex: UnauthenticatedException) =
         ResponseEntity(UnauthenticatedMessage, HttpStatus.UNAUTHORIZED)
 
+    @ExceptionHandler(DataViolationException::class)
+    fun returnDataViolationException(ex: DataViolationException) =
+        ResponseEntity.badRequest().body(Message(ex.msg))
+
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerRepository
@@ -19,6 +20,7 @@ import org.springframework.http.HttpStatus
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
+import strikt.assertions.isNull
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class HrPartnerIntegration : BaseIntegration() {
@@ -78,6 +80,52 @@ class HrPartnerIntegration : BaseIntegration() {
         expectThat(deletedPartner).isEqualTo(null)
     }
 
+    @Test
+    @Order(6)
+    fun `should delete hrPartner by mail`() {
+        verifyOrganization(organizationMail)
+        addHrpartner(organizationMail)
+
+        val partner = getHrPartners().first { it.user.mail == hrpartnerMail }
+        hrPartnerRepository.save(partner.copy(user = partner.user.also { it.password = "a" }))
+        val response = httpRequest(
+            path = "/api/hrpartners/mail",
+            method = HttpMethod.DELETE,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(organizationMail, password)),
+            body = mapOf("mail" to hrpartnerMail)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val deletedPartner = getHrPartners().firstOrNull { it.user.mail == hrpartnerMail }
+        expectThat(deletedPartner).isNull()
+    }
+
+    private fun verifyOrganization(organizationMail: String) {
+        val organization = getOrganization(organizationMail)
+
+        val response = httpRequest(
+            path = "/_admin/verify/${organization.id}",
+            method = HttpMethod.POST,
+            headers = mapOf(EStellaHeaders.adminApiKey to API_KEY)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+
+    }
+
+    private fun getOrganization(organizationMail: String): Organization {
+        val response = httpRequest(
+            path = "/api/organizations",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.adminApiKey to API_KEY)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let { body ->
+            body as List<Map<String, Any>>
+            body.map {
+                it.toOrganization()
+            }.first { it.user.mail == organizationMail }
+        }
+    }
+
     private fun getPartnersOffers(mail: String, password: String): List<OfferResponse> {
         return httpRequest(
             path = "/api/hrpartners/offers",
@@ -103,7 +151,9 @@ class HrPartnerIntegration : BaseIntegration() {
             method = HttpMethod.POST,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail)),
             body = mapOf(
-                "mail" to hrpartnerMail,
+                "firstName" to hrPartnerFirstName,
+                "lastName" to hrPartnerLastName,
+                "mail" to hrpartnerMail
             )
         )
     }
@@ -163,11 +213,15 @@ class HrPartnerIntegration : BaseIntegration() {
 
     private val name = "name"
     private val organizationMail = "organization@hrpartner.pl"
+    private val hrPartnerFirstName = "John"
+    private val hrPartnerLastName = "Doe"
     private val hrpartnerMail = "examplemail@hrpartner.pl"
     private val password = "123"
 
     private val legitHrPartner = hrPartners[0]
     private val legitHrPartnerPassword = "a"
+
+    private val API_KEY = "API_KEY"
 
     private val randomMail = "randommail@user.pl"
     private val randomPassword = "random-password"

@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.offer.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -54,8 +55,12 @@ class OfferService(
     }
 
     fun getHrPartnerOffers(hrPartner: HrPartner): List<OfferResponse> = getOffers()
-            .filter { offer -> offer.creator == hrPartner }
-            .map { offer -> offer.toOfferResponse() }
+            .filter { it.creator == hrPartner }
+            .map { it.toOfferResponse() }
+
+    fun getOrganizationOffers(organization: Organization): List<OfferResponse> = getOffers()
+        .filter { it.creator.organization == organization }
+        .map { it.toOfferResponse() }
 
     fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 }
