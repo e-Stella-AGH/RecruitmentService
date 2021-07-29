@@ -20,14 +20,13 @@ import java.net.URI
 @RequestMapping("/api/hrpartners")
 class HrPartnerController(
     @Autowired private val hrPartnerService: HrPartnerService,
-    @Autowired private val organizationService: OrganizationService,
-    @Autowired private val securityService: SecurityService,
     @Autowired private val offerService: OfferService
 ) {
     @CrossOrigin
     @GetMapping
-    fun getHrPartners(): ResponseEntity<MutableIterable<HrPartner>> =
-        ResponseEntity.ok(hrPartnerService.getHrPartners())
+    fun getHrPartners(): ResponseEntity<List<HrPartner>> =
+        ResponseEntity.ok(hrPartnerService.getHrPartners().toList())
+
 
 
     @CrossOrigin
@@ -38,24 +37,21 @@ class HrPartnerController(
 
     @CrossOrigin
     @GetMapping("/offers")
-    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> =
-        securityService.getHrPartnerFromJWT(jwt)
-            ?.let { offerService.getHrPartnerOffers(it) }
-            ?.let { ResponseEntity(it, HttpStatus.OK) }
-            ?: ResponseEntity(mutableListOf(), HttpStatus.UNAUTHORIZED)
-
+    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> {
+        return offerService.getHrPartnerOffers(jwt)
+            .let { ResponseEntity.ok(it) }
+    }
 
     @CrossOrigin
     @PostMapping()
     fun addHrPartner(
         @RequestBody hrPartnerRequest: HrPartnerRequest,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
-    ): ResponseEntity<Any> =
-        securityService.getUserFromJWT(jwt)
-            ?.let { organizationService.getOrganizationByUser(it) }
-            ?.let { hrPartnerService.registerHrPartner(hrPartnerRequest.toHrPartner(it)) }
-            ?.let { OwnResponses.CREATED(it) }
-            ?: OwnResponses.UNAUTH
+    ): ResponseEntity<Any> {
+        return hrPartnerService
+            .registerHrPartner(hrPartnerRequest, jwt)
+            .let { OwnResponses.CREATED(it) }
+    }
 
     @CrossOrigin
     @DeleteMapping("/{hrPartnerId}")
@@ -63,8 +59,9 @@ class HrPartnerController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("hrPartnerId") hrId: Int
     ): ResponseEntity<Any> =
-        if (!securityService.checkHrRights(jwt, hrId)) OwnResponses.UNAUTH
-        else hrPartnerService.deleteHrPartner(hrId).let { OwnResponses.SUCCESS }
+        hrPartnerService.deleteHrPartner(hrId, jwt).let {
+            OwnResponses.SUCCESS
+        }
 
     @CrossOrigin
     @DeleteMapping("/mail")
@@ -72,16 +69,9 @@ class HrPartnerController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody mail: HrPartnerMail
     ): ResponseEntity<Any> =
-        securityService.getOrganizationFromJWT(jwt)?.let {
-            hrPartnerService.getHrPartnerByMail(mail.mail)
-        }?.let {
-            if (!securityService.checkOrganizationHrRights(jwt, it.user.id!!)) OwnResponses.UNAUTH
-            else {
-                hrPartnerService.deleteHrPartner(it.id!!)
-                OwnResponses.SUCCESS
-            }
+        hrPartnerService.deleteHrPartnerByMail(jwt, mail.mail).let {
+            OwnResponses.SUCCESS
         }
-            ?: OwnResponses.UNAUTH
 }
 
 data class HrPartnerMail(val mail: String)

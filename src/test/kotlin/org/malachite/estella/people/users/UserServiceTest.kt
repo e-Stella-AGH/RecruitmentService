@@ -1,11 +1,17 @@
 package org.malachite.estella.people.users
 
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.services.MailService
+import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.users
@@ -17,23 +23,27 @@ import strikt.assertions.isEqualTo
 class UserServiceTest {
 
     private val repository = DummyUserRepository()
-    private val userService = UserService(repository)
+    private val securityMock = mockk<SecurityService>()
+    private val userService = UserService(repository, securityMock)
 
     companion object {
         @BeforeAll
         @JvmStatic
-        fun setupTest(){
+        fun setupTest() {
             EmailServiceStub.stubForSendEmail()
         }
     }
 
     @BeforeEach
-    fun setup(){
+    fun setup() {
         testUsers.forEach { userService.addUser(it) }
+        every { securityMock.getUserFromJWT("abc") } returns users[0]
+        every { securityMock.isCorrectApiKey("abc") } returns false
+        every { securityMock.getUserFromJWT("def") } returns null
     }
 
     @AfterEach
-    fun cleanup(){
+    fun cleanup() {
         repository.clear()
     }
 
@@ -60,10 +70,19 @@ class UserServiceTest {
     }
 
     @Test
-    fun `should be able to delete user by id`() {
-        userService.deleteUser(0)
-        expectThat(userService.getUsers().count()).isEqualTo(testUsers.size - 1)
-        expectThat(userService.getUsers()).doesNotContain(testUsers[0])
+    fun `should be able to update user`() {
+        userService.updateUser(UserRequest( "new First Name", "new Last Name", users[0].mail, ""), "abc")
+        userService.getUser(users[0].id!!).let {
+            expectThat(it.firstName).isEqualTo("new First Name")
+            expectThat(it.lastName).isEqualTo("new Last Name")
+        }
+    }
+
+    @Test
+    fun `should throw unauth, when jwt is invalid`() {
+        expectThrows<UnauthenticatedException> {
+            userService.updateUser(UserRequest( "newFirstName", "", users[0].mail, ""), "def")
+        }
     }
 
     private val testUsers = users

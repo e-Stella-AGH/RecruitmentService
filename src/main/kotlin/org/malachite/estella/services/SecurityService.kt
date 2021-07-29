@@ -10,6 +10,7 @@ import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
+import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -17,7 +18,7 @@ import java.util.*
 
 @Service
 class SecurityService(
-    @Autowired val userService: UserService,
+    @Autowired val userRepository: UserRepository,
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
     @Autowired val organizationRepository: OrganizationRepository,
@@ -75,7 +76,7 @@ class SecurityService(
         val id = parseJWT(jwt, secret)
             .body
             .issuer
-        return userService.getUser(id.toInt())
+        return userRepository.findById(id.toInt()).orElse(null)
     }
 
     fun getJobSeekerFromJWT(jwt: String?): JobSeeker? {
@@ -87,8 +88,7 @@ class SecurityService(
             ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
     fun getOrganizationFromJWT(jwt: String?): Organization? =
-        getUserFromJWT(jwt)
-            ?.let { it.id }
+        getUserFromJWT(jwt)?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
@@ -100,9 +100,9 @@ class SecurityService(
 
     fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
-        val authUser = userService.getUser(userId)
+        val authUser = userRepository.findById(userId).orElse(null)
         if (refreshUser == authUser)
-            return getAuthenticateToken(refreshUser)
+            return getAuthenticateToken(refreshUser!!)
         return null
     }
 

@@ -34,7 +34,6 @@ class AdminController(
             UNAUTH
 
 
-
     @PostMapping("/deverify/{organizationUUID}")
     fun deverifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
@@ -42,16 +41,9 @@ class AdminController(
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
                 .deverifyOrganization(organizationUUID)
-                .let { SUCCESS}
+                .let { SUCCESS }
         else
             UNAUTH
-
-
-    fun Organization.toDto() = OrganizationDto(
-        this.id.toString(),
-        this.name,
-        this.verified ?: false
-    )
 
     data class OrganizationDto(
         val uuid: String,

@@ -74,11 +74,10 @@ class UserIntegration : BaseIntegration() {
     @Order(6)
     fun `should update created User`() {
         val response = updateUser()
-
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val updatedUser = getUserById()
-        expectThat(updatedUser.firstName == newName)
+        val updatedUser = getLoggedInUser()
+        expectThat(updatedUser.firstName).isEqualTo(newName)
     }
 
     @Test
@@ -188,7 +187,7 @@ class UserIntegration : BaseIntegration() {
         }
     }
 
-    private fun getUserById(): User {
+    private fun getLoggedInUser(): User {
         val response = getUserAsResponse()
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body.let {

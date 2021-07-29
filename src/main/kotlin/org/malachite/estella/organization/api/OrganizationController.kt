@@ -62,46 +62,30 @@ class OrganizationController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("organizationId") organizationId: OrganizationID,
         @RequestBody organizationRequest: OrganizationRequest
-    ): ResponseEntity<Any> {
-        if (!checkOrganizationUserRights(organizationId, jwt)) return OwnResponses.UNAUTH
-        return organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization())
+    ): ResponseEntity<Any> =
+        organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization(), jwt)
             .let { OwnResponses.SUCCESS }
-    }
+
 
     @CrossOrigin
     @DeleteMapping("/{organizationId}")
     fun deleteOrganization(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("organizationId") organizationId: OrganizationID
-    ): ResponseEntity<Any> {
-        if (!checkOrganizationUserRights(organizationId, jwt)) return OwnResponses.UNAUTH
-        return organizationService.deleteOrganization(organizationId.toId()).let { OwnResponses.SUCCESS }
-    }
+    ): ResponseEntity<Any> =
+        organizationService.deleteOrganization(organizationId.toId(), jwt).let { OwnResponses.SUCCESS }
+
 
 
     @CrossOrigin
     @GetMapping("/hrpartners")
-    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
-        securityService.getOrganizationFromJWT(jwt)
-            ?.let{
-            hrPartnerService.getHrPartners()
-                .filter { hr -> hr.organization == it }
-                .map { it.toResponse() }
-                .toMutableList()
-                .let { ResponseEntity.ok(it) }
-        }
-            ?: UNAUTH
+    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<HrPartnerResponse>> =
+        hrPartnerService.getHrPartners()
+            .filter { it.organization == securityService.getOrganizationFromJWT(jwt) }
+            .map { it.toResponse() }
+            .toList()
+            .let { ResponseEntity.ok(it) }
 
-
-
-    private fun checkOrganizationUserRights(organizationId: OrganizationID, jwt: String?): Boolean =
-        organizationService.getOrganization(organizationId.toId())
-            .let { securityService.checkUserRights(jwt, it.user.id!!) }
-
-    @ExceptionHandler(NoSuchElementException::class)
-    fun handleNoSuchElementException(): ResponseEntity<Any> {
-        return OwnResponses.NO_RESOURCE
-    }
 
     fun OrganizationRequest.toOrganization() = Organization(
         null, name,

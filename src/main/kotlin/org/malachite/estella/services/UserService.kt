@@ -1,7 +1,10 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.Permission
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.people.domain.UserRepository
@@ -14,15 +17,16 @@ import kotlin.NoSuchElementException
 
 @Service
 class UserService(
-    @Autowired private val userRepository: UserRepository
-): EStellaService<User>() {
+    @Autowired private val userRepository: UserRepository,
+    @Autowired private val securityService: SecurityService
+) : EStellaService<User>() {
 
     override val throwable: Exception = UserNotFoundException()
 
-    fun generatePassword(length:Int = 15):String {
+    fun generatePassword(length: Int = 15): String {
         val alphanumeric = ('A'..'Z') + ('a'..'z') + ('0'..'9')
         return buildString {
-            repeat(length) {append(alphanumeric.random())}
+            repeat(length) { append(alphanumeric.random()) }
         }
     }
 
@@ -40,17 +44,30 @@ class UserService(
             throw UserAlreadyExistsException()
         }
 
-    fun updateUser(id: Int, user: User) {
+    fun updateUser(userRequest: UserRequest, jwt: String?) {
+        val originalUser = securityService.getUserFromJWT(jwt) ?: throw UnauthenticatedException()
+        if (!getPermissions(originalUser.id!!, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
+        updateUser(originalUser.id, userRequest)
+    }
+
+    private fun updateUser(id: Int, user: UserRequest) {
         val currUser: User = getUser(id)
         val updated: User = currUser.copy(
             firstName = user.firstName,
-            lastName = user.lastName, mail = user.mail
+            lastName = user.lastName
         )
         updated.password = user.password
+        userRepository.save(updated)
     }
 
-    fun deleteUser(id: Int) = withExceptionThrower { userRepository.deleteById(id) }
-
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
+
+    private fun getPermissions(id: Int, jwt: String?): Set<Permission> {
+        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
+        securityService.getUserFromJWT(jwt)?.let {
+            if (it.id == id) return Permission.allPermissions()
+            else throw UnauthenticatedException()
+        } ?: throw UnauthenticatedException()
+    }
 
 }

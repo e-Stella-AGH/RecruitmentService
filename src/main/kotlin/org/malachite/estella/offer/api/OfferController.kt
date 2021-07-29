@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.*
 @Transactional
 @RequestMapping("/api/offers")
 class OfferController(
-    @Autowired private val offerService: OfferService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val offerService: OfferService
 ) {
 
     @CrossOrigin
@@ -39,8 +38,7 @@ class OfferController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<OfferResponse> =
-        getHrPartnerFromJWT(jwt)
-            .let { offerService.addOffer(offerRequest, it) }
+        offerService.addOffer(offerRequest, jwt)
             .let(Offer::toOfferResponse)
             .let { OwnResponses.CREATED(it) }
 
@@ -51,8 +49,7 @@ class OfferController(
         @PathVariable("offerId") offerId: Int,
         @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<Any> =
-        getHrPartnerFromJWT(jwt)
-            .let { offerService.updateOffer(offerId, offerRequest, it) }
+        offerService.updateOffer(offerId, offerRequest, jwt)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
@@ -61,10 +58,6 @@ class OfferController(
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int
     ): ResponseEntity<Any> =
-        getHrPartnerFromJWT(jwt)
-            .let { offerService.deleteOffer(offerId) }
+        offerService.deleteOffer(offerId, jwt)
             .let { OwnResponses.SUCCESS }
-
-    private fun getHrPartnerFromJWT(jwt: String?) =
-        securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException()
 }

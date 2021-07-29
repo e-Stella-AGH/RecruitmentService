@@ -11,13 +11,13 @@ object FakeOrganizations {
             id = null,
             name = "Qualtrics",
             user = organizationsUsers[0],
-            verified = false
+            verified = true
         ),
         Organization(
             id = null,
             name = "Pega",
             user = organizationsUsers[1],
-            verified = true,
+            verified = false,
         )
     )
 }
