@@ -62,9 +62,21 @@ class HrPartnerController(
         hrPartnerService.deleteHrPartner(hrId, jwt).let {
             OwnResponses.SUCCESS
         }
+
+    @CrossOrigin
+    @DeleteMapping("/mail")
+    fun deleteHrPartnerByMail(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @RequestBody mail: HrPartnerMail
+    ): ResponseEntity<Any> =
+        hrPartnerService.deleteHrPartnerByMail(jwt, mail.mail).let {
+            OwnResponses.SUCCESS
+        }
 }
 
-data class HrPartnerRequest(val mail: String) {
+data class HrPartnerMail(val mail: String)
+
+data class HrPartnerRequest(val firstName: String, val lastName: String, val mail: String) {
     fun toHrPartner(organization: Organization): HrPartner =
-        HrPartner(null, organization, User(null, "", "", mail))
+        HrPartner(null, organization, User(null, firstName, lastName, mail))
 }

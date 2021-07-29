@@ -74,6 +74,14 @@ class OfferService(
 
     private fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 
+    fun getHrPartnerOffers(hrPartner: HrPartner): List<OfferResponse> = getOffers()
+            .filter { it.creator == hrPartner }
+            .map { it.toOfferResponse() }
+
+    fun getOrganizationOffers(organization: Organization): List<OfferResponse> = getOffers()
+        .filter { it.creator.organization == organization }
+        .map { it.toOfferResponse() }
+
     private fun checkAuth(offer: Offer, jwt: String?): Set<Permission> {
         if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
         val user = securityService.getHrPartnerFromJWT(jwt) ?: securityService.getOrganizationFromJWT(jwt)

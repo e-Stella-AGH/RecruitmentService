@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.*
 @Transactional
 @RequestMapping("/api/offers")
 class OfferController(
-    @Autowired private val offerService: OfferService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val offerService: OfferService
 ) {
 
     @CrossOrigin
@@ -61,7 +60,4 @@ class OfferController(
     ): ResponseEntity<Any> =
         offerService.deleteOffer(offerId, jwt)
             .let { OwnResponses.SUCCESS }
-
-    private fun getHrPartnerFromJWT(jwt: String?) =
-        securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException()
 }
