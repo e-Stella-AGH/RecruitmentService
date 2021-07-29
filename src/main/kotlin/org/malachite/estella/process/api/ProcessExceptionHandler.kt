@@ -1,6 +1,7 @@
 package org.malachite.estella.process.api
 
 import org.malachite.estella.commons.Message
+import org.malachite.estella.process.domain.InvalidEndDateException
 import org.malachite.estella.process.domain.InvalidStagesListException
 import org.malachite.estella.process.domain.NoSuchStageTypeException
 import org.springframework.http.HttpStatus
@@ -18,4 +19,8 @@ class ProcessExceptionHandler {
     @ExceptionHandler(InvalidStagesListException::class)
     fun handleInvalidStagesListException(ex: InvalidStagesListException) =
         ResponseEntity.badRequest().body(Message(ex.error))
+
+    @ExceptionHandler(InvalidEndDateException::class)
+    fun handleInvalidEndDateException(ex: InvalidEndDateException) =
+        ResponseEntity.badRequest().body(Message("Date you provided is before start date of process!"))
 }

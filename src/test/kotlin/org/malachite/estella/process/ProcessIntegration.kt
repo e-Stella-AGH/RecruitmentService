@@ -16,6 +16,8 @@ import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
+import java.sql.Date
+import java.time.LocalDate
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ProcessIntegration: BaseIntegration() {
@@ -137,6 +139,42 @@ class ProcessIntegration: BaseIntegration() {
             that(message).isEqualTo("There must be only one APPLIED and ENDED stage")
         }
     }
+
+    @Test
+    @Order(7)
+    fun `should be able to change end date of recruitment process`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val response = changeProcessEndDate("01.01.2022", process.id!!)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedProcess = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(updatedProcess).isNotNull()
+        updatedProcess!!
+        println(updatedProcess.endDate)
+        expectThat(updatedProcess.endDate?.toLocalDate()).isEqualTo(LocalDate.of(2022, 1, 1))
+    }
+
+    @Test
+    @Order(8)
+    fun `should throw exception when end date is going to be set before start date`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(process).isNotNull()
+        process!!
+        val response = changeProcessEndDate("01.01.1999", process.id!!)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    private fun changeProcessEndDate(date: String, id: Int) =
+        httpRequest(
+            path = "/api/process/${id}/end_date",
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(getHrPartnerMail())),
+            body = mapOf(
+                "date" to date
+            ),
+            method = HttpMethod.PUT
+        )
+
 
     private fun getHrPartnerMail() =
         hrRepository.findAll().toList()[1].user.mail
