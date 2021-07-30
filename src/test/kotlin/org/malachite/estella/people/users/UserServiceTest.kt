@@ -8,7 +8,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.api.UserRequest
+import org.malachite.estella.people.domain.HrPartnerRepository
+import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.services.MailService
 import org.malachite.estella.services.SecurityService
@@ -22,9 +25,12 @@ import strikt.assertions.isEqualTo
 
 class UserServiceTest {
 
-    private val repository = DummyUserRepository()
+    private val userRepository = DummyUserRepository()
+    private val hrRepository = mockk<HrPartnerRepository>()
+    private val jobSeekerRepository = mockk<JobSeekerRepository>()
+    private val organizationRepository = mockk<OrganizationRepository>()
     private val securityMock = mockk<SecurityService>()
-    private val userService = UserService(repository, securityMock)
+    private val userService = UserService(securityMock, userRepository, hrRepository, jobSeekerRepository, organizationRepository)
 
     companion object {
         @BeforeAll
@@ -44,7 +50,7 @@ class UserServiceTest {
 
     @AfterEach
     fun cleanup() {
-        repository.clear()
+        userRepository.clear()
     }
 
     @Test
