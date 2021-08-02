@@ -13,6 +13,7 @@ import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import java.net.URI
 
@@ -34,7 +35,7 @@ class HrPartnerController(
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
         hrPartnerService.getHrPartner(hrPartnerId).let { ResponseEntity.ok(it) }
 
-
+    @Transactional
     @CrossOrigin
     @GetMapping("/offers")
     fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> {
