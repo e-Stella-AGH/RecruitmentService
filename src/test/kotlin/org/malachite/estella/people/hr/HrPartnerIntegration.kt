@@ -12,6 +12,7 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.services.OfferService
+import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
@@ -24,10 +25,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 
-@TestExecutionListeners(mergeMode =
-TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
-    listeners = [TestDatabaseReseter::class]
-)
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class HrPartnerIntegration : BaseIntegration() {
 

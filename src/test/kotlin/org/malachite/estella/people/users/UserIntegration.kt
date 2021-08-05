@@ -9,6 +9,7 @@ import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.http.HttpMethod
@@ -21,10 +22,7 @@ import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 import java.util.*
 
-@TestExecutionListeners(mergeMode =
-TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
-    listeners = [TestDatabaseReseter::class]
-)
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class UserIntegration : BaseIntegration() {
 

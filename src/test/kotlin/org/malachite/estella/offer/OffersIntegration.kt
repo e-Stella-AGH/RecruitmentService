@@ -9,6 +9,7 @@ import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.offer.domain.Skill
 import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.services.HrPartnerService
+import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,10 +22,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 
-@TestExecutionListeners(mergeMode =
-TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
-    listeners = [TestDatabaseReseter::class]
-)
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class OffersIntegration: BaseIntegration() {
 

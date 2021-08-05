@@ -11,6 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.context.TestContext
 import org.springframework.test.context.TestExecutionListener
+import org.springframework.test.context.TestExecutionListeners
+
+@TestExecutionListeners(mergeMode =
+TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
+    listeners = [TestDatabaseReseter::class]
+)
+annotation class DatabaseReset
+
 
 @Component
 class TestDatabaseReseter: TestExecutionListener {

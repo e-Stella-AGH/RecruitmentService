@@ -13,6 +13,7 @@ import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
+import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
@@ -26,10 +27,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 
-@TestExecutionListeners(mergeMode =
-TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
-    listeners = [TestDatabaseReseter::class]
-)
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ApplicationsIntegration : BaseIntegration() {
 
