@@ -55,7 +55,6 @@ class UserService(
             firstName = userRequest.firstName,
             lastName = userRequest.lastName
         )
-        // TODO [ES-187] - It won't work because of encryption on setter (it invokes encryption of encrypted password)
         updated.password = userRequest.password
         userRepository.save(updated)
     }
