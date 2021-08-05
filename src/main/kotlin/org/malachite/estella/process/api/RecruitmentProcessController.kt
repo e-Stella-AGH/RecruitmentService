@@ -1,6 +1,5 @@
 package org.malachite.estella.process.api
 
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.malachite.estella.process.domain.toRecruitmentProcessDto
@@ -38,10 +37,9 @@ class RecruitmentProcessController(
     @PutMapping("/stages/{processId}")
     fun updateStagesList(
         @PathVariable("processId") processId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody stages: UpdateStagesListRequest
     ) =
-        processService.updateStagesList(jwt, processId, stages.stages)
+        processService.updateStagesList(processId, stages.stages)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin

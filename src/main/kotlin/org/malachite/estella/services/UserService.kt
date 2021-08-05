@@ -1,11 +1,12 @@
 package org.malachite.estella.services
 
+import io.jsonwebtoken.Jwts
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.organization.domain.OrganizationRepository
+import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.security.Authority
 import org.malachite.estella.security.UserContextDetails
@@ -35,7 +36,7 @@ class UserService(
         userRepository.findAll()
 
     fun getUser(id: Int): User =
-        withExceptionThrower { userRepository.findById(id).get() } as User
+        withExceptionThrower { userRepository.findById(id).get() }
 
     fun addUser(user: User): User =
         try {
@@ -45,20 +46,17 @@ class UserService(
             throw UserAlreadyExistsException()
         }
 
-    fun updateUser(userRequest: UserRequest, jwt: String?) {
-        val originalUser = securityService.getUserFromJWT(jwt) ?: throw UnauthenticatedException()
-        if (!getPermissions(originalUser.id!!, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        updateUser(originalUser.id, userRequest)
-    }
+    fun updateUser(userRequest: UserRequest) {
+        val originalUser = securityService.getUserFromContext() ?: throw UnauthenticatedException()
+        if (!getPermissions(originalUser.id!!).contains(Permission.UPDATE)) throw UnauthenticatedException()
 
-    private fun updateUser(id: Int, user: UserRequest) {
-        val currUser: User = getUser(id)
+        val currUser: User = getUser(originalUser.id)
         val updated: User = currUser.copy(
-            firstName = user.firstName,
-            lastName = user.lastName
+            firstName = userRequest.firstName,
+            lastName = userRequest.lastName
         )
         // TODO [ES-187] - It won't work because of encryption on setter (it invokes encryption of encrypted password)
-        updated.password = user.password
+        updated.password = userRequest.password
         userRepository.save(updated)
     }
 
@@ -73,20 +71,25 @@ class UserService(
 
     fun getUserByEmail(email: String): User? = userRepository.findByMail(email).orElse(null)
 
-    fun getUserContextDetails(user: User): UserContextDetails = UserContextDetails(
-            user.id!!,
-            user.firstName,
-            user.lastName,
-            user.mail,
-            listOfNotNull(getUserType(user.id)),
-            true
-    )
+    fun getUserContextDetails(token: String): UserContextDetails {
+        val claims = Jwts.parser().setSigningKey("secret").parseClaimsJws(token)
+        val user = getUserByEmail(claims.body["mail"].toString())
+        return UserContextDetails(
+                user!!,
+                token,
+                listOfNotNull(getUserType(user.id!!)),
+                true
+        )
+    }
 
-    private fun getPermissions(id: Int, jwt: String?): Set<Permission> {
-        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
-        securityService.getUserFromJWT(jwt)?.let {
-            if (it.id == id) return Permission.allPermissions()
-            else throw UnauthenticatedException()
+    private fun getPermissions(id: Int): Set<Permission> {
+        val userDetails = UserContextDetails.fromContext()
+        if (securityService.isCorrectApiKey(userDetails?.token))
+            return Permission.allPermissions()
+
+        return securityService.getUserFromContext()?.let {
+            if (it.id == id) Permission.allPermissions()
+            else null
         } ?: throw UnauthenticatedException()
     }
 

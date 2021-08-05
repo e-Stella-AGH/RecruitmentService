@@ -1,6 +1,5 @@
 package org.malachite.estella
 
-import com.beust.klaxon.Klaxon
 import org.malachite.estella.commons.loader.*
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
@@ -15,7 +14,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import java.io.File
 
 @SpringBootApplication(exclude = [SecurityAutoConfiguration::class])
 class DemoApplication {

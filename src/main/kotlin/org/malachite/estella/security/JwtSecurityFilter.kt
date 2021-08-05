@@ -1,6 +1,9 @@
 package org.malachite.estella.security
 
-import io.jsonwebtoken.*
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.MalformedJwtException
+import io.jsonwebtoken.SignatureException
+import io.jsonwebtoken.UnsupportedJwtException
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.services.UserService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -17,20 +20,16 @@ class JwtSecurityFilter(val userService: UserService) : OncePerRequestFilter() {
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val authHeader = request.getHeader(EStellaHeaders.jwtToken)
-        authHeader?.let {
+        authHeader?.let { token ->
             try {
-                val claims = Jwts.parser().setSigningKey("secret").parseClaimsJws(it)
-                val user = userService.getUserByEmail(claims.body["mail"].toString())
-                user?.let {
-                    val userDetails = userService.getUserContextDetails(user)
-                    val auth = UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails._authorities
-                    )
-                    auth.details = WebAuthenticationDetailsSource().buildDetails(request)
-                    SecurityContextHolder.getContext().authentication = auth
-                }
+                val userDetails = userService.getUserContextDetails(token)
+                val auth = UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails._authorities
+                )
+                auth.details = WebAuthenticationDetailsSource().buildDetails(request)
+                SecurityContextHolder.getContext().authentication = auth
             } catch (ex: SignatureException) {
                 logger.error("Invalid JWT signature - " + ex.message)
             } catch (ex: MalformedJwtException) {

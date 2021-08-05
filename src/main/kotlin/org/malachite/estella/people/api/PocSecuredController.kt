@@ -14,7 +14,7 @@ class PocSecuredController {
     @CrossOrigin
     @GetMapping("get")
     fun getSomething(): ResponseEntity<String> {
-        UserContextDetails.fromContext()?.let {
+        UserContextDetails.fromContext()?.user?.let {
             println(it.firstName)
             println(it.lastName)
             println(it.mail)

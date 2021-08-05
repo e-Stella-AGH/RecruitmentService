@@ -1,13 +1,12 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
-import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationNotFoundException
 import org.malachite.estella.organization.domain.OrganizationRepository
+import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -31,20 +30,15 @@ class OrganizationService(
         return organization.copy(user = user).let { organizationRepository.save(it) }
     }
 
-    fun updateOrganization(id: UUID, organization: Organization, jwt: String?) =
-        if(!checkRights(id, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        else updateOrganization(id, organization)
-
-
-    private fun updateOrganization(id: UUID, organization: Organization) =
+    fun updateOrganization(id: UUID, organization: Organization) {
+        if (!checkRights(id).contains(Permission.UPDATE)) throw UnauthenticatedException()
         getOrganization(id).copy(name = organization.name, verified = organization.verified).let { organizationRepository.save(it) }
+    }
 
-    fun deleteOrganization(id: UUID, jwt: String?) =
-        if(!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        else deleteOrganization(id)
-
-
-    private fun deleteOrganization(id: UUID) = organizationRepository.deleteById(id)
+    fun deleteOrganization(id: UUID) {
+        if(!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
+        organizationRepository.deleteById(id)
+    }
 
     fun verifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, true)
@@ -62,12 +56,16 @@ class OrganizationService(
         return organization
     }
 
-    fun checkRights(id: UUID, jwt: String?): Set<Permission> =
-        if (securityService.isCorrectApiKey(jwt)) Permission.allPermissions()
-        else securityService.getOrganizationFromJWT(jwt)?.id
+    fun checkRights(id: UUID): Set<Permission> {
+        val userDetails = UserContextDetails.fromContext()
+        if (securityService.isCorrectApiKey(userDetails?.token))
+            return Permission.allPermissions()
+
+        return securityService.getOrganizationFromContext()?.id
             ?.let {
-                if(it == id) Permission.allPermissions()
-                else throw UnauthenticatedException()
+                if (it == id) Permission.allPermissions()
+                else null
             } ?: throw UnauthenticatedException()
+    }
 
 }

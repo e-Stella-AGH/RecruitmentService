@@ -59,10 +59,10 @@ class RecruitmentProcessService(
         return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!
     }
 
-    fun updateStagesList(jwt: String?, processId: Int, stagesList: List<String>) {
-        val userFromJWT = securityService.getHrPartnerFromJWT(jwt)
+    fun updateStagesList(processId: Int, stagesList: List<String>) {
+        val user = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
-        if (process.offer.creator.id != userFromJWT?.id) throw UnauthenticatedException()
+        if (process.offer.creator.id != user?.id) throw UnauthenticatedException()
         val stages = compareAndGetStagesList(process.stages, stagesList.toListOfRecruitmentStage())
         recruitmentProcessRepository.save(process.copy(stages = stages))
     }

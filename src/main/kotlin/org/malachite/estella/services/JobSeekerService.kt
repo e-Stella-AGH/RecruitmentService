@@ -8,6 +8,7 @@ import org.malachite.estella.commons.models.people.JobSeekerFile
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
+import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
@@ -29,22 +30,24 @@ class JobSeekerService(
             createJobSeeker(jobSeeker)
                 .also {mailService.sendRegisterMail(it.user) }
 
-    fun createJobSeeker(jobSeeker: JobSeeker):JobSeeker =
+    fun createJobSeeker(jobSeeker: JobSeeker): JobSeeker =
         try {
             jobSeekerRepository.save(jobSeeker)
         } catch(e: DataIntegrityViolationException) {
             throw UserAlreadyExistsException()
         }
 
-    fun deleteJobSeeker(id: Int, jwt: String?) =
-        if(!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        else deleteJobSeeker(id)
+    fun deleteJobSeeker(id: Int) {
+        if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
+        deleteJobSeeker(id)
+    }
 
-    private fun deleteJobSeeker(id: Int) = jobSeekerRepository.deleteById(id)
+    private fun checkRights(id: Int): Set<Permission> {
+        val userDetails = UserContextDetails.fromContext()
+        if (securityService.isCorrectApiKey(userDetails?.token))
+            return Permission.allPermissions()
 
-    private fun checkRights(id: Int, jwt: String?): Set<Permission> {
-        if(securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
-        securityService.getJobSeekerFromJWT(jwt)
+        securityService.getJobSeekerFromContext()
             ?.let {
                 if(id == it.id) return Permission.allPermissions()
                 else null
@@ -59,7 +62,7 @@ class JobSeekerService(
     fun updateJobSeeker(updatedJobSeeker: JobSeeker) =
         jobSeekerRepository.save(updatedJobSeeker)
 
-    fun updateJobSeekerFiles(jobSeeker: JobSeeker,files:Set<JobSeekerFile>) =
+    fun updateJobSeekerFiles(jobSeeker: JobSeeker, files: Set<JobSeekerFile>) =
         jobSeeker
             .copy(files = files)
             .let { updateJobSeeker(it) }

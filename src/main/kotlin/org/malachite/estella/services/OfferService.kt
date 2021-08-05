@@ -8,6 +8,8 @@ import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.offer.domain.*
+import org.malachite.estella.security.Authority
+import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -29,12 +31,12 @@ class OfferService(
     fun getOfferDesiredSkills(id: Int): MutableIterable<DesiredSkill> =
         getOffer(id).skills.toMutableSet()
 
-    fun addOffer(offerRequest: OfferRequest, jwt: String?): Offer {
+    fun addOffer(offerRequest: OfferRequest): Offer {
         offerRequest.toOffer(
-            securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException(),
+            securityService.getHrPartnerFromContext() ?: throw UnauthenticatedException(),
             desiredSkillService
         ).let {
-            if (!checkAuth(it, jwt).contains(Permission.CREATE)) throw UnauthenticatedException()
+            if (!checkAuth(it).contains(Permission.CREATE)) throw UnauthenticatedException()
             return this.addOffer(it)
                 .also { recruitmentProcessService.addBasicProcess(it) }
         }
@@ -55,9 +57,9 @@ class OfferService(
         offerRepository.save(updated)
     }
 
-    fun updateOffer(id: Int, offerRequest: OfferRequest, jwt: String?) {
+    fun updateOffer(id: Int, offerRequest: OfferRequest) {
         val currentOffer = this.getOffer(id)
-        if (!checkAuth(currentOffer, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
+        if (!checkAuth(currentOffer).contains(Permission.UPDATE)) throw UnauthenticatedException()
         this.updateOffer(
             currentOffer,
             offerRequest.toOffer(
@@ -67,12 +69,10 @@ class OfferService(
         )
     }
 
-    fun deleteOffer(id: Int, jwt: String?) {
-        if (!checkAuth(this.getOffer(id), jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        deleteOffer(id)
+    fun deleteOffer(id: Int) {
+        if (!checkAuth(this.getOffer(id)).contains(Permission.DELETE)) throw UnauthenticatedException()
+        offerRepository.deleteById(id)
     }
-
-    private fun deleteOffer(id: Int) = offerRepository.deleteById(id)
 
     fun getHrPartnerOffers(hrPartner: HrPartner): List<OfferResponse> = getOffers()
             .filter { it.creator == hrPartner }
@@ -82,22 +82,33 @@ class OfferService(
         .filter { it.creator.organization == organization }
         .map { it.toOfferResponse() }
 
-    private fun checkAuth(offer: Offer, jwt: String?): Set<Permission> {
-        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
-        val user = securityService.getHrPartnerFromJWT(jwt) ?: securityService.getOrganizationFromJWT(jwt)
-        ?: throw UnauthenticatedException()
-        val permissions = mutableSetOf(Permission.READ)
-        if (user is HrPartner && offer.creator.id == user.id && user.organization.verified) {
-            permissions.addAll(Permission.allPermissions())
+    private fun checkAuth(offer: Offer): Set<Permission> {
+        val userDetails = UserContextDetails.fromContext() ?: throw UnauthenticatedException()
+        if (securityService.isCorrectApiKey(userDetails.token)) return Permission.allPermissions()
+        val user = userDetails.user
+        val userAuthority = userDetails.authorities.first()
+        return when(userAuthority) {
+            Authority.job_seeker ->
+                throw UnauthenticatedException()
+            Authority.hr ->
+                if(offer.creator.id == user.id && offer.creator.organization.verified)
+                    Permission.allPermissions()
+                else
+                    setOf(Permission.READ)
+            Authority.organization ->
+                if(offer.creator.organization.user.id == user.id && offer.creator.organization.verified)
+                    setOf(Permission.READ, Permission.UPDATE, Permission.DELETE)
+                else
+                    setOf(Permission.READ)
+
         }
-        if (user is Organization && offer.creator.organization.id == user.id && user.verified) {
-            permissions.addAll(setOf(Permission.UPDATE, Permission.DELETE))
-        }
-        return permissions
     }
 
-    fun getHrPartnerOffers(jwt: String?): List<OfferResponse> =
-        getOffers()
-            .filter { offer -> offer.creator == securityService.getHrPartnerFromJWT(jwt) ?: throw UnauthenticatedException() }
-            .map { offer -> offer.toOfferResponse() }
+    fun getHrPartnerOffers(): List<OfferResponse> =
+        UserContextDetails.fromContext()?.let { userDetails ->
+            getOffers()
+                .filter { userDetails.authorities.firstOrNull() == Authority.hr }
+                .filter { it.creator.id == userDetails.user.id }
+                .map { it.toOfferResponse() }
+        } ?: listOf()
 }

@@ -11,6 +11,7 @@ import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
+import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -79,16 +80,19 @@ class SecurityService(
         return userRepository.findById(id.toInt()).orElse(null)
     }
 
-    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? {
-        return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
-    }
+    fun getUserFromContext(): User? =
+        UserContextDetails.fromContext()?.user
 
-    fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
-        getUserFromJWT(jwt)
+    fun getJobSeekerFromContext(): JobSeeker? =
+        getUserFromContext()
+            ?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
+    fun getHrPartnerFromContext(): HrPartner? =
+        getUserFromContext()
             ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
-    fun getOrganizationFromJWT(jwt: String?): Organization? =
-        getUserFromJWT(jwt)?.id
+    fun getOrganizationFromContext(): Organization? =
+        getUserFromContext()?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
@@ -106,17 +110,17 @@ class SecurityService(
         return null
     }
 
-    fun checkUserRights(jwt: String?, userId: Int): Boolean =
-        getUserFromJWT(jwt)?.let { it.id == userId } ?: false
+    fun checkUserRights(userId: Int): Boolean =
+        getUserFromContext()?.let { it.id == userId } ?: false
 
-    fun checkJobSeekerRights(jwt: String?, id: Int) =
-        checkUserRights(jwt, id) && getJobSeekerFromJWT(jwt) != null
+    fun checkJobSeekerRights(id: Int) =
+        checkUserRights(id) && getJobSeekerFromContext() != null
 
-    fun checkHrRights(jwt: String?, id: Int) =
-        checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
+    fun checkHrRights(id: Int) =
+        checkUserRights(id) && getHrPartnerFromContext() != null
 
-    fun checkOrganizationHrRights(jwt: String?, hrId: Int) =
-        getOrganizationFromJWT(jwt)?.let {
+    fun checkOrganizationHrRights(hrId: Int) =
+        getOrganizationFromContext()?.let {
             it.verified && hrPartnerRepository.findByUserId(hrId).get().organization == it
         } ?: false
 

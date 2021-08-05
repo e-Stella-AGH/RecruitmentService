@@ -1,21 +1,26 @@
 package org.malachite.estella.services
 
-import org.malachite.estella.commons.*
+import org.malachite.estella.commons.DataViolationException
+import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.Permission
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.HrPartner
-import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.api.HrPartnerRequest
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.UserNotFoundException
+import org.malachite.estella.security.Authority
+import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class HrPartnerService(
-    @Autowired private val hrPartnerRepository: HrPartnerRepository,
-    @Autowired private val mailService: MailService,
-    @Autowired private val userService: UserService,
-    @Autowired private val securityService: SecurityService
+        @Autowired private val hrPartnerRepository: HrPartnerRepository,
+        @Autowired private val organizationRepository: OrganizationRepository,
+        @Autowired private val mailService: MailService,
+        @Autowired private val userService: UserService,
+        @Autowired private val securityService: SecurityService
 ): EStellaService<HrPartner>() {
 
     override val throwable: Exception = UserNotFoundException()
@@ -26,11 +31,11 @@ class HrPartnerService(
 
     private fun addHrPartner(hrPartner: HrPartner): HrPartner = hrPartnerRepository.save(hrPartner)
 
-    fun registerHrPartner(hrPartnerRequest: HrPartnerRequest, jwt: String?): HrPartner {
-        getPermissions(null, jwt).let {
+    fun registerHrPartner(hrPartnerRequest: HrPartnerRequest): HrPartner {
+        getPermissions(null).let {
             if (!it.contains(Permission.CREATE)) throw UnauthenticatedException()
         }
-        val organization = securityService.getOrganizationFromJWT(jwt) ?: throw UnauthenticatedException()
+        val organization = securityService.getOrganizationFromContext() ?: throw UnauthenticatedException()
         val hrPartner = hrPartnerRequest.toHrPartner(organization)
         return registerHrPartner(hrPartner)
     }
@@ -45,12 +50,8 @@ class HrPartnerService(
         return hrPartner
     }
 
-    fun updateHrPartner(id: Int, hrPartner: HrPartner, jwt: String?) {
-        if(!getPermissions(id, jwt).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        updateHrPartner(id, hrPartner)
-    }
-
     private fun updateHrPartner(id: Int, hrPartner: HrPartner) {
+        if(!getPermissions(id).contains(Permission.UPDATE)) throw UnauthenticatedException()
         val currPartner: HrPartner = this.getHrPartner(id)
         val updated: HrPartner = currPartner.copy(
             organization = hrPartner.organization,
@@ -59,45 +60,52 @@ class HrPartnerService(
         hrPartnerRepository.save(updated)
     }
 
-    fun getHrsByOrganizationId(id: UUID?) =
-        this.getHrPartners()
-            .filter { it.organization.id == id }
+    fun getHrsByOrganizationUserId(userId: Int): Collection<HrPartner> =
+        organizationRepository
+                .findByUserId(userId)
+                .orElse(null)
+                ?.let {
+                    this.getHrPartners()
+                        .filter { it.organization.user.id == userId }
+                } ?: listOf()
 
-    private fun getHrsIdsByOrganizationId(id: UUID?) =
-        this.getHrsByOrganizationId(id)
+    private fun getHrsIdsByOrganizationUserId(userId: Int) =
+        this.getHrsByOrganizationUserId(userId)
             .map { it.id }
 
-    fun deleteHrPartner(id: Int, jwt: String?) {
-        if(!getPermissions(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        deleteHrPartner(id)
-    }
+    fun getPermissions(id: Int?): Set<Permission> {
+        val userDetails = UserContextDetails.fromContext()
+        if (securityService.isCorrectApiKey(userDetails?.token))
+            return Permission.allPermissions()
 
-    fun getPermissions(id: Int?, jwt: String?): Set<Permission> {
-        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
-        val permissions = mutableSetOf(Permission.READ)
-        val user = securityService.getHrPartnerFromJWT(jwt) ?: securityService.getOrganizationFromJWT(jwt)
-        ?: throw UnauthenticatedException()
-        if (user is HrPartner && user.id == id) {
-            permissions.addAll(Permission.allPermissions())
+        val user = userDetails?.user ?: throw UnauthenticatedException()
+        val userAuthority = userDetails.authorities.firstOrNull() ?: throw UnauthenticatedException()
+        if (userAuthority == Authority.hr && user.id == id) {
+            return Permission.allPermissions()
         }
-        if (user is Organization && getHrsIdsByOrganizationId(user.id).contains(id) && user.verified) {
-            permissions.addAll(Permission.allPermissions())
+        if (
+                userAuthority == Authority.organization
+                && getHrsIdsByOrganizationUserId(user.id!!).contains(id)
+                && organizationRepository.findByUserId(user.id).filter { it.verified }.isPresent
+        ) {
+            return Permission.allPermissions()
         }
-        if (user is Organization && id == null) {
-            permissions.add(Permission.CREATE)
+        if (userAuthority == Authority.organization && id == null) {
+            return setOf(Permission.READ, Permission.CREATE)
         }
-        return permissions
+        return setOf(Permission.READ)
     }
 
     fun deleteHrPartner(id: Int) = try {
+        if(!getPermissions(id).contains(Permission.DELETE)) throw UnauthenticatedException()
         hrPartnerRepository.deleteById(id)
     } catch (ex: Exception) {
         throw DataViolationException("This user may have offers assigned to him and cannot be deleted")
     }
 
-    fun deleteHrPartnerByMail(organizationJwt: String?, mail: String) {
+    fun deleteHrPartnerByMail(mail: String) {
         this.getHrPartnerByMail(mail)?.let {
-            if (!securityService.checkOrganizationHrRights(organizationJwt, it.user.id!!)) throw UnauthenticatedException()
+            if (!securityService.checkOrganizationHrRights(it.user.id!!)) throw UnauthenticatedException()
             this.deleteHrPartner(it.id!!)
         } ?: throw UserNotFoundException()
     }
