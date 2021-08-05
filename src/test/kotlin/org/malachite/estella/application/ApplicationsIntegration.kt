@@ -1,9 +1,6 @@
 package org.malachite.estella.application
 
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.commons.EStellaHeaders
@@ -15,18 +12,24 @@ import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
+import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.util.EmailServiceStub
+import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 
+@TestExecutionListeners(mergeMode =
+TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
+    listeners = [TestDatabaseReseter::class]
+)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ApplicationsIntegration : BaseIntegration() {
 
@@ -36,6 +39,13 @@ class ApplicationsIntegration : BaseIntegration() {
     @Autowired
     private lateinit var offerRepository: HibernateOfferRepository
 
+    @Autowired
+    private lateinit var userRepository: HibernateUserRepository
+
+    @BeforeEach
+    fun pri() {
+        println("users: ${userRepository.findAll()}")
+    }
 
     @Test
     @Order(1)
@@ -121,7 +131,6 @@ class ApplicationsIntegration : BaseIntegration() {
     @Test
     @Order(4)
     fun `should list all applications by offer`() {
-
         val offer = getOffer()
         val response = httpRequest(
             path = "/api/applications/offer/${offer.id}",
@@ -190,7 +199,6 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.REJECTED)
-
     }
 
     private fun getApplications() =

@@ -13,15 +13,21 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
+import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 
+@TestExecutionListeners(mergeMode =
+TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
+    listeners = [TestDatabaseReseter::class]
+)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class HrPartnerIntegration : BaseIntegration() {
 
@@ -60,7 +66,7 @@ class HrPartnerIntegration : BaseIntegration() {
         response.forEach{
             val offer = it.id?.let { it1 -> offerService.getOffer(it1) }
             offer?.let {
-                expectThat(it.creator.user).isEqualTo(legitHrPartner.user)
+                expectThat(it.creator.user.mail).isEqualTo(legitHrPartner.user.mail)
             }
         }
     }

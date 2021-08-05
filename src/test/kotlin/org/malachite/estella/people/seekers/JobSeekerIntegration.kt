@@ -8,13 +8,19 @@ import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 
+@TestExecutionListeners(mergeMode =
+TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS,
+    listeners = [TestDatabaseReseter::class]
+)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class JobSeekerIntegration: BaseIntegration() {
 
