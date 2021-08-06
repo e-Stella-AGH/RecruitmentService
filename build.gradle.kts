@@ -33,6 +33,7 @@ dependencies {
 
     testImplementation("io.strikt:strikt-core:0.31.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.mockk:mockk:1.9.3")
     testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
     testImplementation("org.apache.httpcomponents:httpclient:4.5.13")

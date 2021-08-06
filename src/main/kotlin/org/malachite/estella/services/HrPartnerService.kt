@@ -74,7 +74,7 @@ class HrPartnerService(
             .map { it.id }
 
     fun getPermissions(id: Int?): Set<Permission> {
-        val userDetails = UserContextDetails.fromContext()
+        val userDetails = securityService.getUserDetailsFromContext()
         if (securityService.isCorrectApiKey(userDetails?.token))
             return Permission.allPermissions()
 

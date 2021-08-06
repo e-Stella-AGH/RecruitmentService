@@ -83,7 +83,7 @@ class OfferService(
         .map { it.toOfferResponse() }
 
     private fun checkAuth(offer: Offer): Set<Permission> {
-        val userDetails = UserContextDetails.fromContext() ?: throw UnauthenticatedException()
+        val userDetails = securityService.getUserDetailsFromContext() ?: throw UnauthenticatedException()
         if (securityService.isCorrectApiKey(userDetails.token)) return Permission.allPermissions()
         val user = userDetails.user
         val userAuthority = userDetails.authorities.first()
@@ -105,7 +105,7 @@ class OfferService(
     }
 
     fun getHrPartnerOffers(): List<OfferResponse> =
-        UserContextDetails.fromContext()?.let { userDetails ->
+        securityService.getUserDetailsFromContext()?.let { userDetails ->
             getOffers()
                 .filter { userDetails.authorities.firstOrNull() == Authority.hr }
                 .filter { it.creator.id == userDetails.user.id }

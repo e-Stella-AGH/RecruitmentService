@@ -39,11 +39,11 @@ class JobSeekerService(
 
     fun deleteJobSeeker(id: Int) {
         if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
-        deleteJobSeeker(id)
+        jobSeekerRepository.deleteById(id)
     }
 
     private fun checkRights(id: Int): Set<Permission> {
-        val userDetails = UserContextDetails.fromContext()
+        val userDetails = securityService.getUserDetailsFromContext()
         if (securityService.isCorrectApiKey(userDetails?.token))
             return Permission.allPermissions()
 

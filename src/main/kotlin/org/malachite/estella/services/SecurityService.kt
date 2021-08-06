@@ -80,8 +80,11 @@ class SecurityService(
         return userRepository.findById(id.toInt()).orElse(null)
     }
 
+    fun getUserDetailsFromContext(): UserContextDetails? =
+        UserContextDetails.fromContext()
+
     fun getUserFromContext(): User? =
-        UserContextDetails.fromContext()?.user
+        getUserDetailsFromContext()?.user
 
     fun getJobSeekerFromContext(): JobSeeker? =
         getUserFromContext()

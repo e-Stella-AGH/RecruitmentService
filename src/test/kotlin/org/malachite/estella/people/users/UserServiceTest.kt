@@ -43,9 +43,7 @@ class UserServiceTest {
     @BeforeEach
     fun setup() {
         testUsers.forEach { userService.addUser(it) }
-        every { securityMock.getUserFromJWT("abc") } returns users[0]
         every { securityMock.isCorrectApiKey("abc") } returns false
-        every { securityMock.getUserFromJWT("def") } returns null
     }
 
     @AfterEach
@@ -77,7 +75,9 @@ class UserServiceTest {
 
     @Test
     fun `should be able to update user`() {
-        userService.updateUser(UserRequest( "new First Name", "new Last Name", users[0].mail, ""), "abc")
+        every { securityMock.getUserFromContext() } returns users[0]
+        every { securityMock.isCorrectApiKey(any()) } returns false
+        userService.updateUser(UserRequest( "new First Name", "new Last Name", users[0].mail, ""))
         userService.getUser(users[0].id!!).let {
             expectThat(it.firstName).isEqualTo("new First Name")
             expectThat(it.lastName).isEqualTo("new Last Name")
@@ -86,8 +86,9 @@ class UserServiceTest {
 
     @Test
     fun `should throw unauth, when jwt is invalid`() {
+        every { securityMock.getUserFromContext() } returns null
         expectThrows<UnauthenticatedException> {
-            userService.updateUser(UserRequest( "newFirstName", "", users[0].mail, ""), "def")
+            userService.updateUser(UserRequest( "newFirstName", "", users[0].mail, ""))
         }
     }
 

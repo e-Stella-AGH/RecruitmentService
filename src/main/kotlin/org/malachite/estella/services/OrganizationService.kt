@@ -57,7 +57,7 @@ class OrganizationService(
     }
 
     fun checkRights(id: UUID): Set<Permission> {
-        val userDetails = UserContextDetails.fromContext()
+        val userDetails = securityService.getUserDetailsFromContext()
         if (securityService.isCorrectApiKey(userDetails?.token))
             return Permission.allPermissions()
 
