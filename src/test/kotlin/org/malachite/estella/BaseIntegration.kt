@@ -10,10 +10,7 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
-import org.malachite.estella.people.domain.HrPartnerResponse
-import org.malachite.estella.people.domain.JobSeekerDTO
-import org.malachite.estella.people.domain.JobSeekerFileDTO
-import org.malachite.estella.people.domain.UserDTO
+import org.malachite.estella.people.domain.*
 import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -169,7 +166,7 @@ class BaseIntegration {
     )
 
     fun Map<String, Any>.toJobSeekerDTO() =
-        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO(),listOf<JobSeekerFileDTO>())
+        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
@@ -194,6 +191,13 @@ class BaseIntegration {
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
             setOf(),  //TODO - change it, when it will be implemented
             setOf()
+        )
+
+    fun Map<String,Any>.toJobSeekerFileDto() =
+        JobSeekerFileDTO(
+            this["id"] as Int,
+            this["fileName"] as String,
+            this["fileBase64"] as String
         )
 
     fun List<Map<String, Any>>.toRecruitmentStagesList() =

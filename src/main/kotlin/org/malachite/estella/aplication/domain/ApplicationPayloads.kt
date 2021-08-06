@@ -5,10 +5,7 @@ import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.people.domain.JobSeekerDTO
-import org.malachite.estella.people.domain.JobSeekerFileDTO
-import org.malachite.estella.people.domain.JobSeekerFilePayload
-import org.malachite.estella.people.domain.toJobSeekerDTO
+import org.malachite.estella.people.domain.*
 import java.sql.Date
 import java.time.LocalDate
 import java.util.*
@@ -79,5 +76,5 @@ fun Application.toApplicationDTO() =
         this.status,
         this.stage,
         this.jobSeeker.toJobSeekerDTO(),
-        this.seekerFiles.map { JobSeekerFileDTO.fromJobSeekerFile(it) }.toSet()
+        this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet()
     )

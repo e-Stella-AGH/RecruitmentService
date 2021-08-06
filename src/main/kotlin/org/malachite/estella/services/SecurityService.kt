@@ -2,6 +2,7 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -79,9 +80,12 @@ class SecurityService(
         return userRepository.findById(id.toInt()).orElse(null)
     }
 
-    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? {
-        return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
-    }
+    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
+    fun getJobSeekerFromJWTUnsafe(jwt: String?): JobSeeker =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+            ?: throw UnauthenticatedException()
 
     fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
         getUserFromJWT(jwt)
@@ -121,11 +125,11 @@ class SecurityService(
         } ?: false
 
     private fun User.getUserType(): String =
-        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
-        hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
-        organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" } ?:
-        throw InvalidUserException()
+        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" }
+            ?: hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" }
+            ?: organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" }
+            ?: throw InvalidUserException()
 
-    fun isCorrectApiKey(apiKey:String?):Boolean =
-        apiKey!=null && apiKey == API_KEY
+    fun isCorrectApiKey(apiKey: String?): Boolean =
+        apiKey != null && apiKey == API_KEY
 }

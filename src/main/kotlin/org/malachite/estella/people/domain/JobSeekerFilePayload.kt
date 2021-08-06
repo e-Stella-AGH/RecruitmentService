@@ -5,30 +5,33 @@ import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 
 data class JobSeekerFilePayload(
-        val fileName : String,
-        val file_base64: String
-){
+    val id: Int?,
+    val fileName: String,
+    val fileBase64: String
+) {
     fun toJobSeekerFile(): JobSeekerFile? = try {
         JobSeekerFile(
-            id = null,
-            file_name = fileName,
-            file = SerialBlob(Base64.getDecoder().decode(file_base64))
+            id = id,
+            fileName = fileName,
+            file = SerialBlob(Base64.getDecoder().decode(fileBase64))
         )
     } catch (e: Exception) {
+        println("Error during parsing JobSeekerFilePayload to JobSeekerFile")
         null
     }
 }
 
+
 data class JobSeekerFileDTO(
-        val fileName: String,
-        val fileBase64: String
-){
-    companion object {
-        fun fromJobSeekerFile(jobSeekerFile: JobSeekerFile) = JobSeekerFileDTO(
-                jobSeekerFile.file_name,
-                Base64.getEncoder().encodeToString(
-                        jobSeekerFile.file.getBytes(1, jobSeekerFile.file.length().toInt())
-                )
-        )
-    }
-}
+    val id:Int,
+    val fileName: String,
+    val fileBase64: String
+)
+
+fun JobSeekerFile.toJobSeekerFileDTO(): JobSeekerFileDTO = JobSeekerFileDTO(
+    this.id!!,
+    this.fileName,
+    Base64.getEncoder().encodeToString(
+        this.file.getBytes(1, this.file.length().toInt())
+    )
+)
