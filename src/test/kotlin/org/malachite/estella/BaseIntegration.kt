@@ -32,7 +32,7 @@ import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY"]
+    properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY","should_fake_load=false"]
 )
 class BaseIntegration {
 

@@ -12,8 +12,8 @@ val hrPartners = FakeLoader.getHrPartners(
     FakeOrganizations.getCompanies(FakeUsers.organizationUsers)
         .mapIndexed { index, company ->
             company.copy(UUID.randomUUID())
-        }
-)
+        })
+
 
 val offersWithNullProcess = FakeOffers.getOffers(hrPartners, desiredSkills)
     .mapIndexed { index, offer ->
