@@ -40,11 +40,6 @@ class ApplicationsIntegration : BaseIntegration() {
     @Autowired
     private lateinit var userRepository: HibernateUserRepository
 
-    @BeforeEach
-    fun pri() {
-        println("users: ${userRepository.findAll()}")
-    }
-
     @Test
     @Order(1)
     fun `should be able to apply for offer as logged in user`() {
@@ -177,8 +172,7 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(application.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
         val response = updateStage(application)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        val updatedApplication = getApplication(application.id);
-        println(updatedApplication)
+        val updatedApplication = getApplication(application.id)
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
         expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
     }
