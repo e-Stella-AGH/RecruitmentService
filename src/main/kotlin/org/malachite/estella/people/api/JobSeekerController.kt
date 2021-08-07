@@ -67,7 +67,7 @@ class JobSeekerController(
         @RequestBody jobSeekerFileRequest: JobSeekerFilesRequest
     ): ResponseEntity<Any> =
         securityService.getJobSeekerFromJWTUnsafe(jwt)
-            .let { jobSeekerFileService.updateFileList(it, jobSeekerFileRequest.files) }
+            .let { jobSeekerService.updateJobSeekerFiles(it, jobSeekerFileRequest.files) }
             .let { OwnResponses.SUCCESS }
 
 
@@ -87,6 +87,6 @@ data class JobSeekerFilesRequest(
 fun JobSeekerRequest.toJobSeeker() = JobSeeker(
     null,
     User(null, firstName, lastName, mail, password),
-    setOf()
+    mutableSetOf()
 )
 

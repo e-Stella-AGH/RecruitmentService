@@ -167,11 +167,7 @@ class JobSeekerIntegration: BaseIntegration() {
         }
     }
 
-    private fun getJobSeekerFilePayload(fileName:String, id:Int? = null):JobSeekerFilePayload =
-        JobSeekerFilePayload(id,fileName,encodedFile)
 
-    private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
-    private val encodedFile:String = Base64.getEncoder().encodeToString(file)
 
     private fun getAuthToken(mail:String = jobseekerMail, userPassword: String = password):String =
         loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""

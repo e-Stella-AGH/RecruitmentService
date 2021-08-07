@@ -8,10 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.people.users.DummyUserRepository
-import org.malachite.estella.services.JobSeekerService
-import org.malachite.estella.services.MailService
-import org.malachite.estella.services.SecurityService
-import org.malachite.estella.services.UserService
+import org.malachite.estella.services.*
 import org.malachite.estella.util.dev.`null`.mailServiceResponse
 import org.malachite.estella.util.jobSeekers
 import org.springframework.http.HttpHeaders
@@ -36,7 +33,8 @@ class JobSeekerServiceTest {
     private val userRepository = DummyUserRepository()
     private val mailServiceMock = mockk<MailService>()
     private val securityServiceMock = mockk<SecurityService>()
-    private val service = JobSeekerService(jobSeekerRepository, mailServiceMock, securityServiceMock)
+    private val jobSeekerFileServiceMock = mockk<JobSeekerFileService>()
+    private val service = JobSeekerService(jobSeekerRepository, mailServiceMock,jobSeekerFileServiceMock, securityServiceMock)
 
     @BeforeEach
     fun setup() {

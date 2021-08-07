@@ -4,29 +4,33 @@ import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.JobSeekerFile
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.*
 import java.sql.Date
 import java.time.LocalDate
 import java.util.*
 
-interface ApplicationPayload{
-    fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker):Application
+interface ApplicationPayload {
+    fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>): Application
+    fun getJobSeekerFiles(): Set<JobSeekerFilePayload>
 }
 
 //TODO: This solution with separate payloads is good enough for now
 data class ApplicationLoggedInPayload(val files: Set<JobSeekerFilePayload>) : ApplicationPayload {
-    override fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker) = Application(
+    override fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>) = Application(
         applicationDate = Date.valueOf(LocalDate.now()),
         status = ApplicationStatus.IN_PROGRESS,
         id = null,
         stage = stage,
         jobSeeker = jobSeeker,
-        seekerFiles = files.mapNotNull { it.toJobSeekerFile() }.toSet(),
+        seekerFiles = files,
         tasksResults = Collections.emptySet(),
         quizzesResults = Collections.emptySet(),
         interviews = Collections.emptySet(),
     )
+
+    override fun getJobSeekerFiles(): Set<JobSeekerFilePayload> = files
 }
 
 data class ApplicationNoUserPayload(
@@ -34,7 +38,7 @@ data class ApplicationNoUserPayload(
     val lastName: String,
     val mail: String,
     val files: Set<JobSeekerFilePayload>
-): ApplicationPayload {
+) : ApplicationPayload {
     fun toJobSeeker() = JobSeeker(
         id = null,
         user = User(
@@ -44,20 +48,22 @@ data class ApplicationNoUserPayload(
             mail = mail,
             password = null
         ),
-        files = files.mapNotNull { it.toJobSeekerFile() }.toSet()
+        files = files.mapNotNull { it.toJobSeekerFile() }.toMutableSet()
     )
 
-    override fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker) = Application(
+    override fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>) = Application(
         applicationDate = Date.valueOf(LocalDate.now()),
         status = ApplicationStatus.IN_PROGRESS,
         id = null,
         stage = stage,
         jobSeeker = jobSeeker,
-        seekerFiles = files.mapNotNull { it.toJobSeekerFile() }.toSet(),
+        seekerFiles = files,
         tasksResults = Collections.emptySet(),
         quizzesResults = Collections.emptySet(),
         interviews = Collections.emptySet(),
     )
+
+    override fun getJobSeekerFiles(): Set<JobSeekerFilePayload> = files
 }
 
 ////////

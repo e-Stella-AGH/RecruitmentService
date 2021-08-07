@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service
 @Service
 class JobSeekerFileService(
     @Autowired private val jobSeekerFileRepository: JobSeekerFileRepository,
-    @Autowired private val jobSeekerService: JobSeekerService
 ) : EStellaService<JobSeekerFile>() {
 
     override val throwable: Exception = JobSeekerFileNotFoundException()
@@ -21,21 +20,29 @@ class JobSeekerFileService(
 
     fun deleteFile(fileId: Int) = jobSeekerFileRepository.deleteById(fileId)
 
-    private fun saveFiles(files: List<JobSeekerFilePayload>): List<JobSeekerFile> = files
+    fun saveFiles(files: List<JobSeekerFilePayload>): List<JobSeekerFile> = files
         .mapNotNull { it.toJobSeekerFile() }
         .map { saveFile(it) }
 
-    fun updateFileList(jobSeeker: JobSeeker, files: List<JobSeekerFilePayload>) {
-        val (oldFilesPayload, newFiles) = files.partition { it.id != null }
-        val savedNewFiles = saveFiles(newFiles)
+    fun getOrAddFile(jobSeeker: JobSeeker, files: Set<JobSeekerFilePayload>): List<JobSeekerFile> =
+        files.mapNotNull { if (it.id === null) it.toJobSeekerFile()?.let { saveFile(it) } else getFile(it.id) }
+
+    fun deleteFiles(files: List<JobSeekerFile>) =
+        files.forEach { deleteFile(it.id!!) }
+
+    fun updateFiles(previousFiles: MutableSet<JobSeekerFile>, updatedFiles: List<JobSeekerFilePayload>): MutableSet<JobSeekerFile> {
+        val (oldFilesPayload, newFilesPayloads) = updatedFiles.partition { it.id != null }
+        val savedNewFiles = saveFiles(newFilesPayloads)
         val oldFilesIdToStay = oldFilesPayload.map { it.id }
-        val oldFiles = jobSeeker.files.map { getFile(it.id!!) }
+
+        val oldFiles = previousFiles.map { getFile(it.id!!) }
         val correctOldFiles = oldFiles.filter { oldFilesIdToStay.contains(it.id) }
         val allFiles = correctOldFiles.toSet() + savedNewFiles
-        jobSeekerService.updateJobSeeker(jobSeeker.copy(files = allFiles))
+
         val oldFilesId = correctOldFiles.map { it.id }
         val toDeleteFiles = oldFiles.filterNot { oldFilesId.contains(it.id) }
-        toDeleteFiles.forEach { deleteFile(it.id!!) }
+        deleteFiles(toDeleteFiles)
+        return allFiles.toMutableSet()
     }
 
 }

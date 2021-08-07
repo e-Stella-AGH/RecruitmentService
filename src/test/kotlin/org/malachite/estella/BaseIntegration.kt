@@ -22,6 +22,8 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.sql.Date
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -29,12 +31,18 @@ import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY"]
+    properties = ["mail_service_url=http://localhost:9797", "admin_api_key=API_KEY"]
 )
 class BaseIntegration {
 
     private val restTemplate = TestRestTemplate()
     val objectMapper = jacksonObjectMapper()
+
+    private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
+    private val encodedFile: String = Base64.getEncoder().encodeToString(file)
+
+    fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
+        JobSeekerFilePayload(id, fileName, encodedFile)
 
     fun httpRequest(
         path: String,
@@ -53,11 +61,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody,response.headers)
+            Response(statusCode, responseBody, response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody,exception.responseHeaders)
+            Response(statusCode, responseBody, exception.responseHeaders)
         }
     }
 
@@ -96,7 +104,7 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
+            (this["user"] as Map<String, Any>).toUser(),
             this["verified"] as Boolean
         )
 
@@ -137,9 +145,9 @@ class BaseIntegration {
             this["id"] as Int,
             Date.valueOf(this["applicationDate"] as String),
             ApplicationStatus.valueOf(this["status"] as String),
-            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
-            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
-            setOf()
+            (this["stage"] as Map<String, Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
+            (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet()
         )
 
     fun String.toSkillLevel(): SkillLevel? {
@@ -162,11 +170,11 @@ class BaseIntegration {
     fun Map<String, Any>.toJobSeeker() = JobSeeker(
         this["id"] as Int?,
         (this["user"] as Map<String, Any>).toUser(),
-        setOf()
+        mutableSetOf()
     )
 
     fun Map<String, Any>.toJobSeekerDTO() =
-        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO())
+        JobSeekerDTO(this["id"] as Int, (this["user"] as Map<String, Any>).toUserDTO())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
@@ -193,7 +201,7 @@ class BaseIntegration {
             setOf()
         )
 
-    fun Map<String,Any>.toJobSeekerFileDto() =
+    fun Map<String, Any>.toJobSeekerFileDto() =
         JobSeekerFileDTO(
             this["id"] as Int,
             this["fileName"] as String,
