@@ -81,3 +81,25 @@ fun Application.toApplicationDTO() =
         this.jobSeeker.toJobSeekerDTO(),
         this.seekerFiles.map { JobSeekerFileDTO.fromJobSeekerFile(it) }.toSet()
     )
+
+data class ApplicationDTOWithStagesListAndOfferName(
+    val id: Int?,
+    val applicationDate: Date,
+    val status: ApplicationStatus,
+    val stage: RecruitmentStage,
+    val jobSeeker: JobSeekerDTO,
+    val seekerFiles: Set<JobSeekerFileDTO>,
+    val stages: List<RecruitmentStage>,
+    val offerName: String
+)
+fun Application.toApplicationDTOWithStagesListAndOfferName(stages: List<RecruitmentStage>, offerName: String) =
+    ApplicationDTOWithStagesListAndOfferName(
+        this.id,
+        this.applicationDate,
+        this.status,
+        this.stage,
+        this.jobSeeker.toJobSeekerDTO(),
+        this.seekerFiles.map { JobSeekerFileDTO.fromJobSeekerFile(it) }.toSet(),
+        stages,
+        offerName
+    )
