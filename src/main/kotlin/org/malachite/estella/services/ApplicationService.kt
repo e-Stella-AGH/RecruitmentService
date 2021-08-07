@@ -17,6 +17,7 @@ class ApplicationService(
     @Autowired private val applicationRepository: ApplicationRepository,
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
+    @Autowired private val jobSeekerFileService: JobSeekerFileService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
@@ -28,30 +29,24 @@ class ApplicationService(
         offerId: Int,
         jobSeeker: JobSeeker,
         applicationPayload: ApplicationLoggedInPayload
-    ): Application {
+    ): Application = insertApplication(offerId, jobSeeker, applicationPayload)
+
+    fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker))
             if (application.seekerFiles.isNotEmpty())
-                jobSeeker.files.plus(application.seekerFiles)
-                    .let { jobSeekerService.updateJobSeekerFiles(jobSeeker, it) }
+                jobSeekerService.updateJobSeekerFiles(jobSeeker, application.seekerFiles)
             mailService.sendApplicationConfirmationMail(offer, application)
             application
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
-    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application {
-        val offer = offerService.getOffer(offerId)
-        val jobSeeker = jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
-        val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
-        return stage
-            ?.let { applicationRepository.save(applicationPayload.toApplication(it, jobSeeker)) }
-            ?.also {
-                mailService.sendApplicationConfirmationMail(offer, it)
-                interviewService.createInterview(offer, it)
-            } ?: throw throwable
-    }
+    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
+        jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
+            .let { insertApplication(offerId, it, applicationPayload) }
+
 
     fun setNextStageOfApplication(applicationId: Int) {
         val application = applicationRepository.findById(applicationId).get()
@@ -65,8 +60,8 @@ class ApplicationService(
     }
 
     fun getApplicationById(applicationId: Int): ApplicationDTO =
-            withExceptionThrower { applicationRepository.findById(applicationId).get() }
-                .toApplicationDTO()
+        withExceptionThrower { applicationRepository.findById(applicationId).get() }
+            .toApplicationDTO()
 
     fun getAllApplications(): List<ApplicationDTO> =
         applicationRepository

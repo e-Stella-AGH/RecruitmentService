@@ -21,11 +21,13 @@ class JobSeekerFileService(
 
     fun deleteFile(fileId: Int) = jobSeekerFileRepository.deleteById(fileId)
 
+    private fun saveFiles(files: List<JobSeekerFilePayload>): List<JobSeekerFile> = files
+        .mapNotNull { it.toJobSeekerFile() }
+        .map { saveFile(it) }
+
     fun updateFileList(jobSeeker: JobSeeker, files: List<JobSeekerFilePayload>) {
         val (oldFilesPayload, newFiles) = files.partition { it.id != null }
-        val savedNewFiles = newFiles
-            .mapNotNull { it.toJobSeekerFile() }
-            .map { saveFile(it) }
+        val savedNewFiles = saveFiles(newFiles)
         val oldFilesIdToStay = oldFilesPayload.map { it.id }
         val oldFiles = jobSeeker.files.map { getFile(it.id!!) }
         val correctOldFiles = oldFiles.filter { oldFilesIdToStay.contains(it.id) }

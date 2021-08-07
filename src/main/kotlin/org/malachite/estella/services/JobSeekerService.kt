@@ -59,8 +59,9 @@ class JobSeekerService(
     fun updateJobSeeker(updatedJobSeeker: JobSeeker) =
         jobSeekerRepository.save(updatedJobSeeker)
 
+
     fun updateJobSeekerFiles(jobSeeker: JobSeeker,files:Set<JobSeekerFile>) =
         jobSeeker
-            .copy(files = files)
+            .copy(files = jobSeeker.files.plus(files))
             .let { updateJobSeeker(it) }
 }
