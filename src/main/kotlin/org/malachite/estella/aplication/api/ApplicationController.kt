@@ -4,9 +4,12 @@ import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
 import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
 import org.malachite.estella.aplication.domain.toApplicationDTO
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
+import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.services.ApplicationService
+import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/applications")
 class ApplicationController(
     @Autowired private val applicationService: ApplicationService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val securityService: SecurityService
 ) {
 
@@ -72,4 +76,31 @@ class ApplicationController(
             ?: UNAUTH
 
 
+    @CrossOrigin
+    @PutMapping("/{applicationId}/next")
+    fun updateApplicationStage(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable applicationId: Int
+    ): ResponseEntity<Any> =
+        applicationService.getApplicationById(applicationId).let {
+            recruitmentProcessService.getProcessFromStage(it.stage)
+        }.let {
+            if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+            applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
+        }
+
+
+    @CrossOrigin
+    @PutMapping("/{applicationId}/reject")
+    fun rejectApplication(
+        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable applicationId: Int
+    ): ResponseEntity<Any> =
+        applicationService.getApplicationById(applicationId)
+            .let {
+                recruitmentProcessService.getProcessFromStage(it.stage) }
+            .let {
+                if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+                applicationService.rejectApplication(applicationId).let { SUCCESS }
+        }
 }

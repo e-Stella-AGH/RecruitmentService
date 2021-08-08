@@ -2,6 +2,8 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.malachite.estella.commons.Message
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -15,6 +17,7 @@ import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.IllegalArgumentException
 import java.util.*
 
 @Service
@@ -122,17 +125,34 @@ class SecurityService(
     fun checkHrRights(id: Int) =
         checkUserRights(id) && getHrPartnerFromContext() != null
 
-    fun checkOrganizationHrRights(hrId: Int) =
-        getOrganizationFromContext()?.let {
+    fun checkOrganizationRights(id: Int) =
+        checkUserRights(id) && getOrganizationFromContext() != null
+
+    fun checkOfferRights(offer: Offer): Boolean {
+        getUserFromContext().let {
+            return when (it!!.getUserType()) {
+                "organization" ->
+                    checkOrganizationRights(offer.creator.organization.user.id!!)
+                "hr" ->
+                    checkHrRights(offer.creator.user.id!!)
+                else ->
+                    false
+            }
+        }
+    }
+
+    fun checkOrganizationHrRights(jwt: String?, hrId: Int) =
+        getOrganizationFromJWT(jwt)?.let {
             it.verified && hrPartnerRepository.findByUserId(hrId).get().organization == it
         } ?: false
 
     private fun User.getUserType(): String =
-        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" } ?:
-        hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" } ?:
-        organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" } ?:
-        throw InvalidUserException()
+        jobSeekerRepository.findByUserId(this.id!!).orElse(null)?.let { "job_seeker" }
+            ?: hrPartnerRepository.findByUserId(this.id).orElse(null)?.let { "hr" }
+            ?: organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" }
+            ?: throw InvalidUserException()
 
-    fun isCorrectApiKey(apiKey:String?):Boolean =
-        apiKey!=null && apiKey == API_KEY
+    fun isCorrectApiKey(apiKey: String?): Boolean =
+        apiKey != null && apiKey == API_KEY
+
 }

@@ -5,6 +5,7 @@ import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.process.domain.InvalidEndDateException
 import org.malachite.estella.process.domain.InvalidStagesListException
 import org.malachite.estella.process.domain.NoSuchStageTypeException
 import org.malachite.estella.process.domain.RecruitmentProcessRepository
@@ -92,5 +93,13 @@ class RecruitmentProcessService(
                 }
             }
             .map { RecruitmentStage(null, it) }
+
+    fun updateEndDate(jwt: String?, processId: Int, endDate: Date) {
+        val userFromJWT = securityService.getHrPartnerFromJWT(jwt)
+        val process = getProcess(processId)
+        if (process.offer.creator.id != userFromJWT?.id) throw UnauthenticatedException()
+        if(process.startDate.after(endDate)) throw InvalidEndDateException()
+        recruitmentProcessRepository.save(process.copy(endDate = endDate))
+    }
 
 }

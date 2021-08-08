@@ -9,6 +9,7 @@ import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
@@ -25,24 +26,51 @@ class DemoApplication {
         @Autowired userRepository: HibernateUserRepository,
         @Autowired offerRepository: HibernateOfferRepository,
         @Autowired recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
-        @Autowired desiredSkillRepository: HibernateDesiredSkillRepository
+        @Autowired desiredSkillRepository: HibernateDesiredSkillRepository,
+        @Value("\${should_fake_load}") shouldFakeLoad: Boolean
     ): CommandLineRunner {
         return CommandLineRunner {
-            if (offerRepository.findAll().count() == 0) {
-                val companies = FakeOrganizations.getCompanies(FakeUsers.organizationUsers).map { organizationRepository.save(it) }
-
-                jobSeekerRepository.saveAll(FakeLoader.getFakeJobSeekers())
-
-                val hrPartners = FakeLoader.getHrPartners(companies)
-                hrPartnerRepository.saveAll(hrPartners)
-                val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
-                val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
-
-                FakeRecruitmentProcess.getProcesses(offers).map {
-                    recruitmentProcessRepository.save(it)
-                }
+            if (offerRepository.findAll().count() == 0 && shouldFakeLoad) {
+                loadData(
+                    organizationRepository,
+                    hrPartnerRepository,
+                    jobSeekerRepository,
+                    offerRepository,
+                    recruitmentProcessRepository,
+                    desiredSkillRepository
+                )
             }
         }
+    }
+}
+
+fun loadData(
+    organizationRepository: HibernateOrganizationRepository,
+    hrPartnerRepository: HibernateHrPartnerRepository,
+    jobSeekerRepository: HibernateJobSeekerRepository,
+    offerRepository: HibernateOfferRepository,
+    recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
+    desiredSkillRepository: HibernateDesiredSkillRepository
+) {
+    val organizationUsers = FakeUsers.organizationUsers
+        .map { it.copy(id = null) }
+        .also { it.map { it.password = "a" } }
+    val companies = FakeOrganizations.getCompanies(organizationUsers).map { organizationRepository.save(it) }
+
+    FakeLoader.getFakeJobSeekers()
+        .map { it.copy(id = null, user = it.user.copy(id = null)) }
+        .also { it.map { it.user.password = "a" } }
+        .let { jobSeekerRepository.saveAll(it) }
+
+    val hrPartners = FakeLoader.getHrPartners(companies)
+        .map { it.copy(id = null, user = it.user.copy(id = null)) }
+        .also { it.map { it.user.password = "a" } }
+    hrPartnerRepository.saveAll(hrPartners)
+    val desiredSkills = FakeDesiredSkills.desiredSkills.map { desiredSkillRepository.save(it) }
+    val offers = FakeOffers.getOffers(hrPartners, desiredSkills).map { offerRepository.save(it) }
+
+    FakeRecruitmentProcess.getProcesses(offers).map {
+        recruitmentProcessRepository.save(it)
     }
 }
 
