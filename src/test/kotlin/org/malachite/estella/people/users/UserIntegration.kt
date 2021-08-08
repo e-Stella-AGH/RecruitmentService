@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.security.Authority
 import org.malachite.estella.util.EmailServiceStub
@@ -117,7 +116,7 @@ class UserIntegration : BaseIntegration() {
     fun `expired jwt token`() {
         val response = getUserAsResponse(expiredJWT)
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-        expectThat((response.body as Map<String,Any>)["message"]).isEqualTo("Your token is expired please refresh it or login again")
+//        expectThat((response.body as Map<String,Any>)["message"]).isEqualTo("Unauthenticated")
     }
 
     private fun getJWTFor(mail: String): UserDataFromJWT {

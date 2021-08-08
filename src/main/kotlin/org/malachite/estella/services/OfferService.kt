@@ -59,7 +59,9 @@ class OfferService(
 
     fun updateOffer(id: Int, offerRequest: OfferRequest) {
         val currentOffer = this.getOffer(id)
-        if (!checkAuth(currentOffer).contains(Permission.UPDATE)) throw UnauthenticatedException()
+        if (!checkAuth(currentOffer).contains(Permission.UPDATE)) {
+            throw UnauthenticatedException()
+        }
         this.updateOffer(
             currentOffer,
             offerRequest.toOffer(
@@ -86,12 +88,14 @@ class OfferService(
         val userDetails = securityService.getUserDetailsFromContext() ?: throw UnauthenticatedException()
         if (securityService.isCorrectApiKey(userDetails.token)) return Permission.allPermissions()
         val user = userDetails.user
+        println(user)
+        println(offer.creator)
         val userAuthority = userDetails.authorities.first()
         return when(userAuthority) {
             Authority.job_seeker ->
                 throw UnauthenticatedException()
             Authority.hr ->
-                if(offer.creator.id == user.id && offer.creator.organization.verified)
+                if(offer.creator.user.id == user.id && offer.creator.organization.verified)
                     Permission.allPermissions()
                 else
                     setOf(Permission.READ)

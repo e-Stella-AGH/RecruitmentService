@@ -11,24 +11,10 @@ import org.malachite.estella.people.users.DummyUserRepository
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.MailService
 import org.malachite.estella.services.SecurityService
-import org.malachite.estella.services.UserService
 import org.malachite.estella.util.dev.`null`.mailServiceResponse
 import org.malachite.estella.util.jobSeekers
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
-import org.springframework.http.client.reactive.ClientHttpRequest
-import org.springframework.util.MultiValueMap
-import org.springframework.web.reactive.function.client.ClientResponse
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import reactor.util.context.Context
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import java.nio.charset.Charset
-import java.time.ZonedDateTime
-import java.util.function.Consumer
-import java.util.function.Function
 
 class JobSeekerServiceTest {
 

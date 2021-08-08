@@ -86,7 +86,7 @@ class UserService(
         if (securityService.isCorrectApiKey(userDetails?.token))
             return Permission.allPermissions()
 
-        return securityService.getUserFromContext()?.let {
+        return userDetails?.user?.let {
             if (it.id == id) Permission.allPermissions()
             else null
         } ?: throw UnauthenticatedException()

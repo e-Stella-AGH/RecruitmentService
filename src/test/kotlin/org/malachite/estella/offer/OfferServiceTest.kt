@@ -9,7 +9,6 @@ import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.SkillLevel
-import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.offer.domain.OfferNotFoundException
 import org.malachite.estella.offer.domain.OfferRequest
 import org.malachite.estella.offer.domain.Skill
@@ -35,6 +34,7 @@ class OfferServiceTest {
     fun setUp() {
         every { desiredSkillServiceMock.safeGetDesiredSkill(any()) } returns null
         every { desiredSkillServiceMock.addDesiredSkill(any()) } returns DesiredSkill(null, "xd", SkillLevel.JUNIOR)
+        every { securityServiceMock.isCorrectApiKey(any()) } returns false
         every { securityServiceMock.isCorrectApiKey("abc") } returns false
     }
 
@@ -58,6 +58,7 @@ class OfferServiceTest {
     @Test
     fun `should throw unauth exception when jwt is not from hr`() {
         val offer = offers[0]
+        every { securityServiceMock.getHrPartnerFromContext() } returns null
         expectThrows<UnauthenticatedException> {
             offerService.addOffer(offer.toOfferRequest(1))
         }
@@ -65,10 +66,11 @@ class OfferServiceTest {
 
     @Test
     fun `should be able to update offer`() {
-        val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1), skills = setOf()) }
+        val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1, user = it.creator.user.copy(id = 1)), skills = setOf()) }
         offerService.addOffer(offer)
 
         val newOffer = offer.copy(name = "Totally new offer", localization = "Nope, it's not the same loc")
+        println(offer.creator)
         every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
                 offer.creator.user,
                 "abc",
@@ -98,7 +100,12 @@ class OfferServiceTest {
     fun `should throw unath when hr is not the same one who created`() {
         val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1), skills = setOf()) }
         offerService.addOffer(offer)
-        every { securityServiceMock.getHrPartnerFromContext() } returns HrPartner(1000, offer.creator.organization, offer.creator.user)
+        every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
+                offer.creator.user.copy(1000),
+                "abc",
+                setOf(Authority.hr),
+                true
+        )
 
         expectThrows<UnauthenticatedException> {
             offerService.updateOffer(
@@ -151,8 +158,12 @@ class OfferServiceTest {
     fun `random user should not be able to update offer`() {
         val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1)) }
         offerService.addOffer(offer)
-        every { securityServiceMock.getOrganizationFromContext() } returns null
-        every { securityServiceMock.getHrPartnerFromContext() } returns null
+        every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
+                users[0],
+                "abc",
+                setOf(Authority.job_seeker),
+                true
+        )
 
         expectThrows<UnauthenticatedException> {
             offerService.updateOffer(offer.id!!, offer.toOfferRequest(1))
@@ -161,8 +172,7 @@ class OfferServiceTest {
 
     @Test
     fun `should be able to delete offer`() {
-        val offer = offers[0]
-        offerService.addOffer(offer)
+        val offer = offerService.addOffer(offers[0])
         every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
                 offer.creator.user,
                 "abc",
@@ -176,9 +186,14 @@ class OfferServiceTest {
 
     @Test
     fun `should throw unath when hr is not the same one who created when deleting`() {
-        val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1), skills = setOf()) }
+        val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1, user = it.creator.user.copy(id = 1)), skills = setOf()) }
         offerService.addOffer(offer)
-        every { securityServiceMock.getHrPartnerFromContext() } returns HrPartner(1000, offer.creator.organization, offer.creator.user)
+        every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
+            offer.creator.user.copy(id = 100),
+            null,
+            setOf(Authority.hr),
+            true
+        )
 
         expectThrows<UnauthenticatedException> {
             offerService.deleteOffer(offer.id!!)

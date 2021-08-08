@@ -6,16 +6,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
-import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
-import org.malachite.estella.services.ApplicationService
-import org.malachite.estella.services.JobSeekerService
-import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.EmailServiceStub
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
@@ -23,7 +18,6 @@ import org.springframework.http.HttpStatus
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isGreaterThan
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
 

@@ -7,20 +7,19 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.UnauthenticatedException
-import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserNotFoundException
-import org.malachite.estella.services.MailService
+import org.malachite.estella.security.Authority
+import org.malachite.estella.security.UserContextDetails
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.users
 import strikt.api.expectThat
 import strikt.api.expectThrows
-import strikt.assertions.doesNotContain
 import strikt.assertions.isEqualTo
 
 class UserServiceTest {
@@ -75,7 +74,15 @@ class UserServiceTest {
 
     @Test
     fun `should be able to update user`() {
-        every { securityMock.getUserFromContext() } returns users[0]
+        val user = users[0]
+        every { securityMock.getUserFromContext() } returns user
+        every { securityMock.getUserDetailsFromContext() } returns UserContextDetails(
+                user,
+                "abc",
+                setOf(Authority.hr),
+                true
+        )
+
         every { securityMock.isCorrectApiKey(any()) } returns false
         userService.updateUser(UserRequest( "new First Name", "new Last Name", users[0].mail, ""))
         userService.getUser(users[0].id!!).let {
