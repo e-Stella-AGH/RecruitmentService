@@ -141,8 +141,8 @@ class SecurityService(
         }
     }
 
-    fun checkOrganizationHrRights(jwt: String?, hrId: Int) =
-        getOrganizationFromJWT(jwt)?.let {
+    fun checkOrganizationHrRights(hrId: Int) =
+        getOrganizationFromContext()?.let {
             it.verified && hrPartnerRepository.findByUserId(hrId).get().organization == it
         } ?: false
 

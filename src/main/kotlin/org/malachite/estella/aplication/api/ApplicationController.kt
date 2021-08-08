@@ -79,13 +79,12 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/next")
     fun updateApplicationStage(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
             recruitmentProcessService.getProcessFromStage(it.stage)
         }.let {
-            if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+            if (!securityService.checkOfferRights(it.offer)) return UNAUTH
             applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
         }
 
@@ -93,14 +92,13 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/reject")
     fun rejectApplication(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId)
             .let {
                 recruitmentProcessService.getProcessFromStage(it.stage) }
             .let {
-                if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+                if (!securityService.checkOfferRights(it.offer)) return UNAUTH
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
         }
 }

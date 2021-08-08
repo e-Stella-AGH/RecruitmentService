@@ -56,10 +56,9 @@ class RecruitmentProcessController(
     @PutMapping("/{processId}/end_date")
     fun updateEndDate(
         @PathVariable("processId") processId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody dateRequest: DateRequest
     ) =
-        processService.updateEndDate(jwt, processId, dateRequest.date).let {
+        processService.updateEndDate(processId, dateRequest.date).let {
             OwnResponses.SUCCESS
         }
 
