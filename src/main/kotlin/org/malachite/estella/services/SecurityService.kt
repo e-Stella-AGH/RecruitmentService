@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
@@ -119,6 +120,22 @@ class SecurityService(
     fun checkHrRights(jwt: String?, id: Int) =
         checkUserRights(jwt, id) && getHrPartnerFromJWT(jwt) != null
 
+    fun checkOrganizationRights(jwt: String?, id: Int) =
+        checkUserRights(jwt, id) && getOrganizationFromJWT(jwt) != null
+
+    fun checkOfferRights(offer: Offer, jwt: String?): Boolean {
+        getUserFromJWT(jwt).let {
+            return when (it!!.getUserType()) {
+                "organization" ->
+                    checkOrganizationRights(jwt, offer.creator.organization.user.id!!)
+                "hr" ->
+                    checkHrRights(jwt, offer.creator.user.id!!)
+                else ->
+                    false
+            }
+        }
+    }
+    
     fun checkOrganizationHrRights(jwt: String?, hrId: Int) =
         getOrganizationFromJWT(jwt)?.let {
             it.verified && hrPartnerRepository.findByUserId(hrId).get().organization == it
@@ -132,4 +149,5 @@ class SecurityService(
 
     fun isCorrectApiKey(apiKey: String?): Boolean =
         apiKey != null && apiKey == API_KEY
+
 }

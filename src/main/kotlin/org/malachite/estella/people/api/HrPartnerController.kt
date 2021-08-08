@@ -1,20 +1,17 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.*
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
-import org.malachite.estella.offer.domain.toOfferResponse
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.services.OfferService
-import org.malachite.estella.services.OrganizationService
-import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import java.net.URI
 
 @RestController
 @RequestMapping("/api/hrpartners")
@@ -34,7 +31,7 @@ class HrPartnerController(
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
         hrPartnerService.getHrPartner(hrPartnerId).let { ResponseEntity.ok(it) }
 
-
+    @Transactional
     @CrossOrigin
     @GetMapping("/offers")
     fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> {

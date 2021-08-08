@@ -1,11 +1,9 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
-import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationNotFoundException
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.springframework.beans.factory.annotation.Autowired

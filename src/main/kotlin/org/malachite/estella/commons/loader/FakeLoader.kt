@@ -3,24 +3,7 @@ package org.malachite.estella.commons.loader
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
-import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
-import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
-import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
-import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
-import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.CommandLineRunner
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.event.EventListener
-import org.springframework.core.annotation.Order
-import org.springframework.stereotype.Component
 import java.util.*
-import javax.annotation.PostConstruct
-import javax.transaction.Transactional
-
 
 
 object FakeLoader {

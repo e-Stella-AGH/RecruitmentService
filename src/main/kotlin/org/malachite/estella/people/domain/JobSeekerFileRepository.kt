@@ -1,6 +1,5 @@
 package org.malachite.estella.people.domain
 
-import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.JobSeekerFile
 
 interface JobSeekerFileRepository {

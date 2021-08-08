@@ -9,14 +9,18 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
+import org.malachite.estella.util.DatabaseReset
+import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import java.util.*
 
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class OrganizationIntegration : BaseIntegration() {
 

@@ -4,7 +4,6 @@ import org.malachite.estella.commons.Message
 import org.malachite.estella.process.domain.InvalidEndDateException
 import org.malachite.estella.process.domain.InvalidStagesListException
 import org.malachite.estella.process.domain.NoSuchStageTypeException
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler

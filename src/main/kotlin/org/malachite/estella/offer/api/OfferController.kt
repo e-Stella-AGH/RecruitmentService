@@ -1,11 +1,12 @@
 package org.malachite.estella.offer.api
 
-import org.malachite.estella.commons.*
-import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.domain.OfferRequest
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
-import org.malachite.estella.services.*
+import org.malachite.estella.services.OfferService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional

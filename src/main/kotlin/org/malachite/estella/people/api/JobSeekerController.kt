@@ -1,20 +1,16 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.commons.models.people.JobSeekerFile
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.services.JobSeekerFileService
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 
 @RestController

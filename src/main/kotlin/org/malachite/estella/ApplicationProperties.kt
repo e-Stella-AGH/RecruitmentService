@@ -54,4 +54,5 @@ fun getApiKey():String=
 fun getOtherApplicationProperties(): String = """
     mail_service_url=https://email-service-estella.herokuapp.com/
     admin_api_key=${getApiKey()}
+    should_fake_load=true
 """.trimIndent()

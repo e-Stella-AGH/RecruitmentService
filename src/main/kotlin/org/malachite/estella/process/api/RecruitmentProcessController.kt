@@ -8,7 +8,6 @@ import org.malachite.estella.process.domain.toRecruitmentProcessDto
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.RecruitmentStageService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*

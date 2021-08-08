@@ -3,7 +3,9 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.JobSeekerFile
-import org.malachite.estella.people.domain.*
+import org.malachite.estella.people.domain.JobSeekerFileNotFoundException
+import org.malachite.estella.people.domain.JobSeekerFilePayload
+import org.malachite.estella.people.domain.JobSeekerFileRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

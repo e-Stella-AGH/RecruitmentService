@@ -8,12 +8,10 @@ import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.people.domain.UserRepository
-import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import java.util.*
-import kotlin.NoSuchElementException
 
 @Service
 class UserService(

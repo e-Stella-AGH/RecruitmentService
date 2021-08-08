@@ -1,9 +1,8 @@
 package org.malachite.estella.people.api
 
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OneStringValueMessage
+import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService

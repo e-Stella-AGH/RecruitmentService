@@ -9,9 +9,13 @@ import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.malachite.estella.util.DatabaseReset
+import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.test.context.TestExecutionListeners
+import org.springframework.transaction.annotation.Transactional
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
@@ -19,6 +23,7 @@ import strikt.assertions.isNotNull
 import java.sql.Date
 import java.time.LocalDate
 
+@DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ProcessIntegration: BaseIntegration() {
 
