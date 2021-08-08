@@ -286,6 +286,7 @@ class ApplicationsIntegration : BaseIntegration() {
     private fun getOffer(which: Int = 0) =
         offerRepository.findAll().filter { it.creator.user.mail == hrPartner.user.mail }.get(which)
 
+
     private val applicationMail = "examplemail@application.pl"
     private val password = "a"
     private val hrPartner = hrPartners[1]

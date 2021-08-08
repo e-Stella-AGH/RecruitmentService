@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -16,6 +17,7 @@ import org.malachite.estella.people.domain.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.IllegalArgumentException
 import java.util.*
 
 @Service
