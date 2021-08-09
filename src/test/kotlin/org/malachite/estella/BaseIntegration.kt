@@ -3,6 +3,7 @@ package org.malachite.estella
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -148,6 +149,18 @@ class BaseIntegration {
             (this["stage"] as Map<String, Any>).toRecruitmentStage(),
             (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
             (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet()
+        )
+
+    fun Map<String, Any>.toApplicationDTOWithStagesAndOfferName() =
+        ApplicationDTOWithStagesListAndOfferName(
+            this["id"] as Int,
+            Date.valueOf(this["applicationDate"] as String),
+            ApplicationStatus.valueOf(this["status"] as String),
+            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
+            setOf(),
+            (this["stages"] as List<Map<String, Any>>).map { it.toRecruitmentStage() },
+            this["offerName"] as String
         )
 
     fun String.toSkillLevel(): SkillLevel? {

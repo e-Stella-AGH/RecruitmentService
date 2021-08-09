@@ -3,6 +3,7 @@ package org.malachite.estella.application
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.commons.models.offers.ApplicationStatus
@@ -191,7 +192,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val offer = getOffer()
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
         expectThat(application.stage.type).isEqualTo(StageType.APPLIED)
-        val response = updateStage(application)
+        val response = updateStage(application.id!!)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id);
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.HR_INTERVIEW)
@@ -204,7 +205,7 @@ class ApplicationsIntegration : BaseIntegration() {
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
         expectThat(application.stage.type).isEqualTo(StageType.HR_INTERVIEW)
         expectThat(application.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
-        val response = updateStage(application)
+        val response = updateStage(application.id!!)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id)
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
@@ -238,7 +239,7 @@ class ApplicationsIntegration : BaseIntegration() {
             it.map { it.toApplicationDTO() }
         }
 
-    private fun getOfferApplications(offer: Offer): List<ApplicationDTO> {
+    private fun getOfferApplications(offer: Offer): List<ApplicationDTOWithStagesListAndOfferName> {
         val response = httpRequest(
             path = "/api/applications/offer/${offer.id}",
             method = HttpMethod.GET
@@ -246,7 +247,7 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         return response.body.let {
             it as List<Map<String, Any>>
-        }.map { it.toApplicationDTO() }
+        }.map { it.toApplicationDTOWithStagesAndOfferName() }
     }
 
     private fun getApplication(id: Int?): ApplicationDTO {
@@ -261,8 +262,8 @@ class ApplicationsIntegration : BaseIntegration() {
 
     }
 
-    private fun updateStage(application: ApplicationDTO) = httpRequest(
-        path = "/api/applications/${application.id}/next",
+    private fun updateStage(applicationId: Int) = httpRequest(
+        path = "/api/applications/${applicationId}/next",
         method = HttpMethod.PUT,
         headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
     )
