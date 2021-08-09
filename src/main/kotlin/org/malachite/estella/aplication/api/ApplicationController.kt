@@ -1,9 +1,6 @@
 package org.malachite.estella.aplication.api
 
-import org.malachite.estella.aplication.domain.ApplicationDTO
-import org.malachite.estella.aplication.domain.ApplicationLoggedInPayload
-import org.malachite.estella.aplication.domain.ApplicationNoUserPayload
-import org.malachite.estella.aplication.domain.toApplicationDTO
+import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
@@ -61,7 +58,7 @@ class ApplicationController(
 
     @CrossOrigin
     @GetMapping("/offer/{offerId}")
-    fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTO>> =
+    fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
         applicationService
             .getApplicationsByOffer(offerId)
             .let { ResponseEntity.ok(it) }

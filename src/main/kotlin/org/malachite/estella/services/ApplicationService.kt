@@ -62,26 +62,33 @@ class ApplicationService(
             .sortedBy { it.id }
         val index = recruitmentProcessStages.indexOf(application.stage)
         if (index == recruitmentProcessStages.lastIndex - 1)
-            applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1], status = ApplicationStatus.ACCEPTED))
+            applicationRepository.save(
+                application.copy(
+                    stage = recruitmentProcessStages[index + 1],
+                    status = ApplicationStatus.ACCEPTED
+                )
+            )
         else if (index < recruitmentProcessStages.lastIndex)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))
     }
 
     fun getApplicationById(applicationId: Int): ApplicationDTO =
-            withExceptionThrower { applicationRepository.findById(applicationId).get() }
-                .toApplicationDTO()
+        withExceptionThrower { applicationRepository.findById(applicationId).get() }
+            .toApplicationDTO()
 
     fun getAllApplications(): List<ApplicationDTO> =
         applicationRepository
             .findAll()
             .map { it.toApplicationDTO() }
 
-    fun getApplicationsByOffer(offerId: Int): List<ApplicationDTO> =
+    fun getApplicationsByOffer(offerId: Int): List<ApplicationDTOWithStagesListAndOfferName> =
         offerService.getOffer(offerId)
-            .let { it.recruitmentProcess?.stages }
-            ?.let {
-                if (it.isNotEmpty())
-                    applicationRepository.getAllByStageIn(it).map { it.toApplicationDTO() }
+            .let {
+                val stages = it.recruitmentProcess?.stages
+                if (stages?.isNotEmpty() == true)
+                    applicationRepository.getAllByStageIn(stages).map { application ->
+                        application.toApplicationDTOWithStagesListAndOfferName(stages, it.name)
+                    }
                 else
                     Collections.emptyList()
             } ?: Collections.emptyList()
