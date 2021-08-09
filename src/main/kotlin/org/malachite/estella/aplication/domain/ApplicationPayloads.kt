@@ -106,7 +106,7 @@ fun Application.toApplicationDTOWithStagesListAndOfferName(stages: List<Recruitm
         this.status,
         this.stage,
         this.jobSeeker.toJobSeekerDTO(),
-        this.seekerFiles.map { JobSeekerFileDTO.fromJobSeekerFile(it) }.toSet(),
+        this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
         stages,
         offerName
     )
