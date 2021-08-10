@@ -7,6 +7,6 @@ import javax.persistence.*
 @Table(name = "job_seeker_files")
 class JobSeekerFile(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
-        val file_name:String,
-        @Lob val file:Blob
+        val fileName:String,
+        @Lob @Basic(fetch = FetchType.LAZY) val file:Blob
 )

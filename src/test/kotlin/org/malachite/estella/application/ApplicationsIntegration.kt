@@ -86,7 +86,7 @@ class ApplicationsIntegration : BaseIntegration() {
             body = mapOf("files" to setOf<JobSeekerFilePayload>())
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-        expectThat(response.body as Map<String,Any>).isEqualTo(mapOf("message" to UnauthenticatedMessage.message))
+        expectThat(response.body as Map<String, Any>).isEqualTo(mapOf("message" to UnauthenticatedMessage.message))
     }
 
     @Test
@@ -102,7 +102,7 @@ class ApplicationsIntegration : BaseIntegration() {
                 "firstName" to "Tolek",
                 "lastName" to "Bolek",
                 "mail" to applicationMail,
-                "files" to setOf<JobSeekerFilePayload>()
+                "files" to setOf<JobSeekerFilePayload>(getJobSeekerFilePayload("file2"))
             )
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
@@ -113,7 +113,7 @@ class ApplicationsIntegration : BaseIntegration() {
             it!!
             expect {
                 that(it.applicationDate).isEqualTo(responseBody.applicationDate)
-                that(it.seekerFiles).isEqualTo(emptySet())
+                that(it.seekerFiles.size).isEqualTo(1)
                 that(it.stage).isEqualTo(responseBody.stage)
                 that(it.status).isEqualTo(responseBody.status)
                 that(it.status).isEqualTo(responseBody.status)
@@ -124,6 +124,40 @@ class ApplicationsIntegration : BaseIntegration() {
 
     @Test
     @Order(4)
+    fun `should be able to apply for another offer as not logged in user`() {
+
+        val offer = getOffer(1)
+
+        val fileName = "file1"
+        val response = httpRequest(
+            path = "/api/applications/apply/${offer.id}/no-user",
+            method = HttpMethod.POST,
+            body = mapOf(
+                "firstName" to "Tolek",
+                "lastName" to "Bolek",
+                "mail" to applicationMail,
+                "files" to setOf<JobSeekerFilePayload>(getJobSeekerFilePayload(fileName))
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
+        val responseBody = (response.body as Map<String, Any>).toApplicationDTO()
+        val applications = getApplications()
+        applications.find { it.id == responseBody.id }.let {
+            expectThat(it).isNotNull()
+            it!!
+            expect {
+                that(it.applicationDate).isEqualTo(responseBody.applicationDate)
+                that(it.seekerFiles.size).isEqualTo(1)
+                that(it.seekerFiles.map { it.fileName }).isEqualTo(listOf(fileName))
+                that(it.stage).isEqualTo(responseBody.stage)
+                that(it.status).isEqualTo(responseBody.status)
+                that(it.jobSeeker.user.mail).isEqualTo(applicationMail)
+            }
+        }
+    }
+
+    @Test
+    @Order(5)
     fun `should list all applications by offer`() {
         val offer = getOffer()
         val response = httpRequest(
@@ -136,7 +170,7 @@ class ApplicationsIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     fun `should list all applications by jobSeeker`() {
 
         val offer = getOffer()
@@ -153,7 +187,7 @@ class ApplicationsIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     fun `should be able to change stage to next`() {
         val offer = getOffer()
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
@@ -165,7 +199,7 @@ class ApplicationsIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     fun `should be able to change status to ended`() {
         val offer = getOffer()
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == getJobSeeker().user.mail }!!
@@ -179,7 +213,7 @@ class ApplicationsIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     fun `should be able to change status to rejected`() {
         val offer = getOffer()
         val application = getOfferApplications(offer!!).find { it.jobSeeker.user.mail == applicationMail }!!
@@ -249,7 +283,10 @@ class ApplicationsIntegration : BaseIntegration() {
         loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
 
     private fun getJobSeeker() = jobSeekerRepository.findAll().first()
-    private fun getOffer() = offerRepository.findAll().first { it.creator.user.mail == hrPartner.user.mail}
+
+    private fun getOffer(which: Int = 0) =
+        offerRepository.findAll().filter { it.creator.user.mail == hrPartner.user.mail }.get(which)
+
 
     private val applicationMail = "examplemail@application.pl"
     private val password = "a"

@@ -1,7 +1,6 @@
 package org.malachite.estella.organization.domain
 
 import org.malachite.estella.commons.models.people.Organization
-import org.malachite.estella.commons.models.people.User
 import java.util.*
 
 interface OrganizationRepository {

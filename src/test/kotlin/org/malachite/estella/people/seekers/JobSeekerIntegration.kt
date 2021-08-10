@@ -8,6 +8,7 @@ import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.http.HttpMethod
@@ -17,6 +18,9 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -41,13 +45,54 @@ class JobSeekerIntegration: BaseIntegration() {
 
     @Test
     @Order(3)
+    fun `should update jobSeekerFiles`() {
+        val response = httpRequest(
+            path = "/api/jobseekers/files",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
+            body = mapOf("files" to listOf(
+                getJobSeekerFilePayload("file1"),
+                getJobSeekerFilePayload("file2")
+            ))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val files = getJobSeekerFiles()
+        expectThat(files.size).isEqualTo(2)
+        expectThat(files.map { it.fileName }.sorted()).isEqualTo(listOf("file1","file2"))
+    }
+
+    @Test
+    @Order(4)
+    fun `should update remove file2 and add file3`() {
+        val oldFile = getJobSeekerFiles().first()
+        val response = httpRequest(
+            path = "/api/jobseekers/files",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken()),
+            body = mapOf("files" to listOf(
+                getJobSeekerFilePayload(oldFile.fileName,oldFile.id),
+                getJobSeekerFilePayload("file3")
+            ))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val files = getJobSeekerFiles()
+        expectThat(files.size).isEqualTo(2)
+        expectThat(files.map { it.fileName }.sorted()).isEqualTo(listOf(oldFile.fileName,"file3"))
+        expectThat(files.minOf { it.id }).isEqualTo(oldFile.id)
+    }
+
+
+
+
+    @Test
+    @Order(5)
     fun `should delete job seeker`() {
         val jobSeeker = getJobSeekers().firstOrNull { it.user.mail == jobseekerMail }
         expectThat(jobSeeker).isNotNull()
         val response = httpRequest(
             path = "/api/jobseekers/${jobSeeker?.id}",
             method = HttpMethod.DELETE,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseekerMail, password))
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken())
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val deletedJobSeeker = getJobSeekers().firstOrNull { it.user.mail == jobseekerMail }
@@ -109,6 +154,23 @@ class JobSeekerIntegration: BaseIntegration() {
             )
         )
     }
+
+    private fun getJobSeekerFiles():List<JobSeekerFileDTO> {
+        val response = httpRequest(
+            path="/api/jobseekers/files",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken())
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        return response.body.let { body ->
+            body as List<Map<String, Any>>
+            body.map {
+                it.toJobSeekerFileDto()
+            }
+        }
+    }
+
+
 
     private fun getAuthToken(mail:String = jobseekerMail, userPassword: String = password):String =
         loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""

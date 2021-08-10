@@ -4,13 +4,8 @@ import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.commons.models.people.HrPartner
-import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.services.DesiredSkillService
-import org.malachite.estella.services.HrPartnerService
-import java.util.HashSet
 import javax.sql.rowset.serial.SerialClob
-
-
 
 
 data class OfferRequest(

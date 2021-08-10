@@ -3,7 +3,6 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.SkillLevel
 import org.malachite.estella.process.domain.DesiredSkillRepository
-import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

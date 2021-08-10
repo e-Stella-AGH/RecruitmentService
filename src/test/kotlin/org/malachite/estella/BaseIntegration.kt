@@ -11,10 +11,7 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
-import org.malachite.estella.people.domain.HrPartnerResponse
-import org.malachite.estella.people.domain.JobSeekerDTO
-import org.malachite.estella.people.domain.JobSeekerFileDTO
-import org.malachite.estella.people.domain.UserDTO
+import org.malachite.estella.people.domain.*
 import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -26,6 +23,8 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.sql.Date
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -39,6 +38,12 @@ class BaseIntegration {
 
     private val restTemplate = TestRestTemplate()
     val objectMapper = jacksonObjectMapper()
+
+    private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
+    private val encodedFile: String = Base64.getEncoder().encodeToString(file)
+
+    fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
+        JobSeekerFilePayload(id, fileName, encodedFile)
 
     fun httpRequest(
         path: String,
@@ -57,11 +62,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody,response.headers)
+            Response(statusCode, responseBody, response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody,exception.responseHeaders)
+            Response(statusCode, responseBody, exception.responseHeaders)
         }
     }
 
@@ -100,7 +105,7 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
+            (this["user"] as Map<String, Any>).toUser(),
             this["verified"] as Boolean
         )
 
@@ -141,9 +146,9 @@ class BaseIntegration {
             this["id"] as Int,
             Date.valueOf(this["applicationDate"] as String),
             ApplicationStatus.valueOf(this["status"] as String),
-            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
-            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
-            setOf()
+            (this["stage"] as Map<String, Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
+            (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet()
         )
 
     fun Map<String, Any>.toApplicationDTOWithStagesAndOfferName() =
@@ -178,11 +183,11 @@ class BaseIntegration {
     fun Map<String, Any>.toJobSeeker() = JobSeeker(
         this["id"] as Int?,
         (this["user"] as Map<String, Any>).toUser(),
-        setOf()
+        mutableSetOf()
     )
 
     fun Map<String, Any>.toJobSeekerDTO() =
-        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO(),listOf<JobSeekerFileDTO>())
+        JobSeekerDTO(this["id"] as Int, (this["user"] as Map<String, Any>).toUserDTO())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
@@ -207,6 +212,13 @@ class BaseIntegration {
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
             setOf(),  //TODO - change it, when it will be implemented
             setOf()
+        )
+
+    fun Map<String, Any>.toJobSeekerFileDto() =
+        JobSeekerFileDTO(
+            this["id"] as Int,
+            this["fileName"] as String,
+            this["fileBase64"] as String
         )
 
     fun List<Map<String, Any>>.toRecruitmentStagesList() =

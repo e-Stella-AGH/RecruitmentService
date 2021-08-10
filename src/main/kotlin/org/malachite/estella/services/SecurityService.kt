@@ -2,6 +2,7 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
@@ -82,9 +83,12 @@ class SecurityService(
         return userRepository.findById(id.toInt()).orElse(null)
     }
 
-    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? {
-        return getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
-    }
+    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
+    fun getJobSeekerFromJWTUnsafe(jwt: String?): JobSeeker =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+            ?: throw UnauthenticatedException()
 
     fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
         getUserFromJWT(jwt)

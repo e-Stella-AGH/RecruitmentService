@@ -7,7 +7,10 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.malachite.estella.people.domain.toResponse
-import org.malachite.estella.services.*
+import org.malachite.estella.services.HrPartnerService
+import org.malachite.estella.services.OfferService
+import org.malachite.estella.services.OrganizationService
+import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

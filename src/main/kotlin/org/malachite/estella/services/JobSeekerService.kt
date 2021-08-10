@@ -5,6 +5,7 @@ import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.JobSeekerFile
+import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserAlreadyExistsException
 import org.malachite.estella.people.domain.UserNotFoundException
@@ -16,8 +17,9 @@ import org.springframework.stereotype.Service
 class JobSeekerService(
     @Autowired private val jobSeekerRepository: JobSeekerRepository,
     @Autowired private val mailService: MailService,
+    @Autowired private val jobSeekerFileService: JobSeekerFileService,
     @Autowired private val securityService: SecurityService
-): EStellaService<JobSeeker>() {
+) : EStellaService<JobSeeker>() {
 
     override val throwable: Exception = UserNotFoundException()
 
@@ -26,41 +28,53 @@ class JobSeekerService(
     fun getJobSeeker(id: Int): JobSeeker = withExceptionThrower { jobSeekerRepository.findByUserId(id).get() }
 
     fun registerJobSeeker(jobSeeker: JobSeeker): JobSeeker =
-            createJobSeeker(jobSeeker)
-                .also {mailService.sendRegisterMail(it.user) }
+        createJobSeeker(jobSeeker)
+            .also { mailService.sendRegisterMail(it.user) }
 
-    fun createJobSeeker(jobSeeker: JobSeeker):JobSeeker =
+    fun createJobSeeker(jobSeeker: JobSeeker): JobSeeker =
         try {
             jobSeekerRepository.save(jobSeeker)
-        } catch(e: DataIntegrityViolationException) {
+        } catch (e: DataIntegrityViolationException) {
             throw UserAlreadyExistsException()
         }
 
     fun deleteJobSeeker(id: Int, jwt: String?) =
-        if(!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
+        if (!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
         else deleteJobSeeker(id)
 
     private fun deleteJobSeeker(id: Int) = jobSeekerRepository.deleteById(id)
 
     private fun checkRights(id: Int, jwt: String?): Set<Permission> {
-        if(securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
+        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
         securityService.getJobSeekerFromJWT(jwt)
             ?.let {
-                if(id == it.id) return Permission.allPermissions()
+                if (id == it.id) return Permission.allPermissions()
                 else null
             } ?: throw UnauthenticatedException()
     }
 
-    fun getOrCreateJobSeeker(jobSeeker: JobSeeker):JobSeeker =
+    fun getOrCreateJobSeeker(jobSeeker: JobSeeker): JobSeeker =
         jobSeekerRepository
-            .findByUserMail(jobSeeker.user.mail)
-            .orElse(createJobSeeker(jobSeeker))
+            .findByUserMail(jobSeeker.user.mail).let { if (it.isPresent) it.get() else createJobSeeker(jobSeeker) }
 
     fun updateJobSeeker(updatedJobSeeker: JobSeeker) =
         jobSeekerRepository.save(updatedJobSeeker)
 
-    fun updateJobSeekerFiles(jobSeeker: JobSeeker,files:Set<JobSeekerFile>) =
-        jobSeeker
-            .copy(files = files)
-            .let { updateJobSeeker(it) }
+
+    fun addNewFiles(jobSeeker: JobSeeker, files: Set<JobSeekerFilePayload>): Set<JobSeekerFile> =
+        jobSeeker.let {
+            val applicationFiles = jobSeekerFileService.getOrAddFile(it, files)
+            val newFiles = it.files.toSet() + applicationFiles
+            updateJobSeeker(it.copy(user = it.user, files = newFiles.toMutableSet()))
+            applicationFiles
+        }.toSet()
+
+
+    fun updateJobSeekerFiles(jobSeeker: JobSeeker, files: List<JobSeekerFilePayload>) {
+        val previousFiles = jobSeeker.files
+        val newFiles = jobSeekerFileService.updateFiles(previousFiles, files)
+        updateJobSeeker(jobSeeker.copy(files = newFiles))
+
+    }
+
 }

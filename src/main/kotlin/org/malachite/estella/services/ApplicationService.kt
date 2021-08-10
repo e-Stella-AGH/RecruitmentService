@@ -7,7 +7,6 @@ import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.lang.UnsupportedOperationException
 import java.util.*
 
 @Service
@@ -16,7 +15,6 @@ class ApplicationService(
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
-    @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {
 
@@ -26,29 +24,23 @@ class ApplicationService(
         offerId: Int,
         jobSeeker: JobSeeker,
         applicationPayload: ApplicationLoggedInPayload
-    ): Application {
+    ): Application = insertApplication(offerId, jobSeeker, applicationPayload)
+
+    fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
-            val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker))
-            if (application.seekerFiles.isNotEmpty())
-                jobSeeker.files.plus(application.seekerFiles)
-                    .let { jobSeekerService.updateJobSeekerFiles(jobSeeker, it) }
+            val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
+            val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
             mailService.sendApplicationConfirmationMail(offer, application)
             application
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
-    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application {
-        val offer = offerService.getOffer(offerId)
-        val jobSeeker = jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
-        val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
-        return stage
-            ?.let { applicationRepository.save(applicationPayload.toApplication(it, jobSeeker)) }
-            ?.also {
-                mailService.sendApplicationConfirmationMail(offer, it)
-            } ?: throw throwable
-    }
+    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
+        jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
+            .let { insertApplication(offerId, it, applicationPayload) }
+
 
     fun setNextStageOfApplication(applicationId: Int) {
         val application = applicationRepository.findById(applicationId).get()

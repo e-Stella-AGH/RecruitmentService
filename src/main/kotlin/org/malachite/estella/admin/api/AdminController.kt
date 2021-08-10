@@ -1,10 +1,8 @@
 package org.malachite.estella.admin.api
 
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
-import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
