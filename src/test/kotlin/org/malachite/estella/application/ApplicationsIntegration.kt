@@ -209,7 +209,12 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedApplication = getApplication(application.id)
         expectThat(updatedApplication.stage.type).isEqualTo(StageType.TECHNICAL_INTERVIEW)
-        expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
+        expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
+        val secondResponse = updateStage(application.id!!)
+        expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
+        val secondApplication = getApplication(application.id)
+        expectThat(secondApplication.stage.type).isEqualTo(StageType.ENDED)
+        expectThat(secondApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
     }
 
     @Test
