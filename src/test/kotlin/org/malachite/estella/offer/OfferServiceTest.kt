@@ -70,7 +70,6 @@ class OfferServiceTest {
         offerService.addOffer(offer)
 
         val newOffer = offer.copy(name = "Totally new offer", localization = "Nope, it's not the same loc")
-        println(offer.creator)
         every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
                 offer.creator.user,
                 "abc",

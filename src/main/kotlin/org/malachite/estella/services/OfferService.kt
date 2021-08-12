@@ -88,8 +88,6 @@ class OfferService(
         val userDetails = securityService.getUserDetailsFromContext() ?: throw UnauthenticatedException()
         if (securityService.isCorrectApiKey(userDetails.token)) return Permission.allPermissions()
         val user = userDetails.user
-        println(user)
-        println(offer.creator)
         val userAuthority = userDetails.authorities.first()
         return when(userAuthority) {
             Authority.job_seeker ->
