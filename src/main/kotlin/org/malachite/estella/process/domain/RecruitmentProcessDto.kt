@@ -8,6 +8,9 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
 import java.sql.Date
 import java.sql.Timestamp
+import java.util.*
+import javax.sql.rowset.serial.SerialBlob
+import javax.sql.rowset.serial.SerialClob
 
 data class RecruitmentProcessDto(
     val id: Int?,
@@ -34,11 +37,27 @@ data class TaskDto(
     val description: String,
     val timeLimit: Int,
     val deadline: Timestamp
-)
+) {
+    companion object {
+        fun toTask(task: TaskDto) = Task(task.id,
+            SerialBlob(Base64.getDecoder().decode(task.tests)),
+            SerialClob(String(Base64.getDecoder().decode(task.description)).toCharArray()),
+            task.timeLimit,
+            task.deadline)
+    }
+}
 fun Task.toTaskDto() = TaskDto(
     id,
-    tests.toString(),
+    Base64.getEncoder().encodeToString(
+        this.tests.getBytes(1, this.tests.length().toInt())
+    ),
     description.toString(),
     timeLimit,
     deadline
+)
+
+data class TaskTestDto(
+    val testCaseId: Int?,
+    val testData: String,
+    val expectedResult: String
 )
