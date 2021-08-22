@@ -25,6 +25,7 @@ class RecruitmentProcessController(
     @Autowired private val taskService: TaskService
 ) {
 
+    @Transactional
     @CrossOrigin
     @GetMapping
     fun getAllProcesses(): ResponseEntity<List<RecruitmentProcessDto>> =
