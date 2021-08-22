@@ -29,12 +29,14 @@ class TaskController(
             .getTasksByRecruitmentProcess(processId)
             .let { ResponseEntity.ok(it) }
 
+    @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @GetMapping("/{taskId}")
     fun getTaskById(@PathVariable taskId: Int): ResponseEntity<TaskDto> = taskService.getTaskById(taskId)
         .let { ResponseEntity.ok(it) }
 
+    @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @GetMapping("/{taskId}/tests")
@@ -56,6 +58,7 @@ class TaskController(
     }
         .let { OwnResponses.SUCCESS }
 
+    @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @PutMapping("/{taskId}/tests/file")
@@ -65,6 +68,7 @@ class TaskController(
         @RequestBody testsBase64: String
     ) = taskService.setTests(taskId, testsBase64)
 
+    @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @PutMapping("/{taskId}/tests/object")
