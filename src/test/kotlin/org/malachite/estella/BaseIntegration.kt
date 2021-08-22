@@ -13,6 +13,7 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.malachite.estella.process.domain.TaskDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpHeaders
@@ -26,8 +27,11 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.sql.Date
+import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @SpringBootTest(
@@ -42,7 +46,7 @@ class BaseIntegration {
     private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
     private val encodedFile: String = Base64.getEncoder().encodeToString(file)
 
-    fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
+    final fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
         JobSeekerFilePayload(id, fileName, encodedFile)
 
     fun httpRequest(
@@ -228,5 +232,23 @@ class BaseIntegration {
         this["id"] as Int?,
         StageType.valueOf(this["type"] as String)
     )
+
+    fun List<Map<String, Any>>.toTaskDto() =
+        this.map { it.toTaskDto() }
+    fun Map<String, Any>.toTaskDto() = TaskDto(
+        id = this["id"] as Int?,
+        testsBase64 = this["testsBase64"] as String,
+        descriptionFileName = this["descriptionFileName"] as String,
+        descriptionBase64 = this["descriptionBase64"] as String,
+        timeLimit = this["timeLimit"] as Int,
+        deadline = (this["deadline"] as String).toTimestamp()
+    )
+
+    fun String.toTimestamp(): Timestamp {
+        val pattern = "yyyy-MM-dd'T'HH:mm:ss"
+        val formatter = DateTimeFormatter.ofPattern(pattern)
+        val localDateTime = LocalDateTime.from(formatter.parse(this.subSequence(0, 19)))
+        return Timestamp.valueOf(localDateTime)
+    }
 
 }

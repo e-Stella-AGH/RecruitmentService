@@ -8,6 +8,7 @@ abstract class EStellaService<T> {
         try {
             fn()
         } catch(ex: NoSuchElementException) {
+            ex.printStackTrace()
             throw throwable
         }
 }

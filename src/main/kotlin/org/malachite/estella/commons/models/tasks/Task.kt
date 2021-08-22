@@ -9,6 +9,9 @@ import javax.persistence.*
 @Table(name = "tasks")
 data class Task(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
-        @Lob val tests: Blob, @Lob val description: Clob,
-        val timeLimit: Int, val deadline: Timestamp
+        @Lob val tests: Blob,
+        @Lob val description: Clob,
+        val descriptionFileName: String,
+        val timeLimit: Int,
+        val deadline: Timestamp
 )
