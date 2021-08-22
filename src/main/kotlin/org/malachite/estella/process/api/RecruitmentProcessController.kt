@@ -46,10 +46,9 @@ class RecruitmentProcessController(
     @PutMapping("/stages/{processId}")
     fun updateStagesList(
         @PathVariable("processId") processId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody stages: UpdateStagesListRequest
     ) =
-        processService.updateStagesList(jwt, processId, stages.stages)
+        processService.updateStagesList(processId, stages.stages)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
@@ -62,10 +61,9 @@ class RecruitmentProcessController(
     @PutMapping("/{processId}/end_date")
     fun updateEndDate(
         @PathVariable("processId") processId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody dateRequest: DateRequest
     ) =
-        processService.updateEndDate(jwt, processId, dateRequest.date).let {
+        processService.updateEndDate(processId, dateRequest.date).let {
             OwnResponses.SUCCESS
         }
 

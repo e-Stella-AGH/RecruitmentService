@@ -1,6 +1,5 @@
 package org.malachite.estella.organization.api
 
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.commons.models.people.Organization
@@ -39,15 +38,15 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/organization")
-    fun getOrganizationByUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
-        securityService.getOrganizationFromJWT(jwt)
+    fun getOrganizationByUser(): ResponseEntity<Any> =
+        securityService.getOrganizationFromContext()
             ?.let { ResponseEntity.ok(it) }
             ?: UNAUTH
 
     @CrossOrigin
     @GetMapping("/offers")
-    fun getOrganizationsOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> =
-        securityService.getOrganizationFromJWT(jwt)
+    fun getOrganizationsOffers(): ResponseEntity<Any> =
+        securityService.getOrganizationFromContext()
             ?.let { offerService.getOrganizationOffers(it) }
             ?.let { ResponseEntity.ok(it) }
             ?: UNAUTH
@@ -62,29 +61,27 @@ class OrganizationController(
     @CrossOrigin
     @PutMapping("/{organizationId}")
     fun updateOrganization(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("organizationId") organizationId: OrganizationID,
         @RequestBody organizationRequest: OrganizationRequest
     ): ResponseEntity<Any> =
-        organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization(), jwt)
+        organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization())
             .let { OwnResponses.SUCCESS }
 
 
     @CrossOrigin
     @DeleteMapping("/{organizationId}")
     fun deleteOrganization(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("organizationId") organizationId: OrganizationID
     ): ResponseEntity<Any> =
-        organizationService.deleteOrganization(organizationId.toId(), jwt).let { OwnResponses.SUCCESS }
+        organizationService.deleteOrganization(organizationId.toId()).let { OwnResponses.SUCCESS }
 
 
 
     @CrossOrigin
     @GetMapping("/hrpartners")
-    fun getHrPartners(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<HrPartnerResponse>> =
+    fun getHrPartners(): ResponseEntity<List<HrPartnerResponse>> =
         hrPartnerService.getHrPartners()
-            .filter { it.organization == securityService.getOrganizationFromJWT(jwt) }
+            .filter { it.organization == securityService.getOrganizationFromContext() }
             .map { it.toResponse() }
             .toList()
             .let { ResponseEntity.ok(it) }
