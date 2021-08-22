@@ -3,6 +3,7 @@ package org.malachite.estella
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -10,11 +11,9 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
-import org.malachite.estella.people.domain.HrPartnerResponse
-import org.malachite.estella.people.domain.JobSeekerDTO
-import org.malachite.estella.people.domain.JobSeekerFileDTO
-import org.malachite.estella.people.domain.UserDTO
+import org.malachite.estella.people.domain.*
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.malachite.estella.process.domain.TaskDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpHeaders
@@ -25,9 +24,14 @@ import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.sql.Date
+import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @SpringBootTest(
@@ -38,6 +42,12 @@ class BaseIntegration {
 
     private val restTemplate = TestRestTemplate()
     val objectMapper = jacksonObjectMapper()
+
+    private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
+    private val encodedFile: String = Base64.getEncoder().encodeToString(file)
+
+    final fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
+        JobSeekerFilePayload(id, fileName, encodedFile)
 
     fun httpRequest(
         path: String,
@@ -56,11 +66,11 @@ class BaseIntegration {
             val response = restTemplate.exchange(requestEntity, String::class.java)
             val statusCode = response.statusCode
             val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody,response.headers)
+            Response(statusCode, responseBody, response.headers)
         } catch (exception: HttpStatusCodeException) {
             val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
             val statusCode = exception.statusCode
-            Response(statusCode, responseBody,exception.responseHeaders)
+            Response(statusCode, responseBody, exception.responseHeaders)
         }
     }
 
@@ -99,7 +109,7 @@ class BaseIntegration {
         Organization(
             UUID.fromString(this["id"] as String),
             this["name"] as String,
-            (this["user"] as Map<String,Any>).toUser(),
+            (this["user"] as Map<String, Any>).toUser(),
             this["verified"] as Boolean
         )
 
@@ -140,9 +150,21 @@ class BaseIntegration {
             this["id"] as Int,
             Date.valueOf(this["applicationDate"] as String),
             ApplicationStatus.valueOf(this["status"] as String),
+            (this["stage"] as Map<String, Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
+            (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet()
+        )
+
+    fun Map<String, Any>.toApplicationDTOWithStagesAndOfferName() =
+        ApplicationDTOWithStagesListAndOfferName(
+            this["id"] as Int,
+            Date.valueOf(this["applicationDate"] as String),
+            ApplicationStatus.valueOf(this["status"] as String),
             (this["stage"] as Map<String,Any>).toRecruitmentStage(),
             (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
-            setOf()
+            setOf(),
+            (this["stages"] as List<Map<String, Any>>).map { it.toRecruitmentStage() },
+            this["offerName"] as String
         )
 
     fun String.toSkillLevel(): SkillLevel? {
@@ -165,11 +187,11 @@ class BaseIntegration {
     fun Map<String, Any>.toJobSeeker() = JobSeeker(
         this["id"] as Int?,
         (this["user"] as Map<String, Any>).toUser(),
-        setOf()
+        mutableSetOf()
     )
 
     fun Map<String, Any>.toJobSeekerDTO() =
-        JobSeekerDTO(this["id"] as Int,(this["user"] as Map<String, Any>).toUserDTO(),listOf<JobSeekerFileDTO>())
+        JobSeekerDTO(this["id"] as Int, (this["user"] as Map<String, Any>).toUserDTO())
 
     fun Map<String, Any>.toHrPartnerResponse() =
         HrPartnerResponse(
@@ -196,6 +218,13 @@ class BaseIntegration {
             setOf()
         )
 
+    fun Map<String, Any>.toJobSeekerFileDto() =
+        JobSeekerFileDTO(
+            this["id"] as Int,
+            this["fileName"] as String,
+            this["fileBase64"] as String
+        )
+
     fun List<Map<String, Any>>.toRecruitmentStagesList() =
         this.map { it.toRecruitmentStage() }
 
@@ -203,5 +232,23 @@ class BaseIntegration {
         this["id"] as Int?,
         StageType.valueOf(this["type"] as String)
     )
+
+    fun List<Map<String, Any>>.toTaskDto() =
+        this.map { it.toTaskDto() }
+    fun Map<String, Any>.toTaskDto() = TaskDto(
+        id = this["id"] as Int?,
+        testsBase64 = this["testsBase64"] as String,
+        descriptionFileName = this["descriptionFileName"] as String,
+        descriptionBase64 = this["descriptionBase64"] as String,
+        timeLimit = this["timeLimit"] as Int,
+        deadline = (this["deadline"] as String).toTimestamp()
+    )
+
+    fun String.toTimestamp(): Timestamp {
+        val pattern = "yyyy-MM-dd'T'HH:mm:ss"
+        val formatter = DateTimeFormatter.ofPattern(pattern)
+        val localDateTime = LocalDateTime.from(formatter.parse(this.subSequence(0, 19)))
+        return Timestamp.valueOf(localDateTime)
+    }
 
 }

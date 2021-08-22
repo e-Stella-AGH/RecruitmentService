@@ -5,12 +5,11 @@ import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
-import org.malachite.estella.process.domain.InvalidEndDateException
-import org.malachite.estella.process.domain.InvalidStagesListException
-import org.malachite.estella.process.domain.NoSuchStageTypeException
-import org.malachite.estella.process.domain.RecruitmentProcessRepository
+import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.process.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.sql.Blob
 import java.sql.Date
 import java.time.LocalDate
 
@@ -38,6 +37,14 @@ class RecruitmentProcessService(
             stages = process.stages,
             quizzes = process.quizzes,
             tasks = process.tasks
+        )
+        recruitmentProcessRepository.save(updated)
+    }
+
+    fun updateTasks(id: Int, tasks: Set<Task>) {
+        val currentProcess = getProcess(id)
+        val updated = currentProcess.copy(
+            tasks = currentProcess.tasks.plus(tasks)
         )
         recruitmentProcessRepository.save(updated)
     }

@@ -2,7 +2,9 @@ package org.malachite.estella.services
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
-import org.malachite.estella.commons.Message
+import io.jsonwebtoken.SignatureException
+import java.util.*
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -17,8 +19,6 @@ import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.lang.IllegalArgumentException
-import java.util.*
 
 @Service
 class SecurityService(
@@ -53,7 +53,6 @@ class SecurityService(
             .compact()
     }
 
-
     private fun getRefreshToken(user: User): String? {
         val issuer = user.id.toString()
         return Jwts.builder()
@@ -64,30 +63,35 @@ class SecurityService(
             .compact()
     }
 
-    private fun isSigned(jwt: String, secret: String) =
-        Jwts.parser()
-            .setSigningKey(secret)
-            .isSigned(jwt)
+    private fun isSigned(jwt: String, secret: String): Boolean =
+        Jwts.parser().setSigningKey(secret).isSigned(jwt)
 
     private fun parseJWT(jwt: String, secret: String) =
-        Jwts.parser()
-            .setSigningKey(secret)
-            .parseClaimsJws(jwt)
+        Jwts.parser().setSigningKey(secret).parseClaimsJws(jwt)
 
-
-    fun getUserFromJWT(jwt: String?, secret: String = authSecret): User? {
-        if (jwt == null || !isSigned(jwt, secret)) return null
-        val id = parseJWT(jwt, secret)
-            .body
-            .issuer
-        return userRepository.findById(id.toInt()).orElse(null)
-    }
+    fun getUserFromJWT(jwt: String?, secret: String = authSecret): User? =
+        try {
+            if (jwt == null || !isSigned(jwt, secret))
+                null
+            else
+                parseJWT(jwt, secret).body
+                    .issuer
+                    .let { userRepository.findById(it.toInt()).orElse(null)}
+        } catch (ex: SignatureException) {
+            null
+        }
 
     fun getUserDetailsFromContext(): UserContextDetails? =
         UserContextDetails.fromContext()
 
     fun getUserFromContext(): User? =
         getUserDetailsFromContext()?.user
+    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
+    fun getJobSeekerFromJWTUnsafe(jwt: String?): JobSeeker =
+        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+            ?: throw UnauthenticatedException()
 
     fun getJobSeekerFromContext(): JobSeeker? =
         getUserFromContext()
@@ -96,10 +100,14 @@ class SecurityService(
     fun getHrPartnerFromContext(): HrPartner? =
         getUserFromContext()
             ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
+    fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
+        getUserFromJWT(jwt)?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
     fun getOrganizationFromContext(): Organization? =
         getUserFromContext()?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
+    fun getOrganizationFromJWT(jwt: String?): Organization? =
+        getUserFromJWT(jwt)?.id?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)
@@ -111,8 +119,7 @@ class SecurityService(
     fun refreshToken(token: String, userId: Int): String? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
         val authUser = userRepository.findById(userId).orElse(null)
-        if (refreshUser == authUser)
-            return getAuthenticateToken(refreshUser!!)
+        if (refreshUser == authUser) return getAuthenticateToken(refreshUser!!)
         return null
     }
 
@@ -152,7 +159,5 @@ class SecurityService(
             ?: organizationRepository.findByUserId(this.id).orElse(null)?.let { "organization" }
             ?: throw InvalidUserException()
 
-    fun isCorrectApiKey(apiKey: String?): Boolean =
-        apiKey != null && apiKey == API_KEY
-
+    fun isCorrectApiKey(apiKey: String?): Boolean = apiKey != null && apiKey == API_KEY
 }
