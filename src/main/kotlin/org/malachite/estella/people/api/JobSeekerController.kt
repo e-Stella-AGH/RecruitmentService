@@ -50,18 +50,17 @@ class JobSeekerController(
 
     @CrossOrigin
     @GetMapping("/files")
-    fun getJobSeekerFiles(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<JobSeekerFileDTO>> =
-        securityService.getJobSeekerFromJWTUnsafe(jwt).files
+    fun getJobSeekerFiles(): ResponseEntity<List<JobSeekerFileDTO>> =
+        securityService.getJobSeekerFromContextUnsafe().files
             .map { it.toJobSeekerFileDTO() }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @PutMapping("/files")
     fun addJobSeekerFiles(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody jobSeekerFileRequest: JobSeekerFilesRequest
     ): ResponseEntity<Any> =
-        securityService.getJobSeekerFromJWTUnsafe(jwt)
+        securityService.getJobSeekerFromContext()!!
             .let { jobSeekerService.updateJobSeekerFiles(it, jobSeekerFileRequest.files) }
             .let { OwnResponses.SUCCESS }
 

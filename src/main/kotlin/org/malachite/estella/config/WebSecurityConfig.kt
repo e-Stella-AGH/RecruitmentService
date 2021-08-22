@@ -30,7 +30,6 @@ class WebSecurityConfig(val jwtFilter: JwtSecurityFilter, val userDetailsService
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
-//                .antMatchers("/api/secured/**").authenticated()
                 .anyRequest().permitAll().and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
     }

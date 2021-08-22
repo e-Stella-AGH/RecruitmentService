@@ -86,28 +86,20 @@ class SecurityService(
 
     fun getUserFromContext(): User? =
         getUserDetailsFromContext()?.user
-    fun getJobSeekerFromJWT(jwt: String?): JobSeeker? =
-        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
-
-    fun getJobSeekerFromJWTUnsafe(jwt: String?): JobSeeker =
-        getUserFromJWT(jwt)?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
-            ?: throw UnauthenticatedException()
 
     fun getJobSeekerFromContext(): JobSeeker? =
         getUserFromContext()
             ?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+    fun getJobSeekerFromContextUnsafe(): JobSeeker =
+        getJobSeekerFromContext() ?: throw UnauthenticatedException()
 
     fun getHrPartnerFromContext(): HrPartner? =
         getUserFromContext()
             ?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
-    fun getHrPartnerFromJWT(jwt: String?): HrPartner? =
-        getUserFromJWT(jwt)?.let { hrPartnerRepository.findByUserId(it.id!!).orElse(null) }
 
     fun getOrganizationFromContext(): Organization? =
         getUserFromContext()?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
-    fun getOrganizationFromJWT(jwt: String?): Organization? =
-        getUserFromJWT(jwt)?.id?.let { organizationRepository.findByUserId(it).orElse(null) }
 
     fun getTokens(user: User): Pair<String, String>? {
         val refreshJWT = getRefreshToken(user)

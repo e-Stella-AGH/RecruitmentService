@@ -49,7 +49,6 @@ class TaskController(
     @PostMapping("/{processId}")
     fun addTask(
         @PathVariable processId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody task: TaskDto
     ) = taskService.addTask(task).let { t ->
         processService.getProcess(processId)
@@ -65,7 +64,6 @@ class TaskController(
     @PutMapping("/{taskId}/tests/file")
     fun setTestsWithFile(
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody testsBase64: String
     ) = ResponseEntity(
         Message("Not Implemented"),
@@ -78,7 +76,6 @@ class TaskController(
     @PutMapping("/{taskId}/tests/object")
     fun setTestsWithObject(
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 
