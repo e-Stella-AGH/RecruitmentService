@@ -66,7 +66,6 @@ class JobSeekerController(
             .let { jobSeekerService.updateJobSeekerFiles(it, jobSeekerFileRequest.files) }
             .let { OwnResponses.SUCCESS }
 
-
 }
 
 data class JobSeekerRequest(

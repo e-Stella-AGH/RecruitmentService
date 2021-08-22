@@ -7,6 +7,7 @@ import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
+import org.malachite.estella.task.infrastructure.HibernateTaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.context.TestContext
@@ -39,6 +40,8 @@ class TestDatabaseReseter: TestExecutionListener {
     private lateinit var recruitmentProcessRepository: HibernateRecruitmentProcessRepository
     @Autowired
     private lateinit var desiredSkillRepository: HibernateDesiredSkillRepository
+    @Autowired
+    private lateinit var tasksRepository: HibernateTaskRepository
 
     override fun afterTestClass(testContext: TestContext) {
         testContext.applicationContext
@@ -59,7 +62,8 @@ class TestDatabaseReseter: TestExecutionListener {
             jobSeekerRepository,
             offerRepository,
             recruitmentProcessRepository,
-            desiredSkillRepository
+            desiredSkillRepository,
+            tasksRepository
         )
     }
 

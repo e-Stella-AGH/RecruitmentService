@@ -3,21 +3,26 @@ package org.malachite.estella.process.api
 import com.fasterxml.jackson.annotation.JsonFormat
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.toRecruitmentProcessDto
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.RecruitmentStageService
+import org.malachite.estella.services.TaskService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.sql.Blob
 import java.sql.Date
 
 @RestController
 @RequestMapping("/api/process")
 class RecruitmentProcessController(
     @Autowired private val processService: RecruitmentProcessService,
-    @Autowired private val stageService: RecruitmentStageService
+    @Autowired private val stageService: RecruitmentStageService,
+    @Autowired private val taskService: TaskService
 ) {
 
     @CrossOrigin
@@ -63,7 +68,8 @@ class RecruitmentProcessController(
             OwnResponses.SUCCESS
         }
 
-    data class UpdateStagesListRequest(
+
+        data class UpdateStagesListRequest(
         val stages: List<String>
     )
 

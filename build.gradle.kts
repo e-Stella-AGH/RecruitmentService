@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm") version "1.4.32"
     kotlin("plugin.spring") version "1.4.32"
     kotlin("plugin.jpa") version "1.4.32"
+    kotlin("plugin.serialization") version "1.5.21"
 }
 
 group = "com.example"
@@ -30,6 +31,7 @@ dependencies {
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.postgresql:postgresql")
     implementation("com.beust:klaxon:5.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
 
     testImplementation("io.strikt:strikt-core:0.31.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

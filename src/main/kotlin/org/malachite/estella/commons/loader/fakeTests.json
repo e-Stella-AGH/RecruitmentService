@@ -1,0 +1,17 @@
+[
+  {
+    "testCaseId": 1,
+    "testData": 1,
+    "expectedResult": "a"
+  },
+  {
+    "testCaseId": 2,
+    "testData": 2,
+    "expectedResult": "ab"
+  },
+  {
+    "testCaseId": 3,
+    "testData": 5,
+    "expectedResult": "abcde"
+  }
+]
