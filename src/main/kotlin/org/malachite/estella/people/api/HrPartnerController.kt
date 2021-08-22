@@ -1,6 +1,5 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
@@ -24,8 +23,6 @@ class HrPartnerController(
     fun getHrPartners(): ResponseEntity<List<HrPartner>> =
         ResponseEntity.ok(hrPartnerService.getHrPartners().toList())
 
-
-
     @CrossOrigin
     @GetMapping("/{hrPartnerId}")
     fun getHrPartner(@PathVariable("hrPartnerId") hrPartnerId: Int): ResponseEntity<HrPartner> =
@@ -34,39 +31,36 @@ class HrPartnerController(
     @Transactional
     @CrossOrigin
     @GetMapping("/offers")
-    fun getHrPartnerOffers(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<List<OfferResponse>> {
-        return offerService.getHrPartnerOffers(jwt)
+    fun getHrPartnerOffers(): ResponseEntity<List<OfferResponse>> {
+        return offerService.getHrPartnerOffers()
             .let { ResponseEntity.ok(it) }
     }
 
     @CrossOrigin
-    @PostMapping()
+    @PostMapping
     fun addHrPartner(
-        @RequestBody hrPartnerRequest: HrPartnerRequest,
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
+        @RequestBody hrPartnerRequest: HrPartnerRequest
     ): ResponseEntity<Any> {
         return hrPartnerService
-            .registerHrPartner(hrPartnerRequest, jwt)
+            .registerHrPartner(hrPartnerRequest)
             .let { OwnResponses.CREATED(it) }
     }
 
     @CrossOrigin
     @DeleteMapping("/{hrPartnerId}")
     fun deleteHrPartner(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("hrPartnerId") hrId: Int
     ): ResponseEntity<Any> =
-        hrPartnerService.deleteHrPartner(hrId, jwt).let {
+        hrPartnerService.deleteHrPartner(hrId).let {
             OwnResponses.SUCCESS
         }
 
     @CrossOrigin
     @DeleteMapping("/mail")
     fun deleteHrPartnerByMail(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody mail: HrPartnerMail
     ): ResponseEntity<Any> =
-        hrPartnerService.deleteHrPartnerByMail(jwt, mail.mail).let {
+        hrPartnerService.deleteHrPartnerByMail(mail.mail).let {
             OwnResponses.SUCCESS
         }
 }

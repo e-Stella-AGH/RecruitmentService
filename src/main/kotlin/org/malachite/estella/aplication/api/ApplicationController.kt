@@ -25,10 +25,10 @@ class ApplicationController(
     @CrossOrigin
     @PostMapping("/apply/{offerId}/user")
     fun applyForAnOffer(
-        @PathVariable offerId: Int, @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
+        @PathVariable offerId: Int,
         @RequestBody applicationPayload: ApplicationLoggedInPayload
     ) =
-        securityService.getJobSeekerFromJWT(jwt)
+        securityService.getJobSeekerFromContext()
             ?.let { applicationService.insertApplicationLoggedInUser(offerId, it, applicationPayload) }
             ?.let { CREATED(it) }
             ?: UNAUTH
@@ -65,9 +65,8 @@ class ApplicationController(
 
     @CrossOrigin
     @GetMapping("/job-seeker")
-    fun getAllApplicationsByJobSeeker(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?)
-            : ResponseEntity<Any> =
-        securityService.getJobSeekerFromJWT(jwt)
+    fun getAllApplicationsByJobSeeker(): ResponseEntity<Any> =
+        securityService.getJobSeekerFromContext()
             ?.id
             ?.let { applicationService.getApplicationsByJobSeeker(it) }
             ?.let { ResponseEntity.ok(it) }
@@ -77,13 +76,12 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/next")
     fun updateApplicationStage(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
             recruitmentProcessService.getProcessFromStage(it.stage)
         }.let {
-            if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+            if (!securityService.checkOfferRights(it.offer)) return UNAUTH
             applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
         }
 
@@ -91,14 +89,13 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/reject")
     fun rejectApplication(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId)
             .let {
                 recruitmentProcessService.getProcessFromStage(it.stage) }
             .let {
-                if (!securityService.checkOfferRights(it.offer, jwt)) return UNAUTH
+                if (!securityService.checkOfferRights(it.offer)) return UNAUTH
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
         }
 }

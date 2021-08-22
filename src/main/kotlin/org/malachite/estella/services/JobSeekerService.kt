@@ -38,15 +38,17 @@ class JobSeekerService(
             throw UserAlreadyExistsException()
         }
 
-    fun deleteJobSeeker(id: Int, jwt: String?) =
-        if (!checkRights(id, jwt).contains(Permission.DELETE)) throw UnauthenticatedException()
-        else deleteJobSeeker(id)
+    fun deleteJobSeeker(id: Int) {
+        if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
+        jobSeekerRepository.deleteById(id)
+    }
 
-    private fun deleteJobSeeker(id: Int) = jobSeekerRepository.deleteById(id)
+    private fun checkRights(id: Int): Set<Permission> {
+        val userDetails = securityService.getUserDetailsFromContext()
+        if (securityService.isCorrectApiKey(userDetails?.token))
+            return Permission.allPermissions()
 
-    private fun checkRights(id: Int, jwt: String?): Set<Permission> {
-        if (securityService.isCorrectApiKey(jwt)) return Permission.allPermissions()
-        securityService.getJobSeekerFromJWT(jwt)
+        securityService.getJobSeekerFromContext()
             ?.let {
                 if (id == it.id) return Permission.allPermissions()
                 else null
@@ -76,5 +78,4 @@ class JobSeekerService(
         updateJobSeeker(jobSeeker.copy(files = newFiles))
 
     }
-
 }

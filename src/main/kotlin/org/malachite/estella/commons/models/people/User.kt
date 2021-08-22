@@ -20,6 +20,10 @@ data class User(
         this.password = password ?: ""
     }
 
+    /*
+        TODO [ES-187] - User should be data class, final form of password should be passed to default constructor
+                        Encryption logic in setter is also very confusing
+     */
     var password: String = ""
         @JsonIgnore
         get() = field

@@ -67,10 +67,10 @@ class RecruitmentProcessService(
         return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!
     }
 
-    fun updateStagesList(jwt: String?, processId: Int, stagesList: List<String>) {
-        val userFromJWT = securityService.getHrPartnerFromJWT(jwt)
+    fun updateStagesList(processId: Int, stagesList: List<String>) {
+        val user = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
-        if (process.offer.creator.id != userFromJWT?.id) throw UnauthenticatedException()
+        if (process.offer.creator.id != user?.id) throw UnauthenticatedException()
         val stages = compareAndGetStagesList(process.stages, stagesList.toListOfRecruitmentStage())
         recruitmentProcessRepository.save(process.copy(stages = stages))
     }
@@ -101,8 +101,8 @@ class RecruitmentProcessService(
             }
             .map { RecruitmentStage(null, it) }
 
-    fun updateEndDate(jwt: String?, processId: Int, endDate: Date) {
-        val userFromJWT = securityService.getHrPartnerFromJWT(jwt)
+    fun updateEndDate(processId: Int, endDate: Date) {
+        val userFromJWT = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
         if (process.offer.creator.id != userFromJWT?.id) throw UnauthenticatedException()
         if(process.startDate.after(endDate)) throw InvalidEndDateException()

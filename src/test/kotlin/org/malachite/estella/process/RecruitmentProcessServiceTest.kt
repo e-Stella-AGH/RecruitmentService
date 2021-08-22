@@ -31,7 +31,7 @@ class RecruitmentProcessServiceTest {
     fun setup() {
         processRepository.clear()
         stagesRepository.clear()
-        every { securityMock.getHrPartnerFromJWT(any()) } returns HrPartner(
+        every { securityMock.getHrPartnerFromContext() } returns HrPartner(
             null,
             Organization(null, "xd", User(1, "xd", "xd", "xd")),
             User(1, "xd", "xd", "xd")
@@ -43,7 +43,6 @@ class RecruitmentProcessServiceTest {
     @Test
     fun `should be able to update stages when they are the same length`() {
         service.updateStagesList(
-            null,
             process.id!!,
             listOf("APPLIED", "HR_INTERVIEW", "ENDED"))
         val updatedProcess = service.getProcess(process.id!!)
@@ -58,7 +57,6 @@ class RecruitmentProcessServiceTest {
     @Test
     fun `should be able to add new stage while updating`() {
         service.updateStagesList(
-            null,
             process.id!!,
             listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
         )
@@ -76,7 +74,6 @@ class RecruitmentProcessServiceTest {
     @Test
     fun `should be able to delete stage while updating`() {
         service.updateStagesList(
-            null,
             process.id!!,
             listOf("APPLIED", "ENDED")
         )
@@ -92,7 +89,6 @@ class RecruitmentProcessServiceTest {
     fun `should throw exception, when there's no APPLIED stage`() {
         expectThrows<InvalidStagesListException> {
             service.updateStagesList(
-                null,
                 process.id!!,
                 listOf("HR_INTERVIEW", "ENDED")
             )
@@ -103,7 +99,6 @@ class RecruitmentProcessServiceTest {
     fun `should throw exception, when there's no ENDED stage`() {
         expectThrows<InvalidStagesListException> {
             service.updateStagesList(
-                null,
                 process.id!!,
                 listOf("APPLIED", "HR_INTERVIEW")
             )
@@ -114,7 +109,6 @@ class RecruitmentProcessServiceTest {
     fun `should throw exception, when there's more than one APPLIED or ENDED stage`() {
         expectThrows<InvalidStagesListException> {
             service.updateStagesList(
-                null,
                 process.id!!,
                 listOf("APPLIED", "ENDED", "HR_INTERVIEW", "APPLIED", "ENDED")
             )

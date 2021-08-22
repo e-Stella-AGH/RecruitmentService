@@ -123,7 +123,6 @@ class OffersIntegration: BaseIntegration() {
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword))
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        println(getOffers())
         val deletedOffer = getOffers().firstOrNull { it.id == offer.id }
         expectThat(deletedOffer).isNull()
     }

@@ -1,9 +1,6 @@
 package org.malachite.estella.people.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.SuccessMessage
+import org.malachite.estella.commons.*
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.services.UserService
@@ -25,7 +22,7 @@ class UserController(
         arrayOf(EStellaHeaders.authToken, EStellaHeaders.refreshToken).joinToString(", ")
 
     @CrossOrigin
-    @GetMapping()
+    @GetMapping
     fun getUsers(): ResponseEntity<MutableIterable<User>> {
         return ResponseEntity(userService.getUsers(), HttpStatus.OK)
     }
@@ -55,8 +52,8 @@ class UserController(
 
     @CrossOrigin
     @GetMapping("/loggedInUser")
-    fun getLoggedInUser(@RequestHeader(EStellaHeaders.jwtToken) jwt: String?): ResponseEntity<Any> {
-        val user = securityService.getUserFromJWT(jwt) ?: OwnResponses.UNAUTH
+    fun getLoggedInUser(): ResponseEntity<Any> {
+        val user = securityService.getUserFromContext() ?: throw UnauthenticatedException()
         return ResponseEntity.ok(user)
     }
 
@@ -79,12 +76,11 @@ class UserController(
 
 
     @CrossOrigin
-    @PutMapping()
+    @PutMapping
     fun updateUser(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody userRequest: UserRequest
     ): ResponseEntity<Any> =
-        userService.updateUser(userRequest, jwt)
+        userService.updateUser(userRequest)
             .let { OwnResponses.SUCCESS }
 
 }

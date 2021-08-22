@@ -1,6 +1,5 @@
 package org.malachite.estella.offer.api
 
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.domain.OfferRequest
@@ -36,29 +35,26 @@ class OfferController(
     @CrossOrigin
     @PostMapping()
     fun addOffer(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<OfferResponse> =
-        offerService.addOffer(offerRequest, jwt)
+        offerService.addOffer(offerRequest)
             .let(Offer::toOfferResponse)
             .let { OwnResponses.CREATED(it) }
 
     @CrossOrigin
     @PutMapping("/{offerId}")
     fun updateOffer(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int,
         @RequestBody offerRequest: OfferRequest
     ): ResponseEntity<Any> =
-        offerService.updateOffer(offerId, offerRequest, jwt)
+        offerService.updateOffer(offerId, offerRequest)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @DeleteMapping("/{offerId}")
     fun deleteOffer(
-        @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @PathVariable("offerId") offerId: Int
     ): ResponseEntity<Any> =
-        offerService.deleteOffer(offerId, jwt)
+        offerService.deleteOffer(offerId)
             .let { OwnResponses.SUCCESS }
 }

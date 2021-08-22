@@ -156,7 +156,6 @@ class ProcessIntegration: BaseIntegration() {
         val updatedProcess = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(updatedProcess).isNotNull()
         updatedProcess!!
-        println(updatedProcess.endDate)
         expectThat(updatedProcess.endDate?.toLocalDate()).isEqualTo(LocalDate.of(2022, 1, 1))
     }
 
