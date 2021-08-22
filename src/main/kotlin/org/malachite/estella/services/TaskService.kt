@@ -33,7 +33,7 @@ class TaskService(
         withExceptionThrower { taskRepository.findById(taskId).get() }
             .toTaskDto()
 
-    fun getTasksTests(taskId: Int) =
+    fun getTestsFromTask(taskId: Int): List<TaskTestCaseDto> =
         taskRepository
             .findById(taskId)
             .get()
@@ -49,6 +49,7 @@ class TaskService(
         }.toTaskDto()
 
     fun updateTask(id: Int, task: Task) {
+        if(!checkTestsFormat(task.toTaskDto().testsBase64)) throw IllegalArgumentException()
         val currTask: Task = taskRepository.findById(id).get()
         val updated: Task = currTask.copy(
             id = task.id,

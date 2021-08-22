@@ -1,6 +1,7 @@
 package org.malachite.estella
 
 import org.malachite.estella.commons.loader.*
+import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository
@@ -8,6 +9,7 @@ import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.process.infrastructure.HibernateDesiredSkillRepository
 import org.malachite.estella.process.infrastructure.HibernateRecruitmentProcessRepository
+import org.malachite.estella.task.infrastructure.HibernateTaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
@@ -27,6 +29,7 @@ class DemoApplication {
         @Autowired offerRepository: HibernateOfferRepository,
         @Autowired recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
         @Autowired desiredSkillRepository: HibernateDesiredSkillRepository,
+        @Autowired tasksRepository: HibernateTaskRepository,
         @Value("\${should_fake_load}") shouldFakeLoad: Boolean
     ): CommandLineRunner {
         return CommandLineRunner {
@@ -37,7 +40,8 @@ class DemoApplication {
                     jobSeekerRepository,
                     offerRepository,
                     recruitmentProcessRepository,
-                    desiredSkillRepository
+                    desiredSkillRepository,
+                    tasksRepository
                 )
             }
         }
@@ -50,7 +54,8 @@ fun loadData(
     jobSeekerRepository: HibernateJobSeekerRepository,
     offerRepository: HibernateOfferRepository,
     recruitmentProcessRepository: HibernateRecruitmentProcessRepository,
-    desiredSkillRepository: HibernateDesiredSkillRepository
+    desiredSkillRepository: HibernateDesiredSkillRepository,
+    tasksRepository: HibernateTaskRepository
 ) {
     val organizationUsers = FakeUsers.organizationUsers
         .map { it.copy(id = null) }
@@ -71,6 +76,13 @@ fun loadData(
 
     FakeRecruitmentProcess.getProcesses(offers).map {
         recruitmentProcessRepository.save(it)
+    }
+
+    tasksRepository.save(FakeTasks.task).also { task ->
+        recruitmentProcessRepository
+            .findAll()
+            .first()
+            .let { recruitmentProcess -> recruitmentProcessRepository.save(recruitmentProcess.copy(tasks = setOf(task))) }
     }
 }
 

@@ -3,13 +3,13 @@ package org.malachite.estella.task.api
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.TaskService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
@@ -33,15 +33,16 @@ class TaskController(
     @CrossOrigin
     @Transactional
     @GetMapping("/{taskId}")
-    fun getTaskById(@PathVariable taskId: Int): ResponseEntity<TaskDto> = taskService.getTaskById(taskId)
-        .let { ResponseEntity.ok(it) }
+    fun getTaskById(@PathVariable taskId: Int) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) /*taskService.getTaskById(taskId)
+        .let { ResponseEntity.ok(it) }*/
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @GetMapping("/{taskId}/tests")
-    fun getTaskTests(@PathVariable taskId: Int): ResponseEntity<List<TaskTestCaseDto>> = taskService.getTasksTests(taskId)
-        .let { ResponseEntity.ok(it) }
+    fun getTaskTests(@PathVariable taskId: Int) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
+    /*taskService.getTestsFromTask(taskId)
+        .let { ResponseEntity.ok(it) } */
 
     @CrossOrigin
     @Transactional
@@ -66,7 +67,10 @@ class TaskController(
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody testsBase64: String
-    ) = taskService.setTests(taskId, testsBase64)
+    ) = ResponseEntity(
+        Message("Not Implemented"),
+        HttpStatus.NOT_IMPLEMENTED
+    ) //taskService.setTests(taskId, testsBase64)
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
@@ -76,6 +80,6 @@ class TaskController(
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?,
         @RequestBody tests: List<TaskTestCaseDto>
-    ) = taskService.setTests(taskId, tests)
+    ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 
 }

@@ -8,6 +8,7 @@ import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.process.domain.RecruitmentProcessRepository
+import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,8 +16,10 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expect
 import strikt.api.expectThat
+import strikt.assertions.any
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotEmpty
+import strikt.assertions.map
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.sql.Timestamp
@@ -63,13 +66,13 @@ class TasksIntegration: BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         expect {
             println(response.body)
-            val taskDto = (response.body as List<Map<String, Any>>).toTaskDto()
-            that(taskDto.size).isEqualTo(1)
-            val task = taskDto[0]
-            that(task.descriptionBase64).isEqualTo(encodedFile)
-            that(task.descriptionFileName).isEqualTo(descriptionFileName)
-            that(task.testsBase64).isEqualTo(encodedFile)
-            that(task.timeLimit).isEqualTo(timeLimit)
+            val tasksDto = (response.body as List<Map<String, Any>>).toTaskDto()
+            that(tasksDto.size).isEqualTo(2)
+            that(tasksDto)
+                .map { it.toAssertionTaskDto() }
+                .any {
+                    isEqualTo(AssertionTaskDto(encodedFile, descriptionFileName, encodedFile, timeLimit))
+                }
         }
     }
 
@@ -80,4 +83,16 @@ class TasksIntegration: BaseIntegration() {
     private val timeLimit = 30
     private val deadline = Timestamp.from(Instant.now())
 
+    private fun TaskDto.toAssertionTaskDto() = AssertionTaskDto(
+        testsBase64,
+        descriptionFileName,
+        descriptionBase64,
+        timeLimit
+    )
+    private data class AssertionTaskDto(
+        val testsBase64: String,
+        val descriptionFileName: String,
+        val descriptionBase64: String,
+        val timeLimit: Int
+    )
 }
