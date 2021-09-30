@@ -19,6 +19,9 @@ import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
+import kotlin.text.Charsets.UTF_8
+
 
 @Service
 class SecurityService(
@@ -38,6 +41,21 @@ class SecurityService(
     private val firstNameKey = "firstName"
     private val lastNameKey = "lastName"
     private val userTypeKey = "userType"
+    private val algorithm = "SHA-256"
+
+
+    private fun sha256(str: String): String = MessageDigest
+        .getInstance(algorithm)
+        .digest(str.toByteArray(UTF_8))
+        .toHex()
+
+    fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
+
+    fun hashOrganization(organization: Organization) =
+        sha256("${organization.id}:${organization.user.password}")
+
+    fun compareOrganizationWithPassword(organization: Organization, password: String) =
+        hashOrganization(organization).equals(password)
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
@@ -76,7 +94,7 @@ class SecurityService(
             else
                 parseJWT(jwt, secret).body
                     .issuer
-                    .let { userRepository.findById(it.toInt()).orElse(null)}
+                    .let { userRepository.findById(it.toInt()).orElse(null) }
         } catch (ex: SignatureException) {
             null
         }
@@ -90,6 +108,7 @@ class SecurityService(
     fun getJobSeekerFromContext(): JobSeeker? =
         getUserFromContext()
             ?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
     fun getJobSeekerFromContextUnsafe(): JobSeeker =
         getJobSeekerFromContext() ?: throw UnauthenticatedException()
 

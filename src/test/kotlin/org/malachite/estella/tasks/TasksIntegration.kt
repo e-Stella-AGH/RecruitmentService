@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.models.offers.RecruitmentProcess
-import org.malachite.estella.process.domain.RecruitmentProcessRepository
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,18 +31,21 @@ import java.util.*
 class TasksIntegration: BaseIntegration() {
 
     @Autowired
-    private lateinit var processRepository: RecruitmentProcessRepository
+    private lateinit var organizationRepository: OrganizationRepository
     @Autowired
     private lateinit var tasksRepository: TaskRepository
+    @Autowired
+    private lateinit var securityService: SecurityService
 
     @Test
     @Order(1)
-    fun `should be able to post task to recruitment process`() {
-        val process = processRepository.findAll().first()
+    fun `should be able to post task to organization`() {
+        val organization = organizationRepository.findAll().first()
+        val password = securityService.hashOrganization(organization)
         val response = httpRequest(
-            "/api/tasks/${process.id}",
+            "/api/tasks?owner=${organization.id}",
             method = HttpMethod.POST,
-            mapOf(EStellaHeaders.jwtToken to "Admin", "Content-Type" to "application/json"),
+            mapOf(EStellaHeaders.passwordHeader to password, "Content-Type" to "application/json"),
             body = mapOf(
                 "testsBase64" to encodedFile,
                 "descriptionFileName" to descriptionFileName,
@@ -57,15 +60,35 @@ class TasksIntegration: BaseIntegration() {
 
     @Test
     @Order(2)
-    fun `should be able to get task from recruitment process`() {
-        val process = processRepository.findAll().first()
+    fun `should respond with unauth when bad password post task`() {
+        val organization = organizationRepository.findAll().first()
         val response = httpRequest(
-            path = "/api/tasks?process=${process.id}",
-            method = HttpMethod.GET
+            "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.POST,
+            mapOf(EStellaHeaders.passwordHeader to "abcdfeg", "Content-Type" to "application/json"),
+            body = mapOf(
+                "testsBase64" to encodedFile,
+                "descriptionFileName" to descriptionFileName,
+                "descriptionBase64" to encodedFile,
+                "timeLimit" to timeLimit,
+                "deadline" to deadline
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Order(3)
+    fun `should be able to get task from organization`() {
+        val organization = organizationRepository.findAll().first()
+        val password = securityService.hashOrganization(organization)
+        val response = httpRequest(
+            path = "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.passwordHeader to password)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         expect {
-            println(response.body)
             val tasksDto = (response.body as List<Map<String, Any>>).toTaskDto()
             that(tasksDto.size).isEqualTo(2)
             that(tasksDto)
@@ -74,6 +97,18 @@ class TasksIntegration: BaseIntegration() {
                     isEqualTo(AssertionTaskDto(encodedFile, descriptionFileName, encodedFile, timeLimit))
                 }
         }
+    }
+
+    @Test
+    @Order(4)
+    fun `should send unauthorized for bad password get tasks`() {
+        val organization = organizationRepository.findAll().first()
+        val response = httpRequest(
+            path = "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.passwordHeader to "abcdefdf")
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
     }
 
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))

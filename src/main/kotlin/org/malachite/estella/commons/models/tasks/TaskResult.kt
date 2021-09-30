@@ -12,5 +12,6 @@ data class TaskResult(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
         @Lob val results:Blob, @Lob val code:Clob,
         val startTime:Timestamp?, val endTime:Timestamp,
+        @ManyToOne val task: Task,
         @ManyToOne val application: Application
 )

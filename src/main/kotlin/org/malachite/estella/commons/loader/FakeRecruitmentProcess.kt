@@ -23,8 +23,7 @@ object FakeRecruitmentProcess {
     ) {
         fun toRecruitmentProcess(offer: Offer): RecruitmentProcess {
             return RecruitmentProcess(
-                offer.id, startDate, endDate, offer, recruitmentStages,
-                quizzes.toSet(), tasks.toSet()
+                offer.id, startDate, endDate, offer, recruitmentStages
             )
         }
     }

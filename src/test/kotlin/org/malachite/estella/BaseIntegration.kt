@@ -214,8 +214,6 @@ class BaseIntegration {
             (this["endDate"] as String?)?.let { Date.valueOf(it) },
             (this["offer"] as Map<String, Any>).toOfferResponse(),
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
-            setOf(),  //TODO - change it, when it will be implemented
-            setOf()
         )
 
     fun Map<String, Any>.toJobSeekerFileDto() =

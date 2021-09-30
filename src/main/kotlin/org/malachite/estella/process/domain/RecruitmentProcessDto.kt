@@ -20,8 +20,6 @@ data class RecruitmentProcessDto(
     val endDate: Date?,
     val offer: OfferResponse,
     val stages: List<RecruitmentStage>,
-    val quizzes: Set<Quiz>,
-    val tasks: Set<TaskDto>
 )
 
 fun RecruitmentProcess.toRecruitmentProcessDto() = RecruitmentProcessDto(
@@ -29,9 +27,7 @@ fun RecruitmentProcess.toRecruitmentProcessDto() = RecruitmentProcessDto(
     startDate,
     endDate,
     offer.toOfferResponse(),
-    stages,
-    quizzes,
-    tasks.map { it.toTaskDto() }.toSet()
+    stages
 )
 
 data class TaskDto(

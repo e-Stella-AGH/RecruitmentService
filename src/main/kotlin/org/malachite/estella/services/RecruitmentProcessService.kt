@@ -35,16 +35,6 @@ class RecruitmentProcessService(
             endDate = process.endDate,
             offer = process.offer,
             stages = process.stages,
-            quizzes = process.quizzes,
-            tasks = process.tasks
-        )
-        recruitmentProcessRepository.save(updated)
-    }
-
-    fun updateTasks(id: Int, tasks: Set<Task>) {
-        val currentProcess = getProcess(id)
-        val updated = currentProcess.copy(
-            tasks = currentProcess.tasks.plus(tasks)
         )
         recruitmentProcessRepository.save(updated)
     }
@@ -57,8 +47,7 @@ class RecruitmentProcessService(
             Date.valueOf(LocalDate.now()),
             null,
             offer,
-            listOf(RecruitmentStage(null, StageType.APPLIED), RecruitmentStage(null, StageType.ENDED)),
-            setOf(), setOf()
+            listOf(RecruitmentStage(null, StageType.APPLIED), RecruitmentStage(null, StageType.ENDED))
         )
         recruitmentProcessRepository.save(recruitmentProcess)
     }
