@@ -33,13 +33,15 @@ class TaskController(
         @RequestHeader(EStellaHeaders.passwordHeader) password: String
     ): ResponseEntity<List<TaskDto>> =
         taskService.checkDevPassword(organizationUuid, password)
+            .also { println("Tutaj jebło") }
             .getTasksByOrganizationUuid(organizationUuid)
+            .also { println("Tutaj jebło x2") }
             .let { ResponseEntity.ok(it) }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
-    @GetMapping("{taskId}")
+    @GetMapping("/{taskId}")
     fun getTaskById(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
@@ -51,7 +53,7 @@ class TaskController(
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
-    @GetMapping("{taskId}/tests")
+    @GetMapping("/{taskId}/tests")
     fun getTaskTests(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
@@ -89,7 +91,7 @@ class TaskController(
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
-    @PutMapping("{taskId}/tests/object")
+    @PutMapping("/{taskId}/tests/object")
     fun setTestsWithObject(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,

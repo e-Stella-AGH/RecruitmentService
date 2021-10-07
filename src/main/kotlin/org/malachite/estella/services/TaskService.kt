@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.process.domain.*
 import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
@@ -66,8 +67,7 @@ class TaskService(
             id = task.id,
             tests = task.tests,
             description = task.description,
-            timeLimit = task.timeLimit,
-            deadline = task.deadline
+            timeLimit = task.timeLimit
         )
         taskRepository.save(updated)
     }

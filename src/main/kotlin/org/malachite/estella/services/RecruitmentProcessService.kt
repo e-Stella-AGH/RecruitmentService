@@ -1,10 +1,7 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.UnauthenticatedException
-import org.malachite.estella.commons.models.offers.Offer
-import org.malachite.estella.commons.models.offers.RecruitmentProcess
-import org.malachite.estella.commons.models.offers.RecruitmentStage
-import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.process.domain.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,9 +49,14 @@ class RecruitmentProcessService(
         recruitmentProcessRepository.save(recruitmentProcess)
     }
 
-    fun getProcessFromStage(recruitmentProcessStage: RecruitmentStage): RecruitmentProcess {
-        return recruitmentProcessRepository.findAll().find { it.stages.contains(recruitmentProcessStage) }!!
-    }
+    fun getProcessFromStage(recruitmentStageId: Int): RecruitmentProcess =
+        recruitmentProcessRepository.findAll()
+            .find { it.stages.map { it.id }.contains(recruitmentStageId) }!!
+
+    fun getProcessFromStage(applicationStage: ApplicationStageData): RecruitmentProcess =
+        recruitmentProcessRepository.findAll()
+            .find { it.stages.map { it.id }.contains(applicationStage.stage.id) }!!
+
 
     fun updateStagesList(processId: Int, stagesList: List<String>) {
         val user = securityService.getHrPartnerFromContext()
@@ -64,17 +66,20 @@ class RecruitmentProcessService(
         recruitmentProcessRepository.save(process.copy(stages = stages))
     }
 
-    private fun compareAndGetStagesList(oldStages: List<RecruitmentStage>, newStages: List<RecruitmentStage>): List<RecruitmentStage> {
-        if(newStages[0].type != StageType.APPLIED || newStages.last().type != StageType.ENDED) throw InvalidStagesListException()
+    private fun compareAndGetStagesList(
+        oldStages: List<RecruitmentStage>,
+        newStages: List<RecruitmentStage>
+    ): List<RecruitmentStage> {
+        if (newStages[0].type != StageType.APPLIED || newStages.last().type != StageType.ENDED) throw InvalidStagesListException()
         val stages: MutableList<RecruitmentStage> = mutableListOf()
         stages += oldStages.zip(newStages).map {
-            if(it.first.type != it.second.type)
+            if (it.first.type != it.second.type)
                 recruitmentStageService.save(it.first.copy(type = it.second.type))
             else it.first
         }
         oldStages.drop(newStages.size).map { recruitmentStageService.delete(it) }
         stages += newStages.drop(oldStages.size).map { recruitmentStageService.save(it) }
-        if(stages.count { it.type == StageType.APPLIED } > 1 || stages.count { it.type == StageType.ENDED } > 1)
+        if (stages.count { it.type == StageType.APPLIED } > 1 || stages.count { it.type == StageType.ENDED } > 1)
             throw InvalidStagesListException("There must be only one APPLIED and ENDED stage")
         return stages
     }
@@ -94,7 +99,7 @@ class RecruitmentProcessService(
         val userFromJWT = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
         if (process.offer.creator.id != userFromJWT?.id) throw UnauthenticatedException()
-        if(process.startDate.after(endDate)) throw InvalidEndDateException()
+        if (process.startDate.after(endDate)) throw InvalidEndDateException()
         recruitmentProcessRepository.save(process.copy(endDate = endDate))
     }
 

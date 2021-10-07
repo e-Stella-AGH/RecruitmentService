@@ -1,7 +1,6 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
@@ -39,7 +38,7 @@ class ApplicationController(
             : ResponseEntity<ApplicationDTO> =
         applicationService
             .insertApplicationWithoutUser(offerId, applicationPayload)
-            .let { CREATED(it.toApplicationDTO()) }
+            .let { CREATED(it) }
 
 
     @CrossOrigin
@@ -79,10 +78,11 @@ class ApplicationController(
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
-            recruitmentProcessService.getProcessFromStage(it.stage)
+            println(it.applicationStages)
+            recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH
-            applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
+            applicationService.setNextStageOfApplication(applicationId, it).let { SUCCESS }
         }
 
 
@@ -93,9 +93,10 @@ class ApplicationController(
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId)
             .let {
-                recruitmentProcessService.getProcessFromStage(it.stage) }
+                recruitmentProcessService.getProcessFromStage(it.applicationStages.first())
+            }
             .let {
                 if (!securityService.checkOfferRights(it.offer)) return UNAUTH
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
-        }
+            }
 }

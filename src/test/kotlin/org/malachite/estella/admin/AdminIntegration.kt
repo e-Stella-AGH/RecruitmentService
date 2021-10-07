@@ -77,7 +77,6 @@ class AdminIntegration : BaseIntegration() {
             method = HttpMethod.GET
         ).body
             .let {
-                println(it)
                 it as List<Map<String, Any>>
                 it.map { it.toOrganization() }
             }

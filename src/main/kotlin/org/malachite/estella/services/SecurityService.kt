@@ -10,17 +10,18 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.malachite.estella.security.UserContextDetails
+import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.crypto.encrypt.Encryptors
 import org.springframework.stereotype.Service
-import java.security.MessageDigest
-import kotlin.text.Charsets.UTF_8
 
 
 @Service
@@ -29,6 +30,7 @@ class SecurityService(
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
     @Autowired val organizationRepository: OrganizationRepository,
+    @Autowired val taskStageRepository: TaskStageRepository,
     @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
@@ -41,21 +43,30 @@ class SecurityService(
     private val firstNameKey = "firstName"
     private val lastNameKey = "lastName"
     private val userTypeKey = "userType"
-    private val algorithm = "SHA-256"
 
 
-    private fun sha256(str: String): String = MessageDigest
-        .getInstance(algorithm)
-        .digest(str.toByteArray(UTF_8))
-        .toHex()
+    fun hashOrganization(organization: Organization, taskStage: TaskStage): String =
+        "${organization.id}:${taskStage.id}"
+            .toByteArray()
+            .let { Base64.getEncoder().encode(it) }
+            .let { String(it) }
 
-    fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
+    private fun decryptDevPassword(password: String) =
+        password.toByteArray()
+            .let { Base64.getDecoder().decode(it) }
+            .let { String(it) }
+            .split(":")
 
-    fun hashOrganization(organization: Organization) =
-        sha256("${organization.id}:${organization.user.password}")
 
-    fun compareOrganizationWithPassword(organization: Organization, password: String) =
-        hashOrganization(organization).equals(password)
+    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean {
+        val decrypted = decryptDevPassword(password)
+        if (decrypted.size != 2) throw UnauthenticatedException()
+        return decrypted[1].let {
+            taskStageRepository.findById(UUID.fromString(it))
+        }.let {
+            decrypted[0] == organization.id!!.toString() && it.isPresent
+        }
+    }
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()

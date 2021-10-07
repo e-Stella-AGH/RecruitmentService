@@ -18,16 +18,15 @@ class OrganizationService(
     @Autowired private val userService: UserService,
     @Autowired private val mailService: MailService,
     @Autowired private val securityService: SecurityService
-): EStellaService<Organization>() {
+) : EStellaService<Organization>() {
 
     override val throwable: Exception = OrganizationNotFoundException()
 
     fun getOrganizations(): MutableIterable<Organization> = organizationRepository.findAll()
 
     fun getOrganization(id: UUID): Organization = withExceptionThrower { organizationRepository.findById(id).get() }
-    fun getOrganization(id: String): Organization = withExceptionThrower{
-        val uuid = UUID.fromString(id)
-        getOrganization(uuid)
+    fun getOrganization(id: String): Organization = withExceptionThrower {
+        UUID.fromString(id).let { getOrganization(it) }
     }
 
     fun addOrganization(organization: Organization): Organization {
@@ -37,19 +36,18 @@ class OrganizationService(
 
     fun updateOrganization(id: UUID, organization: Organization) {
         if (!checkRights(id).contains(Permission.UPDATE)) throw UnauthenticatedException()
-        getOrganization(id).copy(name = organization.name, verified = organization.verified).let { organizationRepository.save(it) }
+        getOrganization(id).copy(name = organization.name, verified = organization.verified)
+            .let { organizationRepository.save(it) }
     }
 
-    fun updateTasks(uuid: String, tasks: Set<Task>) {
-        val organization = getOrganization(uuid)
-        val updated = organization.copy(
-            tasks = organization.tasks.plus(tasks)
-        )
-        organizationRepository.save(updated)
-    }
+    fun updateTasks(uuid: String, tasks: Set<Task>) =
+        getOrganization(uuid)
+            .let { it.copy(tasks = it.tasks.plus(tasks)) }
+            .let { organizationRepository.save(it) }
+
 
     fun deleteOrganization(id: UUID) {
-        if(!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
+        if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
         organizationRepository.deleteById(id)
     }
 
@@ -59,15 +57,16 @@ class OrganizationService(
     fun deverifyOrganization(uuid: String): Organization =
         changeOrganizationVerification(uuid, false)
 
-    private fun changeOrganizationVerification(uuid: String, verified: Boolean): Organization {
+    private fun changeOrganizationVerification(uuid: String, verified: Boolean): Organization = withExceptionThrower {
         val organization = addOrganization(
             getOrganization(UUID.fromString(uuid))
                 .copy(verified = verified)
         )
 
         mailService.sendOrganizationVerificationMail(organization, verified)
-        return organization
+        organization
     }
+
 
     fun checkRights(id: UUID): Set<Permission> {
         val userDetails = securityService.getUserDetailsFromContext()

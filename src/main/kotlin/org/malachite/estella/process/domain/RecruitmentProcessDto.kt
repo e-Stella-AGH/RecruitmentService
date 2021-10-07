@@ -35,8 +35,7 @@ data class TaskDto(
     val testsBase64: String,
     val descriptionFileName: String,
     val descriptionBase64: String,
-    val timeLimit: Int,
-    val deadline: Timestamp
+    val timeLimit: Int
 )
 
 fun TaskDto.toTask(): Task =
@@ -45,8 +44,7 @@ fun TaskDto.toTask(): Task =
         SerialBlob(Base64.getDecoder().decode(this.testsBase64)),
         SerialClob(String(Base64.getDecoder().decode(this.descriptionBase64)).toCharArray()),
         this.descriptionFileName,
-        this.timeLimit,
-        this.deadline
+        this.timeLimit
     )
 
 fun Task.toTaskDto() = TaskDto(
@@ -55,8 +53,7 @@ fun Task.toTaskDto() = TaskDto(
     this.descriptionFileName,
     Base64.getEncoder()
         .encodeToString(this.description.getSubString(1, this.description.length().toInt()).toByteArray()),
-    timeLimit,
-    deadline
+    timeLimit
 )
 
 @Serializable
