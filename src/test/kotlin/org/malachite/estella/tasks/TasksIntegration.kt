@@ -3,8 +3,6 @@ package org.malachite.estella.tasks
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
-import org.malachite.estella.aplication.domain.toApplicationDTO
-import org.malachite.estella.aplication.domain.toApplicationStageDTO
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
@@ -78,7 +76,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.POST,
-            mapOf(EStellaHeaders.passwordHeader to password, "Content-Type" to "application/json"),
+            mapOf(EStellaHeaders.devPassword to password, "Content-Type" to "application/json"),
             body = mapOf(
                 "testsBase64" to encodedFile,
                 "descriptionFileName" to descriptionFileName,
@@ -98,7 +96,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.POST,
-            mapOf(EStellaHeaders.passwordHeader to "abcdfeg", "Content-Type" to "application/json"),
+            mapOf(EStellaHeaders.devPassword to "abcdfeg", "Content-Type" to "application/json"),
             body = mapOf(
                 "testsBase64" to encodedFile,
                 "descriptionFileName" to descriptionFileName,
@@ -139,7 +137,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/tasks?owner=${organization.id}",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.passwordHeader to password)
+            headers = mapOf(EStellaHeaders.devPassword to password)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         expect {
@@ -160,9 +158,20 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/tasks?owner=${organization.id}",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.passwordHeader to "abcdefdf")
+            headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Order(6)
+    fun `should send 400`() {
+        val response = httpRequest(
+            path = "/api/tasks",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))

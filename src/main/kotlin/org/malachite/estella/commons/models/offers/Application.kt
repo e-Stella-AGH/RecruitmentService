@@ -10,7 +10,7 @@ import java.sql.Date
 import javax.persistence.*
 
 @Entity
-@Table(name = "application")
+@Table(name = "applications")
 data class Application(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
     val applicationDate: Date, @Enumerated(EnumType.STRING) val status: ApplicationStatus,

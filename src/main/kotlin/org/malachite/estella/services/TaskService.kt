@@ -58,7 +58,7 @@ class TaskService(
         withExceptionThrower {
             if (!checkTestsFormat(task.testsBase64)) throw IllegalArgumentException("Tests in wrong format")
             taskRepository.save(task.toTask())
-        }.toTaskDto()
+        }
 
     fun updateTask(id: Int, task: Task) {
         if (!checkTestsFormat(task.toTaskDto().testsBase64)) throw IllegalArgumentException()

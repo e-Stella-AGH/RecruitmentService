@@ -3,19 +3,16 @@ package org.malachite.estella.task.api
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.OrganizationService
-import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.TaskService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import javax.websocket.server.PathParam
 
 
 @RestController
@@ -30,12 +27,10 @@ class TaskController(
     @GetMapping
     fun getTaskByRecruitmentProcess(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String
+        @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<List<TaskDto>> =
         taskService.checkDevPassword(organizationUuid, password)
-            .also { println("Tutaj jebło") }
             .getTasksByOrganizationUuid(organizationUuid)
-            .also { println("Tutaj jebło x2") }
             .let { ResponseEntity.ok(it) }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
@@ -45,7 +40,7 @@ class TaskController(
     fun getTaskById(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String
+        @RequestHeader(EStellaHeaders.devPassword) password: String
     ) =
         ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) /*taskService.getTaskById(taskId)
         .let { ResponseEntity.ok(it) }*/
@@ -57,7 +52,7 @@ class TaskController(
     fun getTaskTests(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String
+        @RequestHeader(EStellaHeaders.devPassword) password: String
     ) =
         ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
     /*taskService.getTestsFromTask(taskId)
@@ -68,10 +63,10 @@ class TaskController(
     @PostMapping
     fun addTask(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String,
+        @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = taskService.checkDevPassword(organizationUuid, password).addTask(task)
-        .let { t -> organizationService.updateTasks(organizationUuid, setOf(t.toTask())) }
+        .let { organizationService.updateTasks(organizationUuid, setOf(it)) }
         .let { OwnResponses.SUCCESS }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
@@ -81,7 +76,7 @@ class TaskController(
     fun setTestsWithFile(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String,
+        @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody testsBase64: String
     ) = ResponseEntity(
         Message("Not Implemented"),
@@ -95,7 +90,7 @@ class TaskController(
     fun setTestsWithObject(
         @RequestParam("owner") organizationUuid: String,
         @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String,
+        @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 

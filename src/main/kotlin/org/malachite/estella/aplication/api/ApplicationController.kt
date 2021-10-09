@@ -29,7 +29,7 @@ class ApplicationController(
     ) =
         securityService.getJobSeekerFromContext()
             ?.let { applicationService.insertApplicationLoggedInUser(offerId, it, applicationPayload) }
-            ?.let { CREATED(it) }
+            ?.let { CREATED(it.toApplicationDTO()) }
             ?: UNAUTH
 
     @CrossOrigin
@@ -38,7 +38,7 @@ class ApplicationController(
             : ResponseEntity<ApplicationDTO> =
         applicationService
             .insertApplicationWithoutUser(offerId, applicationPayload)
-            .let { CREATED(it) }
+            .let { CREATED(it.toApplicationDTO()) }
 
 
     @CrossOrigin
@@ -78,7 +78,6 @@ class ApplicationController(
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
-            println(it.applicationStages)
             recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH

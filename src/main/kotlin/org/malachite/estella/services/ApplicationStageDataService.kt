@@ -27,9 +27,15 @@ class ApplicationStageDataService(
             null,
             null
         ).let { applicationStageRepository.save(it) }
+        val taskAndInterview = getTasStageAndInterview(recruitmentStage, applicationStage)
+        return applicationStage.copy(
+            tasksStage = taskAndInterview.first,
+            interview = taskAndInterview.second
+        ).let { applicationStageRepository.save(it) }
+    }
 
-
-        val taskAndInterview = when (recruitmentStage.type) {
+    private fun getTasStageAndInterview(recruitmentStage: RecruitmentStage, applicationStage: ApplicationStageData) =
+        when (recruitmentStage.type) {
             StageType.TASK -> {
                 val taskStage = taskStageService.createTaskStage(applicationStage, null)
                 Pair(taskStage, null)
@@ -45,11 +51,5 @@ class ApplicationStageDataService(
             }
             else -> Pair(null, null)
         }
-
-        return applicationStage.copy(
-            tasksStage = taskAndInterview.first,
-            interview = taskAndInterview.second
-        ).let { applicationStageRepository.save(it) }
-    }
 
 }

@@ -24,20 +24,20 @@ class ApplicationService(
         offerId: Int,
         jobSeeker: JobSeeker,
         applicationPayload: ApplicationLoggedInPayload
-    ): ApplicationDTO = insertApplication(offerId, jobSeeker, applicationPayload)
+    ): Application = insertApplication(offerId, jobSeeker, applicationPayload)
 
-    fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): ApplicationDTO {
+    fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
         val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
         return stage?.let {
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
             mailService.sendApplicationConfirmationMail(offer, application)
-            addNewApplicationStage(application, it).toApplicationDTO()
+            addNewApplicationStage(application, it)
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
-    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): ApplicationDTO =
+    fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
         jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
             .let { insertApplication(offerId, it, applicationPayload) }
 

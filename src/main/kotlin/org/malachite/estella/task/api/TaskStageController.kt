@@ -2,12 +2,8 @@ package org.malachite.estella.task.api
 
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.TaskDto
-import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.OrganizationService
-import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -28,7 +24,7 @@ class TaskStageController(
     @GetMapping("")
     fun getAllTaskStages(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String
+        @RequestHeader(EStellaHeaders.devPassword) password: String
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
 //
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-162 epic")
@@ -37,7 +33,7 @@ class TaskStageController(
     @GetMapping("/dev")
     fun getAllTaskStagesByDev(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String
+        @RequestHeader(EStellaHeaders.devPassword) password: String
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
 
 
@@ -47,7 +43,7 @@ class TaskStageController(
     @PostMapping("/taskStage")
     fun setTasks(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String,
+        @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
 
@@ -57,7 +53,7 @@ class TaskStageController(
     @PostMapping("/interview")
     fun setTasksByInterview(
         @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.passwordHeader) password: String,
+        @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
 
