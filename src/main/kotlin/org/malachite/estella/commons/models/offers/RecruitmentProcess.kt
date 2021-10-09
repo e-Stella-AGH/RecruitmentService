@@ -1,5 +1,6 @@
 package org.malachite.estella.commons.models.offers
 
+import org.hibernate.annotations.Fetch
 import org.malachite.estella.commons.models.quizes.Quiz
 import org.malachite.estella.commons.models.tasks.Task
 import java.sql.Date
@@ -12,7 +13,7 @@ data class RecruitmentProcess(
         @Id @Column(name = "offers_id") val id: Int?,
         val startDate: Date, val endDate: Date?,
         @OneToOne(cascade = [CascadeType.ALL]) @MapsId @JoinColumn(name = "offers_id") val offer: Offer,
-        @OneToMany(cascade = [CascadeType.ALL]) @JoinColumn(name="recruitment_processes_id") val stages: List<RecruitmentStage>,
+        @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER) @JoinColumn(name="recruitment_processes_id") val stages: List<RecruitmentStage>,
         @ManyToMany @JoinTable(
                 name = "recruitment_process_quizes",
                 joinColumns = [JoinColumn(name = "recruitment_processes_id")],

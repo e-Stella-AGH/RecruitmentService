@@ -10,7 +10,6 @@ import org.malachite.estella.people.api.HrPartnerRequest
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.security.Authority
-import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

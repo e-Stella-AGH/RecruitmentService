@@ -28,7 +28,8 @@ import java.util.*
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class TasksIntegration: BaseIntegration() {
+class
+TasksIntegration: BaseIntegration() {
 
     @Autowired
     private lateinit var processRepository: RecruitmentProcessRepository

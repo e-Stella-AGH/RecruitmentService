@@ -4,6 +4,7 @@ import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStatus
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -15,6 +16,7 @@ class ApplicationService(
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {
 
@@ -53,16 +55,24 @@ class ApplicationService(
             .stages
             .sortedBy { it.id }
         val index = recruitmentProcessStages.indexOf(application.stage)
+        val newStage = recruitmentProcessStages[index + 1]
         if (index == recruitmentProcessStages.lastIndex - 1)
             applicationRepository.save(
                 application.copy(
-                    stage = recruitmentProcessStages[index + 1],
+                    stage = newStage,
                     status = ApplicationStatus.ACCEPTED
                 )
             )
         else if (index < recruitmentProcessStages.lastIndex)
             applicationRepository.save(application.copy(stage = recruitmentProcessStages[index + 1]))
+
+        when (newStage.type) {
+            StageType.HR_INTERVIEW, StageType.TECHNICAL_INTERVIEW -> interviewService.createInterview(applicationId, newStage.type)
+            else -> null
+        }
     }
+
+
 
     fun getApplicationById(applicationId: Int): ApplicationDTO =
         withExceptionThrower { applicationRepository.findById(applicationId).get() }

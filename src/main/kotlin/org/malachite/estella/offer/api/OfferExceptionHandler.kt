@@ -1,5 +1,6 @@
 package org.malachite.estella.offer.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.offer.domain.OfferNotFoundException
@@ -13,7 +14,7 @@ class OfferExceptionHandler {
 
     @ExceptionHandler(OfferNotFoundException::class)
     fun handleNoSuchElementException(ex: OfferNotFoundException): ResponseEntity<Any> =
-        ResponseEntity("We couldn't find this offer", HttpStatus.NOT_FOUND)
+        ResponseEntity(Message("We couldn't find this offer"), HttpStatus.NOT_FOUND)
 
     @ExceptionHandler(UnauthenticatedException::class)
     fun handleUnauthenticated(ex: UnauthenticatedException): ResponseEntity<Any> =

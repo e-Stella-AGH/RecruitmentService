@@ -9,6 +9,9 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.interview.api.JobseekerName
+import org.malachite.estella.interview.domain.InterviewDTO
+import org.malachite.estella.interview.domain.InterviewNoteDTO
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.people.domain.*
@@ -250,5 +253,24 @@ class BaseIntegration {
         val localDateTime = LocalDateTime.from(formatter.parse(this.subSequence(0, 19)))
         return Timestamp.valueOf(localDateTime)
     }
+
+    fun Map<String, Any>.toJobSeekerNameDTO() = JobseekerName(
+            firstName = this["firstName"] as String,
+            lastName = this["lastName"] as String
+            )
+
+    fun Map<String, Any>.toInterviewDTO() = InterviewDTO(
+            this["id"] as String?,
+            (this["dateTime"] as String?)?.toTimestamp(),
+            this["minutesLength"] as Int,
+            (this["application"] as Map<String, Any>).toApplicationDTO(),
+            this["hosts"] as List<String>?,
+            (this["notes"] as List<Map<String, Any>>?)?.toInterviewNotesDTO()
+    )
+
+    fun List<Map<String, Any>>.toInterviewNotesDTO() =
+            this.map { it.toInterviewNoteDTO() }.toSet()
+    fun Map<String, Any>.toInterviewNoteDTO() =
+            InterviewNoteDTO(this["id"] as Int, this["note"] as String)
 
 }
