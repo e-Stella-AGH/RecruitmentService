@@ -20,14 +20,16 @@ object AdminQueue {
         return Klaxon().parse<MutableMap<String, String>>(file)!!
     }
 
-    fun generateConnectionFactory(): ConnectionFactory {
+    private fun generateConnectionFactory(): ConnectionFactory {
         val resultEnv: Map<String, String> = if (env.containsKey(cloudamqpKey)) env else getCloudAmqpFromConfig()
-        if (!resultEnv.containsKey(cloudamqpKey) || resultEnv[cloudamqpKey] == null) throw Exception("Env doesn't have key")
+        if (!resultEnv.containsKey(cloudamqpKey) || resultEnv[cloudamqpKey] == null) throw Exception("Env doesn't have key ${cloudamqpKey}")
         val factory = CachingConnectionFactory(URI.create(resultEnv[cloudamqpKey]))
         factory.setRequestedHeartBeat(30)
         factory.setConnectionTimeout(30_000)
         return factory
     }
+
+    val factory = generateConnectionFactory()
 
 
     fun getRabbitAdmin() = RabbitAdmin(this.generateConnectionFactory())

@@ -18,9 +18,14 @@ class QueueExampleIntegration {
     fun `Example consumer should receive 1 message`() {
         val consumer = ExampleConsumer()
         val publisher = ExamplePublisher()
+        publisher.sendMessage()
         sleep(1000)
-        assert(consumer.received==1)
-        consumer.stopConsumer()
+        expectThat(consumer.received).isEqualTo(1)
+        publisher.sendMessage()
+        sleep(1000)
+        expectThat(consumer.received).isEqualTo(2)
+        publisher.close()
+        consumer.close()
     }
 
 }

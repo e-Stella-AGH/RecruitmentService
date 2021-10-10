@@ -2,7 +2,7 @@ package org.malachite.estella.queues
 
 
 abstract class Queue {
-    val factory = AdminQueue.generateConnectionFactory()
+    private val factory = AdminQueue.factory
     val connection = factory.createConnection()
     val channel = connection.createChannel(false)
 }

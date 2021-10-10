@@ -26,8 +26,9 @@ class ExampleConsumer() : Queue() {
         channel.basicConsume("hello", true, consumer)
     }
 
-    fun stopConsumer(){
-        channel.queueDelete("hello")
+    fun close(){
+        channel.close()
+        connection.close()
     }
 
 }
