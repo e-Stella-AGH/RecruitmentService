@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.queues.ExampleConsumer
 import org.malachite.estella.queues.ExamplePublisher
+import org.malachite.estella.queues.ExamplePublisherv2
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
