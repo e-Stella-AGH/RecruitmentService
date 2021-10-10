@@ -6,6 +6,7 @@ import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import reactor.util.function.Tuple3
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -33,7 +34,7 @@ class ApplicationService(
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
             mailService.sendApplicationConfirmationMail(offer, application)
-            addNewApplicationStage(application, it)
+            application.addNewApplicationStageData(it)
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
@@ -52,47 +53,49 @@ class ApplicationService(
             .stages
             .sortedBy { it.id }
 
-        val applicationStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
+        val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
 
-        if (applicationStages.isEmpty()) {
-            addNewApplicationStage(application, recruitmentProcess.stages.first())
+        if (applicationRecruitmentStages.isEmpty()) {
+            application.addNewApplicationStageData(recruitmentProcess.stages.first())
             return
         }
 
-        val index = recruitmentProcessStages.indexOf(applicationStages.last())
+        val indexOfRecruitmentStage = recruitmentProcessStages.indexOf(applicationRecruitmentStages.last())
 
-        if (index < recruitmentProcessStages.lastIndex)
-            addNewApplicationStage(application, recruitmentProcessStages[index + 1])
+        if (isNotLastStage(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
+            application.addNewApplicationStageData(recruitmentProcessStages[indexOfRecruitmentStage + 1])
                 .let {
-                    if (index == recruitmentProcessStages.lastIndex - 1)
+                    if (shouldBeAccepted(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
                         it.copy(status = ApplicationStatus.ACCEPTED)
                     else
                         it
                 }.let { applicationRepository.save(it) }
-
     }
 
-    private fun addNewApplicationStage(application: Application, recruitmentStage: RecruitmentStage) =
+    private fun isNotLastStage(currentIndex: Int, lastIndex: Int) = currentIndex < lastIndex
+
+    private fun shouldBeAccepted(currentIndex: Int, lastIndex: Int) = currentIndex == lastIndex - 1
+
+    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage) =
         applicationStageDataService.createApplicationStageData(
-            application,
+            this,
             recruitmentStage
         ).let {
-            val stages = ArrayList(application.applicationStages.plus(it))
-            val newApplication = application.copy(applicationStages = stages)
+            val stages = ArrayList(this.applicationStages.plus(it))
+            val newApplication = this.copy(applicationStages = stages)
             newApplication
         }.let { applicationRepository.save(it) }
 
 
-    fun getApplicationById(applicationId: Int): ApplicationDTO =
+    fun getApplicationById(applicationId: Int): Application =
         withExceptionThrower { applicationRepository.findById(applicationId).get() }
-            .toApplicationDTO()
 
-    fun getAllApplications(): List<ApplicationDTO> =
+    fun getAllApplications(): List<Application> =
         applicationRepository
             .findAll()
-            .map { it.toApplicationDTO() }
 
-    fun getApplicationsByOffer(offerId: Int): List<ApplicationDTOWithStagesListAndOfferName> =
+
+    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<Triple<Application, List<RecruitmentStage>, String>> =
         offerService.getOffer(offerId)
             .let {
                 val stages = it.recruitmentProcess?.stages
@@ -102,16 +105,15 @@ class ApplicationService(
                             .map { it.stage }
                             .let { stages.intersect(it).isNotEmpty() }
                     }.map { application ->
-                        application.toApplicationDTOWithStagesListAndOfferName(stages, it.name)
+                        Triple(application, stages, it.name)
                     }
                 else
                     Collections.emptyList()
             } ?: Collections.emptyList()
 
-    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationDTO> =
+    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<Application> =
         applicationRepository
             .getAllByJobSeekerId(jobSeekerId)
-            .map { it.toApplicationDTO() }
 
     fun deleteApplication(applicationId: Int) =
         applicationRepository.deleteById(applicationId)

@@ -1,7 +1,6 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.aplication.domain.ApplicationNotFoundException
-import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
@@ -27,14 +26,14 @@ class ApplicationStageDataService(
             null,
             null
         ).let { applicationStageRepository.save(it) }
-        val taskAndInterview = getTasStageAndInterview(recruitmentStage, applicationStage)
+        val taskAndInterview = getTaskStageAndInterview(recruitmentStage, applicationStage)
         return applicationStage.copy(
             tasksStage = taskAndInterview.first,
             interview = taskAndInterview.second
         ).let { applicationStageRepository.save(it) }
     }
 
-    private fun getTasStageAndInterview(recruitmentStage: RecruitmentStage, applicationStage: ApplicationStageData) =
+    private fun getTaskStageAndInterview(recruitmentStage: RecruitmentStage, applicationStage: ApplicationStageData) =
         when (recruitmentStage.type) {
             StageType.TASK -> {
                 val taskStage = taskStageService.createTaskStage(applicationStage, null)

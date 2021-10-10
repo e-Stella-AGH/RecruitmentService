@@ -42,6 +42,11 @@ class OrganizationService(
 
     fun updateTasks(uuid: String, tasks: Set<Task>) =
         getOrganization(uuid)
+            .let {
+                val ids = tasks.map { it.id }
+                val newTasks = it.tasks.filterNot { ids.contains(it.id) }.toSet()
+                it.copy(tasks = newTasks)
+            }
             .let { it.copy(tasks = it.tasks.plus(tasks)) }
             .let { organizationRepository.save(it) }
 

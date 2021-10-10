@@ -46,20 +46,22 @@ class ApplicationController(
     fun getApplicationById(@PathVariable applicationId: Int): ResponseEntity<ApplicationDTO> =
         applicationService
             .getApplicationById(applicationId)
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(it.toApplicationDTO()) }
 
     @CrossOrigin
     @GetMapping("/")
     fun getAllApplications(): ResponseEntity<List<ApplicationDTO>> =
         applicationService
             .getAllApplications()
+            .map { it.toApplicationDTO() }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @GetMapping("/offer/{offerId}")
     fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
         applicationService
-            .getApplicationsByOffer(offerId)
+            .getApplicationsWithStagesAndOfferName(offerId)
+            .map { it.first.toApplicationDTOWithStagesListAndOfferName(it.second,it.third) }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
@@ -68,6 +70,7 @@ class ApplicationController(
         securityService.getJobSeekerFromContext()
             ?.id
             ?.let { applicationService.getApplicationsByJobSeeker(it) }
+            ?.map { it.toApplicationDTO() }
             ?.let { ResponseEntity.ok(it) }
             ?: UNAUTH
 
