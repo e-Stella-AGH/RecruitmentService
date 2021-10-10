@@ -20,7 +20,10 @@ jobs:
     # The type of runner that the job will run on
 
     services:
-      - rabbitmq:latest
+      rabbitmq:
+        image: rabbitmq
+        ports:
+          - 5672:5672
 
     env:
       CLOUDAMQP_URL: ${{ secrets.CLOUDAMQP_URL }}
