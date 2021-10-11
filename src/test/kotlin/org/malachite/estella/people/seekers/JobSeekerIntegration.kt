@@ -10,17 +10,12 @@ import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.util.DatabaseReset
-import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.*
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)

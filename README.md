@@ -4,5 +4,5 @@
 
 App deployed at [link](https://recruitment-service-estella.herokuapp.com/)
 
-To locally start the application, you need to have a rabbit server instance
+To locally start the application, you need to have a RabbitMQ server instance
 listening at port 5672.

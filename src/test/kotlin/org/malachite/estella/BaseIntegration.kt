@@ -23,11 +23,8 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.RequestEntity
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.support.TestPropertySourceUtils
 import org.springframework.web.client.HttpStatusCodeException
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.Network
 import strikt.api.expect
 import strikt.assertions.isEqualTo
 import java.net.URI

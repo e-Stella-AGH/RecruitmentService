@@ -1,6 +1,5 @@
 package org.malachite.estella.queues
 
-import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.support.AmqpHeaders

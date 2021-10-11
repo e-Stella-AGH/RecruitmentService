@@ -1,7 +1,6 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH

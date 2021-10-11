@@ -3,7 +3,6 @@ package org.malachite.estella.services
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.SignatureException
-import java.util.*
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
@@ -19,6 +18,7 @@ import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class SecurityService(

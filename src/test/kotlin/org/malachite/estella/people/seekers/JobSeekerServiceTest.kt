@@ -8,7 +8,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.people.users.DummyUserRepository
-import org.malachite.estella.services.*
+import org.malachite.estella.services.JobSeekerFileService
+import org.malachite.estella.services.JobSeekerService
+import org.malachite.estella.services.MailService
+import org.malachite.estella.services.SecurityService
 import org.malachite.estella.util.dev.`null`.mailServiceResponse
 import org.malachite.estella.util.jobSeekers
 import strikt.api.expectThat

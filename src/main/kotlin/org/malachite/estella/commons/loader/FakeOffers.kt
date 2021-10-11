@@ -1,6 +1,7 @@
 package org.malachite.estella.commons.loader
 
-import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.models.offers.DesiredSkill
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
 import java.sql.Clob
 import javax.sql.rowset.serial.SerialClob

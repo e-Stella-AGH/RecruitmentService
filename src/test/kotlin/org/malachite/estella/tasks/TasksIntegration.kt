@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.process.domain.RecruitmentProcessRepository
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.task.domain.TaskRepository

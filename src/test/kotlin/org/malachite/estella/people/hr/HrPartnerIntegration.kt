@@ -14,12 +14,10 @@ import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.services.OfferService
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
-import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull

@@ -1,6 +1,9 @@
 package org.malachite.estella.application
 
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
@@ -16,12 +19,10 @@ import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
-import org.malachite.estella.util.TestDatabaseReseter
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
