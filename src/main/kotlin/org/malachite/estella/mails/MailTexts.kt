@@ -22,7 +22,7 @@ object MailTexts {
 
     fun getApplicationConfirmation(application: Application, offer: Offer, hrPartnerFullName: String): String =
         """
-            Hi ${application.jobSeeker.user.firstName}
+            Hi ${application.jobSeeker.user.firstName},
             Thank you for submitting your application to be a ${offer.position}. 
             I with our team are reviewing your application and will be in touch if we think you’re a potential match for the position.
             All the best,
@@ -31,7 +31,7 @@ object MailTexts {
 
     fun getInterviewInvitation(interview: Interview, organizationName: String, url: String, hrPartnerFullName: String) =
         """
-            Hi ${interview.application.jobSeeker.user.firstName}
+            Hi ${interview.application.jobSeeker.user.firstName},
             Thanks so much for your interest in joining the ${organizationName}! 
             We are excited to move you forward in our engineering recruiting process.
             Next step will be interview with our recruiters. It will take place at $url
@@ -41,8 +41,8 @@ object MailTexts {
 
     fun getInterviewDevInvitation(jobSeekerName: String, url: String, hrPartnerFullName: String, position: String) =
         """
-            Hi
-            You have been added as host of interview with $jobSeekerName for position $position.
+            Hi,
+            You have been added as host of interview with $jobSeekerName for $position.
             It will take place at $url. 
             All the best,
             $hrPartnerFullName
@@ -50,7 +50,7 @@ object MailTexts {
 
     fun getInterviewDateConfirmation(organization: String, url: String, date: String, hrPartnerFullName: String, position: String) =
         """
-            Hi
+            Hi,
             The date for your interview for $position at $organization has been set.
             The interview will take place at $url on $date. 
             All the best,

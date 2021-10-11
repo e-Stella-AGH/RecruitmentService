@@ -30,7 +30,7 @@ class InterviewService(
 ): EStellaService<Interview>() {
     override val throwable: Exception = InterviewNotFoundException()
 
-    fun createInterview(offer: Offer, application: Application, payload: InterviewPayloads = InterviewPayloads()) {
+    fun createInterview(offer: Offer, application: Application, payload: InterviewPayload = InterviewPayload()) {
         val interview = Interview(null, payload.dateTime, payload.minutesLength, application, listOf(), setOf())
         interviewRepository.save(interview)
         mailService.sendInterviewInvitationMail(offer, interview)
@@ -58,39 +58,36 @@ class InterviewService(
     fun getLastInterviewFromApplicationId(applicationId: Int): InterviewId =
             withExceptionThrower { interviewRepository.getAllByApplicationId(applicationId).sortedWith { a, b ->
                 a.dateTime?.compareTo(b.dateTime) ?: -1
-            }.first() }.toId()
+            }.first() }.getId()
 
     fun setHosts(id: UUID, hostsMails: List<String>) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
-        val interview = interviewRepository.findById(id)
-        interview.ifPresent {
-            val int = interviewRepository.save(it.copy(hosts=hostsMails))
-            val application = int.application
-            val offer = recruitmentProcessService.getProcessFromStage(application.stage).offer
-            hostsMails.forEach { mail -> mailService.sendInterviewDevInvitationMail(offer, int, application, mail) }
-        }
+        val interview = getInterview(id)
+        val savedInterview = interviewRepository.save(interview.copy(hosts=hostsMails))
+        val application = savedInterview.application
+        val offer = recruitmentProcessService.getProcessFromStage(application.stage).offer
+        hostsMails.forEach { mail -> mailService.sendInterviewDevInvitationMail(offer, savedInterview, application, mail) }
+
     }
 
     fun setDate(id: UUID, dateTime: Timestamp) {
         if (!canJobSeekerUpdate(id)) throw UnauthenticatedException()
-        val interview = interviewRepository.findById(id)
-        interview.ifPresent {
-            val int = interviewRepository.save(it.copy(dateTime = dateTime))
-            val application = it.application
-            val offer = recruitmentProcessService.getProcessFromStage(application.stage).offer
-            mailService.sendInterviewDateConfirmationMail(offer, int, application, application.jobSeeker.user.mail)
-            int.hosts.forEach { mail -> mailService.sendInterviewDateConfirmationMail(offer, int, application, mail) }
-        }
+        val interview = getInterview(id)
+        val savedInterview = interviewRepository.save(interview.copy(dateTime = dateTime))
+        val application = interview.application
+        val offer = recruitmentProcessService.getProcessFromStage(application.stage).offer
+        mailService.sendInterviewDateConfirmationMail(offer, savedInterview, application, application.jobSeeker.user.mail)
+        savedInterview.hosts.forEach { mail -> mailService.sendInterviewDateConfirmationMail(offer, savedInterview, application, mail) }
+
     }
 
     fun setNotes(id: UUID, notes: Set<InterviewNote> ) {
         if (!canHrUpdate(id)) throw UnauthenticatedException() //TODO dev security?
-        val interview = interviewRepository.findById(id)
-        interview.ifPresent {
-            val persNotes = mutableSetOf<InterviewNote>()
-            notes.forEach { persNotes.add(interviewNoteRepository.save(it)) }
-            interviewRepository.save(it.copy(notes = persNotes))
-        }
+        val interview = getInterview(id)
+        val savedNotes = mutableSetOf<InterviewNote>()
+        notes.forEach { savedNotes.add(interviewNoteRepository.save(it)) }
+        interviewRepository.save(interview.copy(notes = savedNotes))
+
     }
 
     fun canHrUpdate(id: UUID?): Boolean {

@@ -26,7 +26,7 @@ data class MailPayload(
     }
 }
 
-private val MAIN_URL = "https://e-stella-site.herokuapp.com/"
+private val MAIN_URL = "https://e-stella-agh.github.io/MainFrontApp/#/"
 private val MAIN_MAIL = "estellaagh@gmail.com"
 
 fun Application.toApplicationConfirmationAsMailPayload(offer: Offer): MailPayload {

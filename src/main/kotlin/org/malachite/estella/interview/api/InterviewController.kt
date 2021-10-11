@@ -23,7 +23,7 @@ class InterviewController(
     fun getJobseekerName(@PathVariable interviewId: InterviewId): ResponseEntity<JobseekerName> =
         interviewService.getUserFromInterviewUuid(interviewId.toUUID())
                 .let {
-                    ResponseEntity.ok(JobseekerName(it!!.firstName, it.lastName))
+                    ResponseEntity.ok(JobseekerName(it?.firstName, it?.lastName))
                 }
 
 
@@ -56,7 +56,7 @@ class InterviewController(
 }
 
 
-data class JobseekerName(val firstName: String, val lastName: String)
+data class JobseekerName(val firstName: String?, val lastName: String?)
 data class NotesFilePayload(val id: Int?, val fileBase64: String)
 data class MeetingNotes(val notes: Set<NotesFilePayload>)
 data class MeetingHosts(val hostsMails: List<String>)

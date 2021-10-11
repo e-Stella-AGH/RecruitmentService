@@ -1,5 +1,6 @@
 package org.malachite.estella.interview
 
+import org.aspectj.lang.annotation.After
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
@@ -28,6 +29,7 @@ import org.springframework.test.context.event.annotation.AfterTestExecution
 import org.springframework.test.context.event.annotation.BeforeTestMethod
 import strikt.api.expect
 import strikt.api.expectThat
+import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNull
 import java.sql.Date
@@ -57,6 +59,7 @@ class InterviewIntegration: BaseIntegration() {
     private lateinit var jobseeker: JobSeeker
     private lateinit var hrPartner: HrPartner
 
+    @BeforeEach
     fun prepareApplication() {
         val jobseeker = jobSeekerRepository.findAll().first()
 
@@ -76,6 +79,7 @@ class InterviewIntegration: BaseIntegration() {
         this.jobseeker = jobseeker
     }
 
+    @AfterEach
     fun clearApplication() {
         applicationRepository.deleteById(application.id!!)
         interviewRepository.findAll().forEach { interviewRepository.deleteById(it.id!!) }
@@ -84,7 +88,6 @@ class InterviewIntegration: BaseIntegration() {
     @Test
     @Order(1)
     fun `should return jobseeker name`() {
-        prepareApplication()
         val interview = Interview(null, null, 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         val interviewId = interviewRepository.findAll().first().id
@@ -96,7 +99,6 @@ class InterviewIntegration: BaseIntegration() {
         val responseBody = (response.body as Map<String, Any>).toJobSeekerNameDTO()
         expectThat(responseBody.firstName).isEqualTo(jobseeker.user.firstName)
         expectThat(responseBody.lastName).isEqualTo(jobseeker.user.lastName)
-        clearApplication()
     }
 
     @Test
@@ -124,7 +126,6 @@ class InterviewIntegration: BaseIntegration() {
     @Test
     @Order(4)
     fun `should return interview with later date when new date is set`() {
-        prepareApplication()
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         interview = Interview(null, Timestamp.valueOf(LocalDateTime.now()), 60, application, listOf(), setOf())
@@ -138,13 +139,11 @@ class InterviewIntegration: BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as Map<String, String>
         expectThat(response.body["interviewId"]).isEqualTo(interview.id.toString())
-        clearApplication()
     }
 
     @Test
     @Order(5)
     fun `should return interview with later date when new date is null`() {
-        prepareApplication()
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         interview = Interview(null, null, 60, application, listOf(), setOf())
@@ -158,13 +157,11 @@ class InterviewIntegration: BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as Map<String, Any>
         expectThat(response.body["interviewId"]).isEqualTo(interview.id.toString())
-        clearApplication()
     }
 
     @Test
     @Order(6)
     fun `should set hosts emails`() {
-        prepareApplication()
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         interview = interviewRepository.findAll().first()
@@ -196,14 +193,35 @@ class InterviewIntegration: BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.hosts.toString()).isEqualTo(hosts.toString())
-
-        clearApplication()
     }
 
     @Test
     @Order(7)
+    fun `should return unauthorized when trying to set hosts emails`() {
+        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), 30, application, listOf(), setOf())
+        interviewRepository.save(interview)
+        interview = interviewRepository.findAll().first()
+        expectThat(interview.hosts.size).isEqualTo(0)
+
+        val response = httpRequest(
+                "/api/interview/${interview.id}/set-hosts",
+                method = HttpMethod.PUT,
+                headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseeker.user.mail, password)),
+                body = mapOf(
+                        "hostsMails" to listOf("unauthorized@mail.com")
+                )
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+
+        interview = interviewRepository.findAll().first()
+
+        expectThat(interview.hosts.size).isEqualTo(0)
+    }
+
+    @Test
+    @Order(8)
     fun `should be able to pick date`() {
-        prepareApplication()
         var interview = Interview(null, null, 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         interview = interviewRepository.findAll().first()
@@ -235,14 +253,36 @@ class InterviewIntegration: BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.dateTime.toString()).isEqualTo(dateTime.toString())
-
-        clearApplication()
     }
 
     @Test
-    @Order(8)
+    @Order(9)
+    fun `should return unaouthorized when trying to pick date`() {
+        var interview = Interview(null, null, 30, application, listOf(), setOf())
+        interviewRepository.save(interview)
+        interview = interviewRepository.findAll().first()
+        expectThat(interview.dateTime).isNull()
+        val dateTime = Timestamp.from(Instant.MIN)
+
+        val response = httpRequest(
+                "/api/interview/${interview.id}/pick-date",
+                method = HttpMethod.PUT,
+                headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
+                body = mapOf(
+                        "dateTime" to Timestamp.from(Instant.MIN)
+                )
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+
+        interview = interviewRepository.findAll().first()
+
+        expectThat(interview.dateTime).isNull()
+    }
+
+    @Test
+    @Order(10)
     fun `should be able to set notes`() {
-        prepareApplication()
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), 30, application, listOf(), setOf())
         interviewRepository.save(interview)
         interview = interviewRepository.findAll().first()
@@ -268,12 +308,8 @@ class InterviewIntegration: BaseIntegration() {
         val interviewNoteA = interview.notes.elementAt(0).note.characterStream.readText()
         val interViewNoteB = interview.notes.elementAt(1).note.characterStream.readText()
 
-        val sortedNotes = listOf(this.noteA, this.noteB).sortedWith { a, b -> compareValues(a.length, b.length) }
-        val sortedInterviewNotes = listOf(interviewNoteA, interViewNoteB).sortedWith { a, b -> compareValues(a.length, b.length) }
-
-        expectThat(sortedNotes).isEqualTo(sortedInterviewNotes)
-
-        clearApplication()
+        expectThat(listOf(this.noteA, this.noteB))
+                .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB))
     }
 
 

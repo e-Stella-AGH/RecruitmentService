@@ -17,10 +17,6 @@ class InterviewExceptionHandler {
     fun handleNoSuchElementException(ex: InterviewNotFoundException): ResponseEntity<Any> =
             ResponseEntity(Message("We couldn't find this interview"), HttpStatus.NOT_FOUND)
 
-    @ExceptionHandler(UnauthenticatedException::class)
-    fun handleUnauthenticated(ex: UnauthenticatedException): ResponseEntity<Any> =
-            OwnResponses.UNAUTH
-
     @ExceptionHandler(InvalidUUIDException::class)
     fun handleIllegalArgument(ex: InvalidUUIDException): ResponseEntity<Any> =
             ResponseEntity(Message("Invalid UUID"), HttpStatus.BAD_REQUEST)
