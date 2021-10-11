@@ -171,9 +171,8 @@ class JobSeekerIntegration: BaseIntegration() {
     }
 
 
-
-    private fun getAuthToken(mail:String = jobseekerMail, userPassword: String = password):String =
-        loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
+    private fun getAuthToken() =
+        getAuthToken(jobseekerMail,password)
 
     private val name = "name"
     private val surname = "surname"
