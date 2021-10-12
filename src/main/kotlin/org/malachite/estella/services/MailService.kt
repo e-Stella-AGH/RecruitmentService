@@ -9,35 +9,34 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.mails.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.postForObject
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.core.publisher.Mono
 
 @Component
 class MailService(
     @Value("\${mail_service_url}") final val SERVICE_URL: String
 ) {
-
-    val webClient = WebClient.create(SERVICE_URL)
+    val restTemplate = RestTemplate()
 
     private fun sendMail(mailPayload: MailPayload) =
-        webClient
-            .post()
-            .uri("/email")
-            .body(Mono.just(mailPayload), MailPayload::class.java)
+        restTemplate.postForObject("${SERVICE_URL}/email", mailPayload, Any::class.java)
 
-    fun sendRegisterMail(user:User) =
+    fun sendRegisterMail(user: User) =
         sendMail(user.toRegistrationMailPayload())
 
-    fun sendHrPartnerRegisterMail(hrPartner: HrPartner,password:String)=
+    fun sendHrPartnerRegisterMail(hrPartner: HrPartner, password: String) =
         sendMail(hrPartner.toRegistrationMailPayload(password))
 
-    fun sendOrganizationVerificationMail(organization: Organization,verified:Boolean) =
-        sendMail(organization.toVerificationMailPayload( verified))
+    fun sendOrganizationVerificationMail(organization: Organization, verified: Boolean) =
+        sendMail(organization.toVerificationMailPayload(verified))
 
-    fun sendInterviewInvitationMail(offer: Offer, interview:Interview) =
+    fun sendInterviewInvitationMail(offer: Offer, interview: Interview) =
         sendMail(interview.toInterviewInvitationAsMailPayload(offer))
 
-    fun sendApplicationConfirmationMail(offer: Offer,application: Application) =
+    fun sendApplicationConfirmationMail(offer: Offer, application: Application) =
         sendMail(application.toApplicationConfirmationAsMailPayload(offer))
 
 }
