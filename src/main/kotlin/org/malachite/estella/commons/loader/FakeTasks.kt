@@ -6,6 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.sql.Timestamp
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.*
 
 object FakeTasks {
@@ -23,7 +24,6 @@ object FakeTasks {
         testsBase64 = encodedTestsFile,
         descriptionFileName = "fakeTaskDescription.md",
         descriptionBase64 = encodedDescriptionFile,
-        timeLimit = 30,
-        deadline = Timestamp.from(Instant.now())
+        timeLimit = 30
     ).toTask()
 }

@@ -21,9 +21,11 @@ class ExamplePublisherTest: BaseIntegration() {
     @Test
     fun `example rabbit with spring magic`() {
         val publisher = ExamplePublisherv2(rabbitTemplate)
-        publisher.publish()
+        repeat(3) {
+            publisher.publish()
+        }
         sleep(1000)
-        expectThat(consumers.expected).isEqualTo(1)
+        expectThat(consumers.expected).isEqualTo(3)
     }
 
 }

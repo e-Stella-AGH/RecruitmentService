@@ -46,7 +46,7 @@ fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
     return offer.creator.organization.name.let {
         MailPayload(
             subject = "Your are invited for interview with ${it}!",
-            receiver = this.application.jobSeeker.user.mail,
+            receiver = this.applicationStage.application.jobSeeker.user.mail,
             content = MailTexts.getInterviewInvitation(this,it,url,hrPartnerFullName),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail

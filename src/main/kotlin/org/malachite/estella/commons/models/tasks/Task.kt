@@ -12,6 +12,5 @@ data class Task(
         @Lob val tests: Blob,
         @Lob val description: Clob,
         val descriptionFileName: String,
-        val timeLimit: Int,
-        val deadline: Timestamp
+        val timeLimit: Int
 )

@@ -78,10 +78,10 @@ fun loadData(
     }
 
     tasksRepository.save(FakeTasks.task).also { task ->
-        recruitmentProcessRepository
+        organizationRepository
             .findAll()
             .first()
-            .let { recruitmentProcess -> recruitmentProcessRepository.save(recruitmentProcess.copy(tasks = setOf(task))) }
+            .let { organization -> organizationRepository.save(organization.copy(tasks = setOf(task))) }
     }
 }
 

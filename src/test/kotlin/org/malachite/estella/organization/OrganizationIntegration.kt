@@ -33,7 +33,7 @@ class OrganizationIntegration : BaseIntegration() {
         val users = getUsers()
         val organizations = getOrganizations()
         expectThat(users.find { it.mail == mail }).isNotNull()
-        expectThat(organizations.find {it.name == name}).isNotNull()
+        expectThat(organizations.find { it.name == name }).isNotNull()
     }
 
     @Test
@@ -72,7 +72,7 @@ class OrganizationIntegration : BaseIntegration() {
     @Order(5)
     fun `should return ok with list of hrpartners`() {
         val response = getOrganizationsPartners(legitOrganizationUser.mail, legitOrganizationPassword)
-        response.forEach{
+        response.forEach {
             it.let {
                 expectThat(it.organizationName).isEqualTo(legitOrganizationName)
             }
@@ -97,7 +97,7 @@ class OrganizationIntegration : BaseIntegration() {
     fun `should return ok with list of offers`() {
         val response = getOrganizationsOffers(legitOrganizationUser.mail, legitOrganizationPassword)
         expect {
-            response.forEach{
+            response.forEach {
                 it.let {
                     that(it.organization.name).isEqualTo(legitOrganizationName)
                 }
@@ -169,7 +169,7 @@ class OrganizationIntegration : BaseIntegration() {
         )
     }
 
-    private fun getOrganizations():List<Organization> {
+    private fun getOrganizations(): List<Organization> {
         val response = httpRequest(
             path = "/api/organizations",
             method = HttpMethod.GET
@@ -233,11 +233,9 @@ class OrganizationIntegration : BaseIntegration() {
         )
     }
 
-    private fun getAuthToken():String =
+    private fun getAuthToken(): String =
         loginUser().headers!![EStellaHeaders.authToken]!![0]
 
-    private fun getAuthToken(mail: String, password: String) =
-        loginUser(mail, password).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
 
     private val name = "name"
     private val mail = "examplemail@organization.pl"
