@@ -7,7 +7,6 @@ import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.organization.domain.OrganizationNotFoundException
 import org.malachite.estella.organization.domain.OrganizationRepository
-import org.malachite.estella.security.UserContextDetails
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*

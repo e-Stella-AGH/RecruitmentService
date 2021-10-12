@@ -1,7 +1,6 @@
 package org.malachite.estella
 
 import org.malachite.estella.commons.loader.*
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.infrastructure.HibernateOrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateHrPartnerRepository

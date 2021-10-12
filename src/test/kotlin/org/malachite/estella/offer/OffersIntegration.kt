@@ -11,11 +11,9 @@ import org.malachite.estella.people.infrastrucutre.HibernateUserRepository
 import org.malachite.estella.services.HrPartnerService
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
-import org.malachite.estella.util.TestDatabaseReseter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.TestExecutionListeners
 import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
