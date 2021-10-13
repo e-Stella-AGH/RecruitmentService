@@ -8,7 +8,7 @@ import javax.persistence.*
 @Table(name = "users")
 data class User(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
-    val firstName: String, val lastName: String,
+    var firstName: String, var lastName: String,
     @Column(unique = true) val mail: String
 ) {
     constructor(id: Int?, firstName: String, lastName: String, mail: String, password: String?) : this(

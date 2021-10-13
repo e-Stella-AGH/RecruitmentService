@@ -83,6 +83,22 @@ class UserController(
         userService.updateUser(userRequest)
             .let { OwnResponses.SUCCESS }
 
+    @CrossOrigin
+    @PutMapping("personalData")
+    fun updatePersonalData(
+        @RequestBody personalDataRequest: PersonalDataRequest
+    ): ResponseEntity<Any> =
+        userService.updateUserPersonalData(personalDataRequest)
+            .let { OwnResponses.SUCCESS }
+
+    @CrossOrigin
+    @PutMapping("password")
+    fun updatePersonalData(
+        @RequestBody passwordRequest: PasswordRequest
+    ): ResponseEntity<Any> =
+        userService.updateUserPassword(passwordRequest)
+            .let { OwnResponses.SUCCESS }
+
 }
 
 data class UserRequest(
@@ -90,6 +106,16 @@ data class UserRequest(
     val lastName: String,
     val mail: String,
     val password: String
+)
+
+data class PersonalDataRequest(
+    val firstName: String,
+    val lastName: String,
+)
+
+data class PasswordRequest(
+    val oldPassword: String,
+    val newPassword: String,
 )
 
 data class LoginRequest(val mail: String, val password: String)
