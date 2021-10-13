@@ -103,6 +103,7 @@ class  OfferService(
                 else
                     setOf(Permission.READ)
 
+
         }
     }
 
@@ -113,8 +114,4 @@ class  OfferService(
                 .filter { it.creator.id == userDetails.user.id }
                 .map { it.toOfferResponse() }
         } ?: listOf()
-
-    fun getOfferByApplication(application: Application): Offer =
-            recruitmentProcessService.getProcessFromStage(application.stage).offer
-
 }

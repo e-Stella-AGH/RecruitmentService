@@ -10,15 +10,19 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.malachite.estella.security.UserContextDetails
+import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.crypto.encrypt.Encryptors
 import org.springframework.stereotype.Service
+
 
 @Service
 class SecurityService(
@@ -26,6 +30,7 @@ class SecurityService(
     @Autowired val jobSeekerRepository: JobSeekerRepository,
     @Autowired val hrPartnerRepository: HrPartnerRepository,
     @Autowired val organizationRepository: OrganizationRepository,
+    @Autowired val taskStageRepository: TaskStageRepository,
     @Value("\${admin_api_key}") final val API_KEY: String
 ) {
 
@@ -38,6 +43,30 @@ class SecurityService(
     private val firstNameKey = "firstName"
     private val lastNameKey = "lastName"
     private val userTypeKey = "userType"
+
+
+    fun hashOrganization(organization: Organization, taskStage: TaskStage): String =
+        "${organization.id}:${taskStage.id}"
+            .toByteArray()
+            .let { Base64.getEncoder().encode(it) }
+            .let { String(it) }
+
+    private fun decryptDevPassword(password: String) =
+        password.toByteArray()
+            .let { Base64.getDecoder().decode(it) }
+            .let { String(it) }
+            .split(":")
+
+
+    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean {
+        val decrypted = decryptDevPassword(password)
+        if (decrypted.size != 2) throw UnauthenticatedException()
+        return decrypted[1].let {
+            taskStageRepository.findById(UUID.fromString(it))
+        }.let {
+            decrypted[0] == organization.id!!.toString() && it.isPresent
+        }
+    }
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
@@ -76,7 +105,7 @@ class SecurityService(
             else
                 parseJWT(jwt, secret).body
                     .issuer
-                    .let { userRepository.findById(it.toInt()).orElse(null)}
+                    .let { userRepository.findById(it.toInt()).orElse(null) }
         } catch (ex: SignatureException) {
             null
         }
@@ -90,6 +119,7 @@ class SecurityService(
     fun getJobSeekerFromContext(): JobSeeker? =
         getUserFromContext()
             ?.let { jobSeekerRepository.findByUserId(it.id!!).orElse(null) }
+
     fun getJobSeekerFromContextUnsafe(): JobSeeker =
         getJobSeekerFromContext() ?: throw UnauthenticatedException()
 

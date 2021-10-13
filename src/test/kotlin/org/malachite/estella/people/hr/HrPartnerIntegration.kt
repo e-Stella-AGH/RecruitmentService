@@ -46,7 +46,7 @@ class HrPartnerIntegration : BaseIntegration() {
     @Test
     @Order(2)
     fun `should not add hrpartner, because not login as organization`() {
-        val response = addHrpartner(hrpartnerMail)
+        val response = addHrpartner(hrpartnerMail, "abcd")
         withStatusAndMessage(response, "Unauthenticated", HttpStatus.UNAUTHORIZED)
     }
 
@@ -149,11 +149,11 @@ class HrPartnerIntegration : BaseIntegration() {
         expectThat(response.body["message"]).isEqualTo(message)
     }
 
-    private fun addHrpartner(mail: String): Response {
+    private fun addHrpartner(mail: String, token: String = getAuthToken(mail,password)): Response {
         return httpRequest(
             path = "/api/hrpartners",
             method = HttpMethod.POST,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail)),
+            headers = mapOf(EStellaHeaders.jwtToken to token),
             body = mapOf(
                 "firstName" to hrPartnerFirstName,
                 "lastName" to hrPartnerLastName,
@@ -223,9 +223,6 @@ class HrPartnerIntegration : BaseIntegration() {
             )
         )
     }
-
-    private fun getAuthToken(mail:String = hrpartnerMail, userPassword: String = password):String =
-        loginUser(mail, userPassword).headers?.get(EStellaHeaders.authToken)?.get(0)?:""
 
     private val name = "name"
     private val organizationMail = "organization@hrpartner.pl"

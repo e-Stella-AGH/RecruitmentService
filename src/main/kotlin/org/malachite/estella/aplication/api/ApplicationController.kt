@@ -1,7 +1,6 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
@@ -30,7 +29,7 @@ class ApplicationController(
     ) =
         securityService.getJobSeekerFromContext()
             ?.let { applicationService.insertApplicationLoggedInUser(offerId, it, applicationPayload) }
-            ?.let { CREATED(it) }
+            ?.let { CREATED(it.toApplicationDTO()) }
             ?: UNAUTH
 
     @CrossOrigin
@@ -47,20 +46,22 @@ class ApplicationController(
     fun getApplicationById(@PathVariable applicationId: Int): ResponseEntity<ApplicationDTO> =
         applicationService
             .getApplicationById(applicationId)
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(it.toApplicationDTO()) }
 
     @CrossOrigin
     @GetMapping("/")
     fun getAllApplications(): ResponseEntity<List<ApplicationDTO>> =
         applicationService
             .getAllApplications()
+            .map { it.toApplicationDTO() }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @GetMapping("/offer/{offerId}")
     fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
         applicationService
-            .getApplicationsByOffer(offerId)
+            .getApplicationsWithStagesAndOfferName(offerId)
+            .map { it.first.toApplicationDTOWithStagesListAndOfferName(it.second,it.third) }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
@@ -69,6 +70,7 @@ class ApplicationController(
         securityService.getJobSeekerFromContext()
             ?.id
             ?.let { applicationService.getApplicationsByJobSeeker(it) }
+            ?.map { it.toApplicationDTO() }
             ?.let { ResponseEntity.ok(it) }
             ?: UNAUTH
 
@@ -79,10 +81,10 @@ class ApplicationController(
         @PathVariable applicationId: Int
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
-            recruitmentProcessService.getProcessFromStage(it.stage)
+            recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH
-            applicationService.setNextStageOfApplication(applicationId).let { SUCCESS }
+            applicationService.setNextStageOfApplication(applicationId, it).let { SUCCESS }
         }
 
 
@@ -93,9 +95,10 @@ class ApplicationController(
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId)
             .let {
-                recruitmentProcessService.getProcessFromStage(it.stage) }
+                recruitmentProcessService.getProcessFromStage(it.applicationStages.first())
+            }
             .let {
                 if (!securityService.checkOfferRights(it.offer)) return UNAUTH
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
-        }
+            }
 }

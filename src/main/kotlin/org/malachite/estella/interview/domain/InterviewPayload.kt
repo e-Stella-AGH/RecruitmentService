@@ -6,8 +6,8 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
 
-data class InterviewPayload(val dateTime: Timestamp = Timestamp.from(Instant.now()),
-                            val minutesLength: Int = 30)
+data class InterviewPayload(val dateTime: Timestamp? = Timestamp.from(Instant.now()),
+                            val minutesLength: Int? = 30)
 
 data class InterviewId(val interviewId: String) {
     fun toUUID(): UUID {

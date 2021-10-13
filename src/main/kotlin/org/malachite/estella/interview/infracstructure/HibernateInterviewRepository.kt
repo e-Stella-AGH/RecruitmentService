@@ -8,5 +8,4 @@ import java.util.*
 
 @Repository
 interface HibernateInterviewRepository: CrudRepository<Interview, UUID>, InterviewRepository {
-    override fun getAllByApplicationId(applicationId: Int): List<Interview>
 }

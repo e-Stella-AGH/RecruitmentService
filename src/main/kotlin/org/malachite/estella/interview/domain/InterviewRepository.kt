@@ -7,6 +7,5 @@ interface InterviewRepository {
     fun findAll(): List<Interview>
     fun findById(id: UUID): Optional<Interview>
     fun deleteById(id: UUID)
-    fun getAllByApplicationId(applicationId: Int): List<Interview>
     fun save(interview: Interview): Interview
 }

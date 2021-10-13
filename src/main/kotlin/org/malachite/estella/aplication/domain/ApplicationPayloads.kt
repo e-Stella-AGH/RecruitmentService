@@ -1,15 +1,20 @@
 package org.malachite.estella.aplication.domain
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
+import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.JobSeekerFile
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.people.domain.*
 import java.sql.Date
 import java.time.LocalDate
 import java.util.*
+import javax.persistence.*
 
 interface ApplicationPayload {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>): Application
@@ -22,12 +27,9 @@ data class ApplicationLoggedInPayload(val files: Set<JobSeekerFilePayload>) : Ap
         applicationDate = Date.valueOf(LocalDate.now()),
         status = ApplicationStatus.IN_PROGRESS,
         id = null,
-        stage = stage,
         jobSeeker = jobSeeker,
-        seekerFiles = files,
-        tasksResults = Collections.emptySet(),
-        quizzesResults = Collections.emptySet(),
-        interviews = Collections.emptySet(),
+        seekerFiles = files.toMutableSet(),
+        applicationStages = mutableListOf()
     )
 
     override fun getJobSeekerFiles(): Set<JobSeekerFilePayload> = files
@@ -55,12 +57,9 @@ data class ApplicationNoUserPayload(
         applicationDate = Date.valueOf(LocalDate.now()),
         status = ApplicationStatus.IN_PROGRESS,
         id = null,
-        stage = stage,
         jobSeeker = jobSeeker,
-        seekerFiles = files,
-        tasksResults = Collections.emptySet(),
-        quizzesResults = Collections.emptySet(),
-        interviews = Collections.emptySet(),
+        seekerFiles = files.toMutableSet(),
+        applicationStages = mutableListOf()
     )
 
     override fun getJobSeekerFiles(): Set<JobSeekerFilePayload> = files
@@ -76,7 +75,8 @@ data class ApplicationDTO(
     val status: ApplicationStatus,
     val stage: RecruitmentStage,
     val jobSeeker: JobSeekerDTO,
-    val seekerFiles: Set<JobSeekerFileDTO>
+    val seekerFiles: Set<JobSeekerFileDTO>,
+    val applicationStages: List<Int>
 )
 
 fun Application.toApplicationDTO() =
@@ -84,9 +84,10 @@ fun Application.toApplicationDTO() =
         this.id,
         this.applicationDate,
         this.status,
-        this.stage,
+        this.applicationStages.last().stage,
         this.jobSeeker.toJobSeekerDTO(),
-        this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet()
+        this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
+        this.applicationStages.map { it.stage.id!! }
     )
 
 data class ApplicationDTOWithStagesListAndOfferName(
@@ -99,14 +100,32 @@ data class ApplicationDTOWithStagesListAndOfferName(
     val stages: List<RecruitmentStage>,
     val offerName: String
 )
+
 fun Application.toApplicationDTOWithStagesListAndOfferName(stages: List<RecruitmentStage>, offerName: String) =
     ApplicationDTOWithStagesListAndOfferName(
         this.id,
         this.applicationDate,
         this.status,
-        this.stage,
+        this.applicationStages.last().stage,
         this.jobSeeker.toJobSeekerDTO(),
         this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
         stages,
         offerName
+    )
+
+data class ApplicationStageDTO(
+    val id: Int,
+    val stage: RecruitmentStage,
+    val applicationId: Int,
+    val tasksStage: TaskStage?,
+    val interview: Interview?
+)
+
+fun ApplicationStageData.toApplicationStageDTO(): ApplicationStageDTO =
+    ApplicationStageDTO(
+        id!!,
+        stage,
+        application.id!!,
+        tasksStage,
+        interview
     )

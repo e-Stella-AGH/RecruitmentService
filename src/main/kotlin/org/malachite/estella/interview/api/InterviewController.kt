@@ -39,6 +39,12 @@ class InterviewController(
                     .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
+    @PutMapping("/{meetingId}/set-length")
+    fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody length: Int): ResponseEntity<Any> =
+            interviewService.setLength(meetingId.toUUID(), length)
+                    .let { OwnResponses.SUCCESS }
+
+    @CrossOrigin
     @PutMapping("/{meetingId}/pick-date")
     fun pickDate(@PathVariable meetingId: InterviewId, @RequestBody date: MeetingDate): ResponseEntity<Any> =
             interviewService.setDate(meetingId.toUUID(), date.dateTime)

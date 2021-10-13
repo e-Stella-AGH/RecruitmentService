@@ -158,10 +158,6 @@ class OffersIntegration: BaseIntegration() {
         )
     }
 
-    private fun getAuthToken(mail: String, password: String):String =
-        loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
-
-
     private val name = "Normal offer"
     private val organizationMail = "organization@hrpartner.pl"
     private val hrpartnerMail = "examplemail@hrpartner.pl"

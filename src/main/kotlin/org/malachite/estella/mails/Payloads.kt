@@ -14,11 +14,11 @@ import org.malachite.estella.mails.MailTexts.getVerificationText
 import org.springframework.http.HttpEntity
 
 data class MailPayload(
-        val subject: String,
-        val sender_name: String,
-        val receiver: String,
-        val content: String,
-        val sender_email: String
+    val subject: String,
+    val sender_name: String,
+    val receiver: String,
+    val content: String,
+    val sender_email: String
 ) {
 
     fun toHttpEntity(): HttpEntity<MailPayload> {
@@ -32,11 +32,11 @@ private val MAIN_MAIL = "estellaagh@gmail.com"
 fun Application.toApplicationConfirmationAsMailPayload(offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     return MailPayload(
-            subject = "Your application has been received!",
-            receiver = this.jobSeeker.user.mail,
-            content = getApplicationConfirmation(this, offer, hrPartnerFullName),
-            sender_name = hrPartnerFullName,
-            sender_email = offer.creator.user.mail
+        subject = "Your application has been received!",
+        receiver = this.jobSeeker.user.mail,
+        content = getApplicationConfirmation(this,offer,hrPartnerFullName),
+        sender_name = hrPartnerFullName,
+        sender_email = offer.creator.user.mail
     )
 }
 
@@ -46,7 +46,7 @@ fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
     return offer.creator.organization.name.let {
         MailPayload(
                 subject = "You are invited for interview with ${it}!",
-                receiver = this.application.jobSeeker.user.mail,
+                receiver = this.applicationStage.application.jobSeeker.user.mail,
                 content = MailTexts.getInterviewInvitation(this, it, url, hrPartnerFullName),
                 sender_name = hrPartnerFullName,
                 sender_email = offer.creator.user.mail
@@ -83,30 +83,30 @@ fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application
     )
 }
 
-fun Organization.toVerificationMailPayload(verified: Boolean) =
-        MailPayload(
-                subject = "Your company has been ${if (verified) "verified" else "unverified"}!",
-                sender_name = "e-Stella Team",
-                receiver = this.user.mail,
-                content = if (verified) getVerificationText() else getUnVerificationText(),
-                sender_email = MAIN_MAIL
-        )
+fun Organization.toVerificationMailPayload( verified: Boolean) =
+    MailPayload(
+        subject = "Your company has been ${if (verified) "verified" else "unverified"}!",
+        sender_name = "e-Stella Team",
+        receiver = this.user.mail,
+        content = if (verified) getVerificationText() else getUnVerificationText(),
+        sender_email = MAIN_MAIL
+    )
 
 fun User.toRegistrationMailPayload() =
-        MailPayload(
-                subject = "Thank you for register",
-                sender_name = "e-Stella Team",
-                receiver = this.mail,
-                content = getRegistrationText(),
-                sender_email = MAIN_MAIL
-        )
+    MailPayload(
+        subject = "Thank you for register",
+        sender_name = "e-Stella Team",
+        receiver = this.mail,
+        content = getRegistrationText(),
+        sender_email = MAIN_MAIL
+    )
 
 fun HrPartner.toRegistrationMailPayload(password: String) =
-        MailPayload(
-                subject = "Your account as Recruiter was created",
-                sender_name = "e-Stella Team",
-                receiver = this.user.mail,
-                content = getHrPartnerRegistrationText(this.organization.name,
-                        this.user.mail, password, MAIN_URL),
-                sender_email = MAIN_MAIL
-        )
+    MailPayload(
+        subject = "Your account as Recruiter was created",
+        sender_name = "e-Stella Team",
+        receiver = this.user.mail,
+        content = getHrPartnerRegistrationText(this.organization.name,
+            this.user.mail, password, MAIN_URL),
+        sender_email = MAIN_MAIL
+    )

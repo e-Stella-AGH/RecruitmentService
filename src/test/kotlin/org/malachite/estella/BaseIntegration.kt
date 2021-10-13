@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Test
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -39,7 +40,7 @@ import java.util.*
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = ["mail_service_url=http://localhost:9797","admin_api_key=API_KEY","should_fake_load=false"]
+    properties = ["mail_service_url=http://localhost:9797", "admin_api_key=API_KEY", "should_fake_load=false"]
 )
 class BaseIntegration {
 
@@ -56,7 +57,7 @@ class BaseIntegration {
         path: String,
         method: HttpMethod,
         headers: Map<String, String> = mapOf(),
-        body: Map<String, Any> = mapOf()
+        body: Any = mapOf<String, Any>()
     ): Response {
         val httpHeaders = HttpHeaders().also {
             headers.forEach { (key, value) -> it.add(key, value) }
@@ -155,7 +156,8 @@ class BaseIntegration {
             ApplicationStatus.valueOf(this["status"] as String),
             (this["stage"] as Map<String, Any>).toRecruitmentStage(),
             (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
-            (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet()
+            (this["seekerFiles"] as List<Map<String, Any>>).map { it.toJobSeekerFileDto() }.toSet(),
+            (this["applicationStages"] as List<Int>)
         )
 
     fun Map<String, Any>.toApplicationDTOWithStagesAndOfferName() =
@@ -163,8 +165,8 @@ class BaseIntegration {
             this["id"] as Int,
             Date.valueOf(this["applicationDate"] as String),
             ApplicationStatus.valueOf(this["status"] as String),
-            (this["stage"] as Map<String,Any>).toRecruitmentStage(),
-            (this["jobSeeker"] as Map<String,Any>).toJobSeekerDTO(),
+            (this["stage"] as Map<String, Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
             setOf(),
             (this["stages"] as List<Map<String, Any>>).map { it.toRecruitmentStage() },
             this["offerName"] as String
@@ -217,8 +219,6 @@ class BaseIntegration {
             (this["endDate"] as String?)?.let { Date.valueOf(it) },
             (this["offer"] as Map<String, Any>).toOfferResponse(),
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
-            setOf(),  //TODO - change it, when it will be implemented
-            setOf()
         )
 
     fun Map<String, Any>.toJobSeekerFileDto() =
@@ -238,13 +238,13 @@ class BaseIntegration {
 
     fun List<Map<String, Any>>.toTaskDto() =
         this.map { it.toTaskDto() }
+
     fun Map<String, Any>.toTaskDto() = TaskDto(
         id = this["id"] as Int?,
         testsBase64 = this["testsBase64"] as String,
         descriptionFileName = this["descriptionFileName"] as String,
         descriptionBase64 = this["descriptionBase64"] as String,
         timeLimit = this["timeLimit"] as Int,
-        deadline = (this["deadline"] as String).toTimestamp()
     )
 
     fun String.toTimestamp(): Timestamp {
@@ -257,7 +257,7 @@ class BaseIntegration {
     fun Map<String, Any>.toJobSeekerNameDTO() = JobseekerName(
             firstName = this["firstName"] as String,
             lastName = this["lastName"] as String
-            )
+    )
 
     fun Map<String, Any>.toInterviewDTO() = InterviewDTO(
             this["id"] as String?,
@@ -273,4 +273,29 @@ class BaseIntegration {
     fun Map<String, Any>.toInterviewNoteDTO() =
             InterviewNoteDTO(this["id"] as Int, this["note"] as String)
 
+
+    fun applyForOffer(jobSeeker: JobSeeker, password: String, offer: Offer): Response = httpRequest(
+        path = "/api/applications/apply/${offer.id}/user",
+        method = HttpMethod.POST,
+        headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, password)),
+        body = mapOf("files" to setOf<JobSeekerFilePayload>())
+    )
+
+    fun updateStage(applicationId: Int, mail: String, password: String) = httpRequest(
+        path = "/api/applications/${applicationId}/next",
+        method = HttpMethod.PUT,
+        headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password)),
+    )
+
+    private fun loginUser(userMail: String, userPassword: String): Response = httpRequest(
+        path = "/api/users/login",
+        method = HttpMethod.POST,
+        body = mapOf(
+            "mail" to userMail,
+            "password" to userPassword
+        )
+    )
+
+    fun getAuthToken(mail: String, password: String): String =
+        loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
 }
