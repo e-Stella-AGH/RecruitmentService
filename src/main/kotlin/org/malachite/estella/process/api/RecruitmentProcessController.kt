@@ -1,11 +1,8 @@
 package org.malachite.estella.process.api
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.process.domain.RecruitmentProcessDto
-import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.toRecruitmentProcessDto
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.RecruitmentStageService
@@ -14,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import java.sql.Blob
 import java.sql.Date
 
 @RestController

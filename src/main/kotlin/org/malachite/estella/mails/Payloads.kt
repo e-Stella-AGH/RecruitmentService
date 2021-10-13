@@ -45,11 +45,11 @@ fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
     val url = "${MAIN_URL}interview/${this.id}"
     return offer.creator.organization.name.let {
         MailPayload(
-                subject = "You are invited for interview with ${it}!",
-                receiver = this.applicationStage.application.jobSeeker.user.mail,
-                content = MailTexts.getInterviewInvitation(this, it, url, hrPartnerFullName),
-                sender_name = hrPartnerFullName,
-                sender_email = offer.creator.user.mail
+            subject = "Your are invited for interview with ${it}!",
+            receiver = this.applicationStage.application.jobSeeker.user.mail,
+            content = MailTexts.getInterviewInvitation(this,it,url,hrPartnerFullName),
+            sender_name = hrPartnerFullName,
+            sender_email = offer.creator.user.mail
         )
 
     }

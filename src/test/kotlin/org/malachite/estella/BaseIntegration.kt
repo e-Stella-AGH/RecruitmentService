@@ -20,10 +20,14 @@ import org.malachite.estella.process.domain.RecruitmentProcessDto
 import org.malachite.estella.process.domain.TaskDto
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.context.ApplicationContextInitializer
+import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.RequestEntity
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.support.TestPropertySourceUtils
 import org.springframework.web.client.HttpStatusCodeException
 import strikt.api.expect
 import strikt.assertions.isEqualTo
@@ -38,9 +42,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = ["mail_service_url=http://localhost:9797", "admin_api_key=API_KEY", "should_fake_load=false"]
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@ContextConfiguration(
+    initializers = [BaseIntegration.Companion.PropertyOverride::class],
+    classes = [DemoApplication::class]
 )
 class BaseIntegration {
 
@@ -298,4 +303,19 @@ class BaseIntegration {
 
     fun getAuthToken(mail: String, password: String): String =
         loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
+
+    companion object {
+        class PropertyOverride : ApplicationContextInitializer<ConfigurableApplicationContext> {
+            override fun initialize(applicationContext: ConfigurableApplicationContext) {
+                TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
+                    applicationContext,
+                    "mail_service_url=http://localhost:9797",
+                    "admin_api_key=API_KEY",
+                    "should_fake_load=false",
+                    "cloud_amqp_url=amqp://localhost:5672"
+                )
+            }
+        }
+    }
+
 }

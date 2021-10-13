@@ -20,7 +20,6 @@ class ApplicationService(
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val applicationStageDataService: ApplicationStageDataService,
-    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {

@@ -51,8 +51,12 @@ fun prepareSpringProperties(env: MutableMap<String, String> = getConfigurationDa
 fun getApiKey():String=
     System.getenv().getOrDefault("API_KEY","API_KEY")
 
-fun getOtherApplicationProperties(): String = """
-    mail_service_url=https://email-service-estella.herokuapp.com/
+fun getOtherApplicationProperties(): String {
+    val rabbitUrl = System.getenv().getOrDefault("CLOUD_AMQP", "amqp://localhost:5672")
+    return """
+    mail_service_url=https://email-service-estella.herokuapp.com
     admin_api_key=${getApiKey()}
     should_fake_load=true
-""".trimIndent()
+    cloud_amqp_url=${rabbitUrl}
+    """.trimIndent()
+}
