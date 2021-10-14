@@ -84,7 +84,7 @@ class UserController(
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @PutMapping("personalData")
+    @PutMapping("/personalData")
     fun updatePersonalData(
         @RequestBody personalDataRequest: PersonalDataRequest
     ): ResponseEntity<Any> =
@@ -92,7 +92,7 @@ class UserController(
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @PutMapping("password")
+    @PutMapping("/password")
     fun updatePersonalData(
         @RequestBody passwordRequest: PasswordRequest
     ): ResponseEntity<Any> =
