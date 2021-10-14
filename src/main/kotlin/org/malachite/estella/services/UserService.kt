@@ -6,6 +6,8 @@ import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.organization.domain.OrganizationRepository
+import org.malachite.estella.people.api.PasswordRequest
+import org.malachite.estella.people.api.PersonalDataRequest
 import org.malachite.estella.people.api.UserRequest
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.security.Authority
@@ -56,6 +58,32 @@ class UserService(
             lastName = userRequest.lastName
         )
         updated.password = userRequest.password
+        userRepository.save(updated)
+    }
+
+    fun updateUserPersonalData(personalDataRequest: PersonalDataRequest) {
+        val originalUser = securityService.getUserFromContext() ?: throw UnauthenticatedException()
+        if (!getPermissions(originalUser.id!!).contains(Permission.UPDATE)) throw UnauthenticatedException()
+
+        val currUser: User = getUser(originalUser.id)
+        currUser.firstName = personalDataRequest.firstName
+        currUser.lastName = personalDataRequest.lastName
+
+        userRepository.save(currUser)
+    }
+
+    fun updateUserPassword(passwordRequest: PasswordRequest) {
+        val originalUser = securityService.getUserFromContext() ?: throw UnauthenticatedException()
+        if (!getPermissions(originalUser.id!!).contains(Permission.UPDATE))
+            throw UnauthenticatedException()
+
+        val currUser: User = getUser(originalUser.id)
+        if (!currUser.comparePassword(passwordRequest.oldPassword))
+            throw UnauthenticatedException()
+
+        val updated: User = currUser.copy()
+        updated.password = passwordRequest.newPassword
+
         userRepository.save(updated)
     }
 
