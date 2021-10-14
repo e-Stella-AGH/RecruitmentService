@@ -62,7 +62,7 @@ class BaseIntegration {
         path: String,
         method: HttpMethod,
         headers: Map<String, String> = mapOf(),
-        body: Any = mapOf<String, Any>()
+        body: Map<String, Any> = mapOf()
     ): Response {
         val httpHeaders = HttpHeaders().also {
             headers.forEach { (key, value) -> it.add(key, value) }

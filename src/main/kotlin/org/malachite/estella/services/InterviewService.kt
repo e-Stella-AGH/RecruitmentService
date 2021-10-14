@@ -21,7 +21,6 @@ class InterviewService(
     @Autowired private val interviewRepository: InterviewRepository,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val mailService: MailService,
-    @Autowired private val applicationRepository: ApplicationRepository,
     @Autowired private val hrPartnerService: HrPartnerService,
     @Autowired private val offerService: OfferService,
     @Autowired private val interviewNoteRepository: InterviewNoteRepository,
@@ -44,10 +43,15 @@ class InterviewService(
     fun getOrganizationFromPartner(hrPartnerId: Int): Organization =
             hrPartnerService.getHrPartner(hrPartnerId).organization
 
-    fun getLastInterviewFromApplicationId(applicationId: Int): InterviewId =
+    fun getLastInterviewIdFromApplicationId(applicationId: Int): InterviewId =
             withExceptionThrower { getAllByApplicationId(applicationId).sortedWith { a, b ->
                 a.dateTime?.compareTo(b.dateTime) ?: -1
             }.first() }.getId()
+
+    fun getLastInterviewFromApplicationId(applicationId: Int): Interview =
+            withExceptionThrower { getAllByApplicationId(applicationId).sortedWith { a, b ->
+                a.dateTime?.compareTo(b.dateTime) ?: -1
+            }.first() }
 
     fun setHosts(id: UUID, hostsMails: List<String>) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
@@ -75,11 +79,11 @@ class InterviewService(
 
     }
 
-    fun setNotes(id: UUID, notes: Set<InterviewNote> ) {
-        if (!canHrUpdate(id)) throw UnauthenticatedException() //TODO dev security?
-        val interview = getInterview(id)
+    fun setNotes(id: UUID, password: String, notes: Set<InterviewNote> ) {
+        if (!canDevUpdate(id, password)) throw UnauthenticatedException()
         val savedNotes = mutableSetOf<InterviewNote>()
         notes.forEach { savedNotes.add(interviewNoteRepository.save(it)) }
+        val interview = getInterview(id)
         interviewRepository.save(interview.copy(notes = savedNotes))
 
     }
@@ -97,6 +101,16 @@ class InterviewService(
                 recruitmentProcessService.getProcessFromStage(interview.applicationStage).offer.creator.id)
             return true
         return false
+    }
+
+    private fun canDevUpdate(id: UUID?, password: String): Boolean {
+        id?: let { return false }
+        id.let {
+            val organization = recruitmentProcessService
+                    .getProcessFromStage(getInterview(it).applicationStage)
+                    .offer.creator.organization
+            return securityService.compareOrganizationWithPassword(organization, password)
+        }
     }
 
     private fun getAllByApplicationId(applicationId: Int): List<Interview> = interviewRepository

@@ -1,8 +1,11 @@
 package org.malachite.estella.interview.api
 
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.interviews.InterviewNote
+import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewId
+import org.malachite.estella.interview.domain.toInterviewDTO
 import org.malachite.estella.services.InterviewService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
@@ -29,8 +32,13 @@ class InterviewController(
 
     @CrossOrigin
     @GetMapping("/newest/{applicationId}")
-    fun getNewestInterview(@PathVariable applicationId: Int): ResponseEntity<Any> =
-            interviewService.getLastInterviewFromApplicationId(applicationId).let { ResponseEntity.ok(it) }
+    fun getNewestInterviewId(@PathVariable applicationId: Int): ResponseEntity<InterviewId> =
+            interviewService.getLastInterviewIdFromApplicationId(applicationId).let { ResponseEntity.ok(it) }
+
+    @CrossOrigin
+    @GetMapping("/newest/{applicationId}/interview")
+    fun getNewestInterview(@PathVariable applicationId: Int): ResponseEntity<InterviewDTO> =
+            interviewService.getLastInterviewFromApplicationId(applicationId).let { ResponseEntity.ok(it.toInterviewDTO()) }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set-hosts")
@@ -40,8 +48,8 @@ class InterviewController(
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set-length")
-    fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody length: Int): ResponseEntity<Any> =
-            interviewService.setLength(meetingId.toUUID(), length)
+    fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody length: MeetingLength): ResponseEntity<Any> =
+            interviewService.setLength(meetingId.toUUID(), length.minutesLength)
                     .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
@@ -53,8 +61,8 @@ class InterviewController(
     @CrossOrigin
     @Transactional
     @PutMapping("/{meetingId}/add-notes")
-    fun addNotes(@PathVariable meetingId: InterviewId, @RequestBody notes: MeetingNotes): ResponseEntity<Any> =
-            interviewService.setNotes(meetingId.toUUID(), notes.notes.map { it.toNotes() }.toSet())
+    fun addNotes(@PathVariable meetingId: InterviewId, @RequestHeader(EStellaHeaders.devPassword) password: String, @RequestBody notes: MeetingNotes): ResponseEntity<Any> =
+            interviewService.setNotes(meetingId.toUUID(), password, notes.notes.map { it.toNotes() }.toSet())
                     .let { OwnResponses.SUCCESS }
 
     fun NotesFilePayload.toNotes() = InterviewNote(this.id, SerialClob(String(Base64.getDecoder().decode(this.fileBase64)).toCharArray()))
@@ -67,4 +75,5 @@ data class NotesFilePayload(val id: Int?, val fileBase64: String)
 data class MeetingNotes(val notes: Set<NotesFilePayload>)
 data class MeetingHosts(val hostsMails: List<String>)
 data class MeetingDate(val dateTime: Timestamp)
+data class MeetingLength(val minutesLength: Int)
 

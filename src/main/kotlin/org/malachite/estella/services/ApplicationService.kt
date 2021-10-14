@@ -76,15 +76,6 @@ class ApplicationService(
                         it
                 }.let {
                         applicationRepository.save(it)
-                        val newStage = recruitmentProcessStages[indexOfRecruitmentStage]
-                        it.applicationStages.find { it.stage == newStage }?.let {
-                            when (newStage.type) {
-                                StageType.HR_INTERVIEW, StageType.TECHNICAL_INTERVIEW ->
-                                    interviewService.createInterview(it, InterviewPayload(null, null))
-                                else -> null
-                            }
-                        }
-                        it
                 }
     }
 

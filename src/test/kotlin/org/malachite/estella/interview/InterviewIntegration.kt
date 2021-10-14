@@ -9,12 +9,17 @@ import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.Organization
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.InterviewRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
-import org.malachite.estella.process.domain.RecruitmentProcessRepository
 import org.malachite.estella.process.domain.RecruitmentStageRepository
+import org.malachite.estella.services.RecruitmentProcessService
+import org.malachite.estella.services.SecurityService
+import org.malachite.estella.task.domain.TaskStageRepository
 import org.malachite.estella.util.DatabaseReset
+import org.malachite.estella.util.EmailServiceStub
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -43,10 +48,15 @@ class InterviewIntegration: BaseIntegration() {
     @Autowired
     private lateinit var applicationStageDataRepository: ApplicationStageRepository
     @Autowired
-    private lateinit var recruitmentProcessRepository: RecruitmentProcessRepository
+    private lateinit var taskStageRepository: TaskStageRepository
+    @Autowired
+    private lateinit var securityService: SecurityService
+    @Autowired
+    private lateinit var recruitmentProcessService: RecruitmentProcessService
 
     private lateinit var application: Application
     private lateinit var applicationStageData: ApplicationStageData
+    private lateinit var organization: Organization
     private lateinit var jobseeker: JobSeeker
     private lateinit var hrPartner: HrPartner
 
@@ -55,7 +65,7 @@ class InterviewIntegration: BaseIntegration() {
         val jobseeker = jobSeekerRepository.findAll().first()
 
         val stage = recruitmentStageRepository.findAll().first()
-        hrPartner = recruitmentProcessRepository.findAll().first{ it.stages.contains(stage) }.offer.creator
+        hrPartner = recruitmentProcessService.getProcesses().first{ it.stages.contains(stage) }.offer.creator
         val application = Application(null,
                 Date(Calendar.getInstance().time.time),
                 ApplicationStatus.IN_PROGRESS,
@@ -64,17 +74,19 @@ class InterviewIntegration: BaseIntegration() {
                 mutableListOf())
         val savedApplication = applicationRepository.save(application)
         val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null)
-        val savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
+        var savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
+        var taskStage = TaskStage(null, setOf(), savedApplicationStageData)
+        taskStage = taskStageRepository.save(taskStage)
+        savedApplicationStageData = applicationStageDataRepository.save(savedApplicationStageData.copy(tasksStage = taskStage))
         this.application = savedApplication
-        this.applicationStageData = savedApplicationStageData
+        this.applicationStageData = applicationStageDataRepository.findById(savedApplicationStageData.id!!).get()
+        this.organization = recruitmentProcessService.getProcessFromStage(stage.id!!).offer.creator.organization
         this.jobseeker = jobseeker
     }
 
     @AfterEach
     fun clearApplication() {
         interviewRepository.findAll().forEach { interviewRepository.deleteById(it.id!!) }
-        applicationStageDataRepository.deleteById(applicationStageData.id!!)
-        applicationRepository.deleteById(application.id!!)
     }
 
     @Test
@@ -152,6 +164,8 @@ class InterviewIntegration: BaseIntegration() {
     @Test
     @Order(6)
     fun `should set hosts emails`() {
+        EmailServiceStub.stubForSendEmail()
+
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.hosts.size).isEqualTo(0)
@@ -167,17 +181,6 @@ class InterviewIntegration: BaseIntegration() {
         )
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-
-        response = httpRequest(
-                "/api/interview/${interview.id}/set-hosts",
-                method = HttpMethod.PUT,
-                headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseeker.user.mail, password)),
-                body = mapOf(
-                        "hostsMails" to listOf("unauthorized@mail.com")
-                )
-        )
-
-        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
 
         interview = interviewRepository.findAll().first()
 
@@ -209,7 +212,7 @@ class InterviewIntegration: BaseIntegration() {
 
 
     @Test
-    @Order(7)
+    @Order(8)
     fun `should set meeting length`() {
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
         interview = interviewRepository.save(interview)
@@ -220,7 +223,7 @@ class InterviewIntegration: BaseIntegration() {
                 "/api/interview/${interview.id}/set-length",
                 method = HttpMethod.PUT,
                 headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
-                body = length
+                body = mapOf("minutesLength" to length)
         )
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
@@ -231,7 +234,7 @@ class InterviewIntegration: BaseIntegration() {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     fun `should return unauthorized when trying to set meeting length`() {
         var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
         interview = interviewRepository.save(interview)
@@ -242,7 +245,7 @@ class InterviewIntegration: BaseIntegration() {
                 "/api/interview/${interview.id}/set-length",
                 method = HttpMethod.PUT,
                 headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseeker.user.mail, password)),
-                body = length
+                body = mapOf("minutesLength" to length)
         )
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
@@ -255,6 +258,8 @@ class InterviewIntegration: BaseIntegration() {
     @Test
     @Order(10)
     fun `should be able to pick date`() {
+        EmailServiceStub.stubForSendEmail()
+
         var interview = Interview(null, null, null, applicationStageData, listOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.dateTime).isNull()
@@ -284,11 +289,12 @@ class InterviewIntegration: BaseIntegration() {
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
         val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
         val notes = setOf(NotesFilePayload(null, noteA), NotesFilePayload(null, noteB))
+        val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
         var response = httpRequest(
                 "/api/interview/${interview.id}/add-notes",
                 method = HttpMethod.PUT,
-                headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
+                headers = mapOf(EStellaHeaders.devPassword to password),
                 body = mapOf(
                         "notes" to notes
                 )
@@ -304,6 +310,34 @@ class InterviewIntegration: BaseIntegration() {
 
         expectThat(listOf(this.noteA, this.noteB))
                 .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB))
+    }
+
+
+    @Test
+    @Order(12)
+    fun `should return unauthorized when trying to set notes`() {
+        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+        interview = interviewRepository.save(interview)
+        expectThat(interview.notes.size).isEqualTo(0)
+        val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
+        val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
+        val notes = setOf(NotesFilePayload(null, noteA), NotesFilePayload(null, noteB))
+        val badPassword = "xd"
+
+        var response = httpRequest(
+                "/api/interview/${interview.id}/add-notes",
+                method = HttpMethod.PUT,
+                headers = mapOf(EStellaHeaders.devPassword to badPassword),
+                body = mapOf(
+                        "notes" to notes
+                )
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+
+        interview = interviewRepository.findAll().first()
+
+        expectThat(interview.notes.size).isEqualTo(0)
     }
 
     private val password = "a"
