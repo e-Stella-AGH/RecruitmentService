@@ -1,15 +1,13 @@
 package org.malachite.estella.people.seekers
 
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.util.DatabaseReset
+import org.malachite.estella.util.EmailServiceStub
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expectThat
@@ -103,6 +101,7 @@ class JobSeekerIntegration: BaseIntegration() {
     }
 
     private fun registerJobSeeker(): Response {
+        EmailServiceStub.stubForSendEmail()
         return httpRequest(
             path = "/api/jobseekers/",
             method = HttpMethod.POST,
