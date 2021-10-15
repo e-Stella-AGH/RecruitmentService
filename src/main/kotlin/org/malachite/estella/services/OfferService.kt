@@ -3,6 +3,7 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner
@@ -13,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class OfferService(
+class  OfferService(
     @Autowired private val offerRepository: OfferRepository,
     @Autowired private val desiredSkillService: DesiredSkillService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,

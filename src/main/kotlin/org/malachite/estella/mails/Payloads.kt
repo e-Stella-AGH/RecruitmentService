@@ -55,6 +55,34 @@ fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
     }
 }
 
+fun Interview.toInterviewDevInvitationAsMailPayload(offer: Offer, application: Application, hostMail: String): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
+    val url = "${MAIN_URL}interview/${this.id}/${offer.creator.organization.id}"
+    return MailPayload(
+            subject = "You are invited for interview with ${jobSeekerFullName}!",
+            receiver = hostMail,
+            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, hrPartnerFullName, offer.position),
+            sender_name = hrPartnerFullName,
+            sender_email = offer.creator.user.mail
+    )
+}
+
+fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application: Application, mail: String): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
+    val position = offer.position
+    val url = "${MAIN_URL}interview/${this.id}/${offer.creator.organization.id}"
+    val date = this.dateTime.toString()
+    return MailPayload(
+            subject = "Your interview's date for $position has been set!",
+            receiver = mail,
+            content = MailTexts.getInterviewDateConfirmation(jobSeekerFullName, url, date, hrPartnerFullName, offer.position),
+            sender_name = hrPartnerFullName,
+            sender_email = offer.creator.user.mail
+    )
+}
+
 fun Organization.toVerificationMailPayload( verified: Boolean) =
     MailPayload(
         subject = "Your company has been ${if (verified) "verified" else "unverified"}!",
