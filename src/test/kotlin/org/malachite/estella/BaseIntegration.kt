@@ -220,7 +220,7 @@ class BaseIntegration {
     fun Map<String, Any>.toRecruitmentProcessDto() =
         RecruitmentProcessDto(
             this["id"] as Int?,
-            Date.valueOf(this["startDate"] as String),
+            (this["startDate"] as String?)?.let { Date.valueOf(it) },
             (this["endDate"] as String?)?.let { Date.valueOf(it) },
             (this["offer"] as Map<String, Any>).toOfferResponse(),
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
