@@ -17,6 +17,6 @@ import javax.persistence.*
 @Table(name = "tasks_stages")
 data class TaskStage(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: UUID?,
-        @OneToMany(mappedBy = "taskStage") val tasksResult:Set<TaskResult>,
+        @JsonIgnore @OneToMany(mappedBy = "taskStage",fetch = FetchType.EAGER) val tasksResult:List<TaskResult>,
         @JsonIgnore @OneToOne val applicationStage: ApplicationStageData
 )

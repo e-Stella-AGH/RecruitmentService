@@ -269,7 +269,7 @@ class BaseIntegration {
             (this["dateTime"] as String?)?.toTimestamp(),
             this["minutesLength"] as Int,
             (this["application"] as Map<String, Any>).toApplicationDTO(),
-            this["hosts"] as List<String>?,
+        (this["hosts"] as List<String>?),
             (this["notes"] as List<Map<String, Any>>?)?.toInterviewNotesDTO()
     )
 

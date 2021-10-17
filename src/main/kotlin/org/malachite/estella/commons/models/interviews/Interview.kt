@@ -1,5 +1,8 @@
 package org.malachite.estella.commons.models.interviews
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.hibernate.annotations.LazyCollection
+import org.hibernate.annotations.LazyCollectionOption
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.tasks.TaskStage
 import java.sql.Timestamp

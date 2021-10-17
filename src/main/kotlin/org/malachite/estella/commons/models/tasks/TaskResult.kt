@@ -15,5 +15,5 @@ data class TaskResult(
     @Lob val results: Blob, @Lob val code: Clob,
     val startTime: Timestamp?, val endTime: Timestamp?,
     @ManyToOne val task: Task,
-    @JsonIgnore @ManyToOne @JoinColumn(name = "task_stage_id") val taskStage: TaskStage
+    @JsonIgnore @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "taskStage") val taskStage: TaskStage
 )

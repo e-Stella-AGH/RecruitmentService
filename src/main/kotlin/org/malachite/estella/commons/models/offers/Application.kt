@@ -21,7 +21,5 @@ data class Application(
         joinColumns = [JoinColumn(name = "application_id")],
         inverseJoinColumns = [JoinColumn(name = "job_seeker_file_id")]
     ) val seekerFiles: MutableSet<JobSeekerFile>,
-    @OneToMany(
-        mappedBy = "application"
-    ) val applicationStages: MutableList<ApplicationStageData>
+    @OneToMany(mappedBy = "application") val applicationStages: MutableList<ApplicationStageData>
 )
