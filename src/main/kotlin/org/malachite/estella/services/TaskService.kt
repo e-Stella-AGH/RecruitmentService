@@ -6,14 +6,17 @@ import kotlinx.serialization.json.Json
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
+import org.malachite.estella.task.domain.TaskResultRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 
@@ -22,6 +25,7 @@ import javax.sql.rowset.serial.SerialBlob
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
     @Autowired private val organizationService: OrganizationService,
+    @Autowired private val taskStageService: TaskStageService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Task>() {
 
@@ -39,6 +43,10 @@ class TaskService(
         organizationService.getOrganization(organizationUuid)
             .tasks
             .map { it.toTaskDto() }
+
+    fun getTasksByTasksStage(tasksStageId: String) =
+        taskStageService.getTaskStage(tasksStageId)
+                .tasksResult.map { it.task.toTaskDto() }
 
     fun getTaskById(taskId: Int) =
         withExceptionThrower { taskRepository.findById(taskId).get() }

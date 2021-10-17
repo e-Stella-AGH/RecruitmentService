@@ -1,6 +1,8 @@
 package org.malachite.estella.commons.models.tasks
 
-import org.malachite.estella.commons.models.offers.Application
+import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.springframework.transaction.annotation.Transactional
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Timestamp
@@ -13,5 +15,5 @@ data class TaskResult(
     @Lob val results: Blob, @Lob val code: Clob,
     val startTime: Timestamp?, val endTime: Timestamp?,
     @ManyToOne val task: Task,
-    @ManyToOne val taskStage: TaskStage
+    @JsonIgnore @ManyToOne @JoinColumn(name = "task_stage_id") val taskStage: TaskStage
 )

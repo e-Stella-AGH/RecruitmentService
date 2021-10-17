@@ -1,5 +1,6 @@
 package org.malachite.estella.commons.models.people
 
+import org.springframework.transaction.annotation.Transactional
 import java.sql.Blob
 import javax.persistence.*
 

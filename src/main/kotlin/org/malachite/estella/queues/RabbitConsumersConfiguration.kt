@@ -37,6 +37,7 @@ class RabbitConsumersConfiguration {
         RabbitAdmin(rabbitTemplate).apply {
             //declare queues, exchanges, bindings, etc
             this.declareQueue(Queue("example_queue"))
+            this.declareQueue(Queue("task_result"))
         }
         return RabbitMqConsumers()
     }

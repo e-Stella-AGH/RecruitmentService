@@ -21,16 +21,25 @@ class TaskController(
     @Autowired private val taskService: TaskService,
     @Autowired private val organizationService: OrganizationService,
 ) {
+//
+//    @CrossOrigin
+//    @Transactional
+//    @GetMapping
+//    fun getTaskByRecruitmentProcess(
+//        @RequestParam("owner") organizationUuid: String,
+//        @RequestHeader(EStellaHeaders.devPassword) password: String
+//    ): ResponseEntity<List<TaskDto>> =
+//        taskService.checkDevPassword(organizationUuid, password)
+//            .getTasksByOrganizationUuid(organizationUuid)
+//            .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
     @Transactional
     @GetMapping
-    fun getTaskByRecruitmentProcess(
-        @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.devPassword) password: String
+    fun getTasksByTasksStage(
+        @RequestParam("tasksStage") tasksStageId: String,
     ): ResponseEntity<List<TaskDto>> =
-        taskService.checkDevPassword(organizationUuid, password)
-            .getTasksByOrganizationUuid(organizationUuid)
+        taskService.getTasksByTasksStage(tasksStageId)
             .let { ResponseEntity.ok(it) }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
