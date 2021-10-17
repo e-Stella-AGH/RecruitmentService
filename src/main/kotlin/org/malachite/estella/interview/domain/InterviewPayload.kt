@@ -23,7 +23,7 @@ data class InterviewId(val interviewId: String) {
 }
 
 fun Interview.getId() = InterviewId(this.id.toString())
-fun Interview.toInterviewDTO() = InterviewDTO(this.id.toString(), this.dateTime, this.minutesLength, this.applicationStage.application.toApplicationDTO(), this.hosts, this.notes.map { it.toInterviewNoteDTO() }.toSet())
+fun Interview.toInterviewDTO() = InterviewDTO(this.id.toString(), this.dateTime, this.minutesLength, this.applicationStage.application.toApplicationDTO(), this.hosts.toList(), this.notes.map { it.toInterviewNoteDTO() }.toSet())
 fun InterviewNote.toInterviewNoteDTO() = InterviewNoteDTO(this.id, String(Base64.getDecoder().decode(this.note.toString())))
 data class InterviewDTO(val id: String?, val dateTime: Timestamp?, val minutesLength: Int?,
 val application: ApplicationDTO, val hosts: List<String>?, val notes: Set<InterviewNoteDTO>?)

@@ -102,7 +102,7 @@ class InterviewIntegration : BaseIntegration() {
     @Test
     @Order(1)
     fun `should return jobseeker name`() {
-        val interview = Interview(null, null, null, applicationStageData, listOf(), setOf())
+        val interview = Interview(null, null, null, applicationStageData, setOf(), setOf())
         interviewRepository.save(interview)
         val interviewId = interviewRepository.findAll().first().id
         val response = httpRequest(
@@ -141,10 +141,10 @@ class InterviewIntegration : BaseIntegration() {
     @Order(4)
     fun `should return interview with later date when new date is set`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interviewRepository.save(interview)
         interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.now()), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.now()), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         val response = httpRequest(
             "/api/interview/newest/${application.id}",
@@ -160,9 +160,9 @@ class InterviewIntegration : BaseIntegration() {
     @Order(5)
     fun `should return interview with later date when new date is null`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interviewRepository.save(interview)
-        interview = Interview(null, null, null, applicationStageData, listOf(), setOf())
+        interview = Interview(null, null, null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         val response = httpRequest(
             "/api/interview/newest/${application.id}",
@@ -180,7 +180,7 @@ class InterviewIntegration : BaseIntegration() {
         EmailServiceStub.stubForSendEmail()
 
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.hosts.size).isEqualTo(0)
         val hosts = listOf("a@host.com", "b@host.com")
@@ -198,14 +198,14 @@ class InterviewIntegration : BaseIntegration() {
 
         interview = interviewRepository.findAll().first()
 
-        expectThat(interview.hosts.toString()).isEqualTo(hosts.toString())
+        expectThat(interview.hosts.toList()).containsExactlyInAnyOrder(hosts)
     }
 
     @Test
     @Order(7)
     fun `should return unauthorized when trying to set hosts emails`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.hosts.size).isEqualTo(0)
 
@@ -230,7 +230,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(8)
     fun `should set meeting length`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData,setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.minutesLength).isNull()
         val length = 30
@@ -253,7 +253,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(9)
     fun `should return unauthorized when trying to set meeting length`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.minutesLength).isNull()
         val length = 30
@@ -277,7 +277,7 @@ class InterviewIntegration : BaseIntegration() {
     fun `should be able to pick date`() {
         EmailServiceStub.stubForSendEmail()
 
-        var interview = Interview(null, null, null, applicationStageData, listOf(), setOf())
+        var interview = Interview(null, null, null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.dateTime).isNull()
         val dateTime = Timestamp.from(Instant.MIN)
@@ -301,7 +301,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(11)
     fun `should be able to set notes`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -335,7 +335,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(12)
     fun `should return unauthorized when trying to set notes`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf(), setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
