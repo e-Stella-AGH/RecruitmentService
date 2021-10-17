@@ -132,7 +132,7 @@ class OffersIntegration: BaseIntegration() {
         startProcess(offers[0].id!!)
 
         val jobSeekerOffers = httpRequest(
-            path = "/api/offers?for_seeker=true",
+            path = "/api/offers?only_started=true",
             method = HttpMethod.GET
         ).let {
             (it.body as List<Map<String, Any>>).map { it.toOfferResponse() }
