@@ -49,39 +49,11 @@ import java.util.*
 )
 class BaseIntegration {
 
-    private val restTemplate = TestRestTemplate()
-    val objectMapper = jacksonObjectMapper()
-
     private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
     private val encodedFile: String = Base64.getEncoder().encodeToString(file)
 
     final fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
         JobSeekerFilePayload(id, fileName, encodedFile)
-
-    fun httpRequest(
-        path: String,
-        method: HttpMethod,
-        headers: Map<String, String> = mapOf(),
-        body: Map<String, Any> = mapOf()
-    ): Response {
-        val httpHeaders = HttpHeaders().also {
-            headers.forEach { (key, value) -> it.add(key, value) }
-        }
-        val uri = URI.create("http://localhost:8080$path")
-
-        val requestEntity = RequestEntity(body, httpHeaders, method, uri)
-
-        return try {
-            val response = restTemplate.exchange(requestEntity, String::class.java)
-            val statusCode = response.statusCode
-            val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody, response.headers)
-        } catch (exception: HttpStatusCodeException) {
-            val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
-            val statusCode = exception.statusCode
-            Response(statusCode, responseBody, exception.responseHeaders)
-        }
-    }
 
     @Test
     fun `test for httpRequest`() {
@@ -314,6 +286,34 @@ class BaseIntegration {
                     "should_fake_load=false",
                     "cloud_amqp_url=amqp://localhost:5672"
                 )
+            }
+        }
+
+        private val restTemplate = TestRestTemplate()
+        val objectMapper = jacksonObjectMapper()
+
+        fun httpRequest(
+            path: String,
+            method: HttpMethod,
+            headers: Map<String, String> = mapOf(),
+            body: Map<String, Any> = mapOf()
+        ): Response {
+            val httpHeaders = HttpHeaders().also {
+                headers.forEach { (key, value) -> it.add(key, value) }
+            }
+            val uri = URI.create("http://localhost:8080$path")
+
+            val requestEntity = RequestEntity(body, httpHeaders, method, uri)
+
+            return try {
+                val response = restTemplate.exchange(requestEntity, String::class.java)
+                val statusCode = response.statusCode
+                val responseBody = objectMapper.readValue(response.body, Any::class.java)
+                Response(statusCode, responseBody, response.headers)
+            } catch (exception: HttpStatusCodeException) {
+                val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
+                val statusCode = exception.statusCode
+                Response(statusCode, responseBody, exception.responseHeaders)
             }
         }
     }

@@ -28,4 +28,8 @@ class ProcessExceptionHandler {
     @ExceptionHandler(ProcessNotFoundException::class)
     fun handleNotFoundException(ex: ProcessNotFoundException) =
         ResponseEntity.badRequest().body(Message("Process wasn't found!"))
+
+    @ExceptionHandler(ProcessNotStartedException::class)
+    fun handleProcessNotStartedException(ex: ProcessNotStartedException) =
+        ResponseEntity.badRequest().body(Message(ex.message!!))
 }

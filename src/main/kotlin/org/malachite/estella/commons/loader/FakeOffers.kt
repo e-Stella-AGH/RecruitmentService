@@ -48,6 +48,11 @@ object FakeOffers {
                 "Centurion", SerialClob("Join IX Legion. Join conquering the Great Britain".toCharArray()),
                 "Centurion", 10000, 20000, "Londonium, via Rome  XIV",
                 desiredSkills.subList(7, 9).toSet()
+            ),
+            OfferPayload(
+                "Frontend engineer", SerialClob("Frontend engineer what's to understand more?".toCharArray()),
+                "Frontend engineer", 10000, 20000, "Warsaw",
+                desiredSkills.subList(2, 3).toSet()
             )
         )
 
