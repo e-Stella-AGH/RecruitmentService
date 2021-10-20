@@ -1,12 +1,7 @@
 package org.malachite.estella.queue
 
-import com.rabbitmq.client.Channel
-import io.mockk.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.awaitility.kotlin.await
-import org.junit.BeforeClass
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.malachite.estella.BaseIntegration
@@ -18,11 +13,8 @@ import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
-import org.malachite.estella.interview.domain.InterviewRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.process.domain.RecruitmentStageRepository
-import org.malachite.estella.services.RecruitmentProcessService
-import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.malachite.estella.util.DatabaseReset

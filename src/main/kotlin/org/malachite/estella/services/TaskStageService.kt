@@ -2,9 +2,7 @@ package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.interviews.Interview
-import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.task.domain.TaskResultRepository

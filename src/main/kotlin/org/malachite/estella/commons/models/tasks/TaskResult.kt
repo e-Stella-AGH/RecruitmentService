@@ -1,8 +1,6 @@
 package org.malachite.estella.commons.models.tasks
 
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.springframework.transaction.annotation.Transactional
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Timestamp
