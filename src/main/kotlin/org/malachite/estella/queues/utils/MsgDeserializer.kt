@@ -18,7 +18,8 @@ class MsgDeserializer(
 
         fun toTaskResult(msg: String): TaskResult? {
             try {
-                val decodedMsg = Json.decodeFromString<Map<String, String>>(msg)
+                val based = Base64.getDecoder().decode(msg).decodeToString()
+                val decodedMsg = Json.decodeFromString<Map<String, String>>(based)
                 val taskStage = taskStageService.getTaskStage(decodedMsg["solverId"] as String)
                 val task = taskService.getTaskById(decodedMsg["taskId"]!!.toInt()).toTask()
                 val startTime = decodedMsg["startTime"]?.let { if (it == "null") null else Timestamp.valueOf(it) }?:let { null }

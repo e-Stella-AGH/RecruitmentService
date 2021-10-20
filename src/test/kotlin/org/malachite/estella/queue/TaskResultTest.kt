@@ -112,7 +112,8 @@ class TaskResultTest : BaseIntegration() {
                     "taskId" to result.task.id!!.toString()
             )
             val msg = Json.encodeToString(resultBody)
-            rabbitTemplate.send("task_result", Message(msg.toByteArray(), MessageProperties()))
+            rabbitTemplate.send("task_result", Message(Base64.getEncoder().encode(msg.toByteArray())
+                    , MessageProperties()))
         } catch (e: Exception) {
             println("Couldn't send test message to consumer")
             throw e
