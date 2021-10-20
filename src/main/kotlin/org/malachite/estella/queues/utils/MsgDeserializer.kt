@@ -21,8 +21,8 @@ class MsgDeserializer(
                 val decodedMsg = Json.decodeFromString<Map<String, String>>(msg)
                 val taskStage = taskStageService.getTaskStage(decodedMsg["solverId"] as String)
                 val task = taskService.getTaskById(decodedMsg["taskId"]!!.toInt()).toTask()
-                val startTime = if (decodedMsg["startTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["startTime"] as String)
-                val endTime = if (decodedMsg["endTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["endTime"] as String)
+                val startTime = decodedMsg["startTime"]?.let { if (it == "null") null else Timestamp.valueOf(it) }?:let { null }
+                val endTime = decodedMsg["endTime"]?.let { if (it == "null") null else Timestamp.valueOf(it) }?:let { null }
                 return TaskResult(null,
                         SerialBlob(Base64.getEncoder().encode((decodedMsg["results"] as String).encodeToByteArray())),
                         SerialClob((decodedMsg["code"] as String).toCharArray()),
