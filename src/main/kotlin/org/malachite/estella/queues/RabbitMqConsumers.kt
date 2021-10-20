@@ -33,11 +33,15 @@ class RabbitMqConsumers() {
             ackMode = "MANUAL",
             containerFactory = "containerFactory"
     )
-    fun taskResultListener(message: String, channel: Channel, @Header(AmqpHeaders.DELIVERY_TAG) tag: Long) {
-        val results = MsgDeserializer(taskService, taskStageService).toTaskResultSet(message)
-        taskStageService.addResult(results)
-        channel.basicAck(tag, false)
-    }
+    fun taskResultListener(message: String, channel: Channel, @Header(AmqpHeaders.DELIVERY_TAG) tag: Long) =
+            MsgDeserializer(taskService, taskStageService).toTaskResult(message)
+                    ?.let {
+                taskStageService.addResult(it)
+                channel.basicAck(tag, false)
+            }
+                    ?:let {
+                channel.basicNack(tag, false, false)
+            }
 
     //add other consumers
 

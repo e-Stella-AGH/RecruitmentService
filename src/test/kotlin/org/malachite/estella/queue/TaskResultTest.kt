@@ -1,7 +1,10 @@
 package org.malachite.estella.queue
 
+import com.rabbitmq.client.Channel
+import io.mockk.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.awaitility.kotlin.await
 import org.junit.BeforeClass
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -27,12 +30,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
-import org.springframework.test.context.TestExecutionListeners
-import org.springframework.test.context.event.annotation.BeforeTestClass
-import org.springframework.transaction.annotation.Transactional
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import java.io.BufferedReader
 import java.sql.Date
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
@@ -61,11 +60,6 @@ class TaskResultTest : BaseIntegration() {
     @Autowired
     private lateinit var taskStageRepository: TaskStageRepository
 
-    @Autowired
-    private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var recruitmentProcessService: RecruitmentProcessService
 
     private lateinit var task: Task
     private lateinit var taskStage: TaskStage
@@ -97,10 +91,21 @@ class TaskResultTest : BaseIntegration() {
         val taskResult = TaskResult(null, SerialBlob("xd".toByteArray()), SerialClob("xd".toCharArray()), null, null, task, taskStage)
         publish(taskResult)
 
-        Thread.sleep(200)
+        eventually {
+            taskStage = taskStageRepository.findById(taskStage.id!!).get()
+            expectThat(taskStage.tasksResult.size).isEqualTo(1)
+        }
+    }
 
-        taskStage = taskStageRepository.findById(taskStage.id!!).get()
-        expectThat(taskStage.tasksResult.size).isEqualTo(1)
+    @Test
+    fun `task bad message format consuming`() {
+        expectThat(taskStage.tasksResult.size).isEqualTo(0)
+
+        badPublish()
+
+        coolDown {
+            expectThat(taskStage.tasksResult.size).isEqualTo(0)
+        }
     }
 
 
@@ -116,6 +121,22 @@ class TaskResultTest : BaseIntegration() {
             )
             val msg = Json.encodeToString(resultBody)
             rabbitTemplate.send("task_result", Message(msg.toByteArray(), MessageProperties()))
+        } catch (e: Exception) {
+            println("Couldn't send test message to consumer")
+            throw e
+        }
+    }
+
+    fun badPublish() {
+        try {
+            val resultBody = mapOf(
+                    "results" to "4",
+                    "potatoes" to "yes",
+                    "solverId" to "1"
+            )
+            val msg = Json.encodeToString(resultBody)
+            rabbitTemplate.send("task_result", Message(msg.toByteArray(), MessageProperties()))
+
         } catch (e: Exception) {
             println("Couldn't send test message to consumer")
             throw e

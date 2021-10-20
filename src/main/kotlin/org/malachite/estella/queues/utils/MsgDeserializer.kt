@@ -12,6 +12,8 @@ import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
+import java.lang.IllegalArgumentException
+import java.lang.NullPointerException
 import java.sql.Timestamp
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
@@ -21,21 +23,25 @@ class MsgDeserializer(
         @Autowired private val taskService: TaskService,
         @Autowired private val taskStageService: TaskStageService) {
 
-        fun toTaskResultSet(msg: String): TaskResult {
-            var decodedMsg = Json.decodeFromString<Map<String, String>>(msg)
-            val task = taskService.getTaskById(decodedMsg["taskId"]!!.toInt()).toTask()
-            val taskStage = taskStageService.getTaskStage(decodedMsg["solverId"] as String)
-            val startTime = if (decodedMsg["startTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["startTime"] as String)
-            val endTime = if (decodedMsg["endTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["endTime"] as String)
-            return TaskResult(null,
-                    SerialBlob(Base64.getEncoder().encode((decodedMsg["results"] as String).encodeToByteArray())),
-                    SerialClob((decodedMsg["code"] as String).toCharArray()),
-                    startTime,
-                    endTime,
-                    task,
-                    taskStage
-            )
-
+        fun toTaskResult(msg: String): TaskResult? {
+            try {
+                val decodedMsg = Json.decodeFromString<Map<String, String>>(msg)
+                val taskStage = taskStageService.getTaskStage(decodedMsg["solverId"] as String)
+                val task = taskService.getTaskById(decodedMsg["taskId"]!!.toInt()).toTask()
+                val startTime = if (decodedMsg["startTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["startTime"] as String)
+                val endTime = if (decodedMsg["endTime"].equals("null")) null else Timestamp.valueOf(decodedMsg["endTime"] as String)
+                return TaskResult(null,
+                        SerialBlob(Base64.getEncoder().encode((decodedMsg["results"] as String).encodeToByteArray())),
+                        SerialClob((decodedMsg["code"] as String).toCharArray()),
+                        startTime,
+                        endTime,
+                        task,
+                        taskStage
+                )
+            } catch (ex: Exception) {
+                println("DBG: Bad request. Couldn't parse msg to TaskResult: $msg")
+                return null
+            }
         }
 
 
