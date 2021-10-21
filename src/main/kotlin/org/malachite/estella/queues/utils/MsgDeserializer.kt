@@ -1,43 +1,32 @@
 package org.malachite.estella.queues.utils
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.malachite.estella.commons.models.tasks.TaskResult
-import org.malachite.estella.process.domain.toTask
-import org.malachite.estella.services.TaskService
-import org.malachite.estella.services.TaskStageService
-import org.springframework.beans.factory.annotation.Autowired
-import java.sql.Timestamp
+import org.springframework.stereotype.Component
 import java.util.*
-import javax.sql.rowset.serial.SerialBlob
-import javax.sql.rowset.serial.SerialClob
 
-class MsgDeserializer(
-        @Autowired private val taskService: TaskService,
-        @Autowired private val taskStageService: TaskStageService) {
+@Component
+class MsgDeserializer() {
 
-        fun toTaskResult(msg: String): TaskResult? {
-            try {
-                val based = Base64.getDecoder().decode(msg).decodeToString()
-                val decodedMsg = Json.decodeFromString<Map<String, String>>(based)
-                val taskStage = taskStageService.getTaskStage(decodedMsg["solverId"] as String)
-                val task = taskService.getTaskById(decodedMsg["taskId"]!!.toInt()).toTask()
-                val startTime = decodedMsg["startTime"]?.let { if (it == "null") null else Timestamp.valueOf(it) }?:let { null }
-                val endTime = decodedMsg["endTime"]?.let { if (it == "null") null else Timestamp.valueOf(it) }?:let { null }
-                return TaskResult(null,
-                        SerialBlob(Base64.getEncoder().encode((decodedMsg["results"] as String).encodeToByteArray())),
-                        SerialClob((decodedMsg["code"] as String).toCharArray()),
-                        startTime,
-                        endTime,
-                        task,
-                        taskStage
-                )
+        fun toTaskResultRabbitDTO(msg: String): TaskResultRabbitDTO? {
+            return try {
+                Base64.getDecoder().decode(msg).decodeToString().let { Json.decodeFromString<TaskResultRabbitDTO>(it) }
             } catch (ex: Exception) {
+                ex.printStackTrace()
                 println("DBG: Bad request. Couldn't parse msg to TaskResult: $msg")
-                return null
+                null
             }
         }
 
 
-
 }
+
+@Serializable
+data class TaskResultRabbitDTO(
+        val results: String,
+        val code: String,
+        val startTime: String?,
+        val endTime: String?,
+        val taskId: Int,
+        val solverId: String)

@@ -21,6 +21,7 @@ class TaskController(
     @Autowired private val taskService: TaskService,
     @Autowired private val organizationService: OrganizationService,
 ) {
+
     @CrossOrigin
     @Transactional
     @GetMapping

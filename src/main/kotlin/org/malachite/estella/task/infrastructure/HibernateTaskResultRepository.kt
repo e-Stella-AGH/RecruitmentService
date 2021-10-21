@@ -6,5 +6,4 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface HibernateTaskResultRepository: CrudRepository<TaskResult, Int>, TaskResultRepository {
-}
+interface HibernateTaskResultRepository: CrudRepository<TaskResult, Int>, TaskResultRepository
