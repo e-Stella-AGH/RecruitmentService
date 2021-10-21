@@ -2,8 +2,7 @@ package org.malachite.estella.queue
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
@@ -30,6 +29,7 @@ import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
 
 @DatabaseReset
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class TaskResultTest : BaseIntegration() {
     @Autowired
     lateinit var rabbitTemplate: RabbitTemplate
@@ -77,6 +77,7 @@ class TaskResultTest : BaseIntegration() {
     }
 
     @Test
+    @Order(1)
     fun `task result consuming`() {
         expectThat(taskStage.tasksResult.size).isEqualTo(0)
 
@@ -90,6 +91,7 @@ class TaskResultTest : BaseIntegration() {
     }
 
     @Test
+    @Order(2)
     fun `task bad message format consuming`() {
         expectThat(taskStage.tasksResult.size).isEqualTo(0)
 
@@ -100,39 +102,52 @@ class TaskResultTest : BaseIntegration() {
         }
     }
 
+    @Test
+    @Order(2)
+    fun `task bad message parameter consuming`() {
+        expectThat(taskStage.tasksResult.size).isEqualTo(0)
 
-    fun publish(result: TaskResult) {
-        try {
-            val resultBody = mapOf(
-                    "results" to String(result.results.binaryStream.readAllBytes()),
-                    "code" to result.code.characterStream.readText(),
-                    "startTime" to result.startTime.toString(),
-                    "endTime" to result.endTime.toString(),
-                    "solverId" to result.taskStage.id!!.toString(),
-                    "taskId" to result.task.id!!.toString()
-            )
-            val msg = Json.encodeToString(resultBody)
-            rabbitTemplate.send("task_result", Message(Base64.getEncoder().encode(msg.toByteArray())
-                    , MessageProperties()))
-        } catch (e: Exception) {
-            println("Couldn't send test message to consumer")
-            throw e
+        publishWithMistake()
+
+        coolDown {
+            expectThat(taskStage.tasksResult.size).isEqualTo(0)
         }
     }
 
-    fun badPublish() {
-        try {
-            val resultBody = mapOf(
-                    "results" to "4",
-                    "potatoes" to "yes",
-                    "solverId" to "1"
-            )
-            val msg = Json.encodeToString(resultBody)
-            rabbitTemplate.send("task_result", Message(msg.toByteArray(), MessageProperties()))
 
-        } catch (e: Exception) {
-            println("Couldn't send test message to consumer")
-            throw e
-        }
+    fun publish(result: TaskResult) {
+        val resultBody = mapOf(
+                "results" to String(result.results.binaryStream.readAllBytes()),
+                "code" to result.code.characterStream.readText(),
+                "startTime" to result.startTime.toString(),
+                "endTime" to result.endTime.toString(),
+                "solverId" to result.taskStage.id!!.toString(),
+                "taskId" to result.task.id!!.toString()
+        )
+        send(resultBody)
+
+    }
+
+    fun badPublish() {
+        val resultBody = mapOf(
+                "results" to "4",
+                "potatoes" to "yes",
+                "solverId" to "1"
+        )
+        send(resultBody)
+    }
+
+    fun publishWithMistake() {
+        // missing solverId
+        val resultBody = mapOf(
+                "results" to "xd",
+                "code" to "xd",
+                "taskId" to "4"
+        )
+        send(resultBody)
+    }
+
+    private fun send(msg: Map<String, String>) = Json.encodeToString(msg).let {
+        rabbitTemplate.send("task_result", Message(Base64.getEncoder().encode(it.toByteArray()), MessageProperties()))
     }
 }

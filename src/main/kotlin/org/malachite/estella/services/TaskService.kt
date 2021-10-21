@@ -6,16 +6,20 @@ import kotlinx.serialization.json.Json
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.process.domain.toTaskDto
+import org.malachite.estella.queues.utils.TaskResultRabbitDTO
 import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
+import javax.sql.rowset.serial.SerialClob
 
 
 @Service
@@ -92,6 +96,22 @@ class TaskService(
                     it.copy(tests = SerialBlob(Base64.getEncoder().encode(tests.toString().encodeToByteArray())))
                 )
             }
+
+    fun addResult(result: TaskResultRabbitDTO) {
+        val taskStage = taskStageService.getTaskStage(result.solverId)
+        val task = getTaskById(result.taskId).toTask()
+        val startTime = result.startTime?.let { if (it == "null") null else Timestamp.valueOf(it) } ?: let { null }
+        val endTime = result.endTime?.let { if (it == "null") null else Timestamp.valueOf(it) } ?: let { null }
+
+        taskStageService.addResult(TaskResult(null,
+                SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
+                SerialClob(result.solverId.toCharArray()),
+                startTime,
+                endTime,
+                task,
+                taskStage
+        ))
+    }
 
 
     private fun checkTestsFormat(tests: String) = try {

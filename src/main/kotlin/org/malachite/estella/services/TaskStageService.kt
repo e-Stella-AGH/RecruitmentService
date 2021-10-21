@@ -15,16 +15,14 @@ import java.util.*
 @Service
 class TaskStageService(
         @Autowired private val taskStageRepository: TaskStageRepository,
-        @Autowired private val taskResultRepository: TaskResultRepository,
-        @Autowired private val organizationService: OrganizationService,
-        @Autowired private val securityService: SecurityService
+        @Autowired private val taskResultRepository: TaskResultRepository
 ) : EStellaService<TaskStage>() {
     override val throwable: Exception = TaskStageNotFoundException()
 
 
     fun createTaskStage(applicationStage: ApplicationStageData, interview: Interview?): TaskStage =
-        TaskStage(null, listOf(), applicationStage)
-            .let { taskStageRepository.save(it) }
+            TaskStage(null, listOf(), applicationStage)
+                    .let { taskStageRepository.save(it) }
 
     fun getTaskStage(taskStageId: UUID) = withExceptionThrower { taskStageRepository.findById(taskStageId).get() }
 
