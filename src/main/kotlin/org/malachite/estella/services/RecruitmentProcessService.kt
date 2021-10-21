@@ -4,7 +4,6 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.process.domain.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -102,22 +101,32 @@ class RecruitmentProcessService(
         val userFromJWT = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
         assertCanPerformOperation(process, userFromJWT)
-        if (process.isStarted()) throw ProcessAlreadyStartedException(processId)
-        if (process.startDate == null && Date.from(Instant.now()).after(endDate)) throw InvalidEndDateException()
-        if (process.startDate?.after(endDate) == true) throw InvalidEndDateException()
+        if (Date.from(Instant.now()).after(endDate) || process.startDate?.after(endDate) == true) throw InvalidDateException()
         recruitmentProcessRepository.save(process.copy(endDate = endDate))
     }
 
     fun startProcess(processId: Int) {
         val user = securityService.getHrPartnerFromContext()
         val process = getProcess(processId)
-        if (process.startDate != null) throw ProcessAlreadyStartedException(processId)
         assertCanPerformOperation(process, user)
+        if (processWasAlreadyStarted(process)) throw ProcessAlreadyStartedException(processId)
         recruitmentProcessRepository.save(process.copy(startDate = Date(Date.from(Instant.now()).time)))
     }
 
+    private fun processWasAlreadyStarted(process: RecruitmentProcess) =
+        process.startDate != null && process.startDate.before(Date.from(Instant.now()))
+
     private fun assertCanPerformOperation(process: RecruitmentProcess, user: HrPartner?) {
         if (process.offer.creator.id != user?.id) throw UnauthenticatedException()
+    }
+
+    fun updateStartDate(processId: Int, startDate: Date) {
+        val userFromJWT = securityService.getHrPartnerFromContext()
+        val process = getProcess(processId)
+        assertCanPerformOperation(process, userFromJWT)
+        if (process.isStarted()) throw ProcessAlreadyStartedException(processId)
+        if (Date.from(Instant.now()).after(startDate)) throw InvalidDateException()
+        recruitmentProcessRepository.save(process.copy(startDate = startDate))
     }
 
 }

@@ -80,4 +80,13 @@ class RecruitmentProcessController(
     ) = processService.startProcess(processId).let {
         OwnResponses.SUCCESS
     }
+
+    @CrossOrigin
+    @PutMapping("/{processId}/start_date")
+    fun scheduleProcess(
+        @PathVariable("processId") processId: Int,
+        @RequestBody dateRequest: DateRequest
+    ) = processService.updateStartDate(processId, dateRequest.date).let {
+        OwnResponses.SUCCESS
+    }
 }

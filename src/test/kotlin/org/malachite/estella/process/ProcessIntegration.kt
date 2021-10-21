@@ -1,15 +1,11 @@
 package org.malachite.estella.process
 
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.people.domain.HrPartnerRepository
 import org.malachite.estella.process.domain.RecruitmentProcessDto
@@ -19,7 +15,8 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expect
 import strikt.api.expectThat
-import strikt.assertions.*
+import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import java.sql.Date
 import java.time.Instant
 import java.time.LocalDate
@@ -152,12 +149,12 @@ class ProcessIntegration: BaseIntegration() {
         val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(process).isNotNull()
         process!!
-        val response = changeProcessEndDate("01.01.2022", process.id!!)
+        val response = changeProcessEndDate("01.01.2023", process.id!!)
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val updatedProcess = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         expectThat(updatedProcess).isNotNull()
         updatedProcess!!
-        expectThat(updatedProcess.endDate?.toLocalDate()).isEqualTo(LocalDate.of(2022, 1, 1))
+        expectThat(updatedProcess.endDate?.toLocalDate()).isEqualTo(LocalDate.of(2023, 1, 1))
     }
 
     @Test
@@ -172,6 +169,27 @@ class ProcessIntegration: BaseIntegration() {
 
     @Test
     @Order(9)
+    fun `should be able to schedule start of process`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        process!!
+
+        val response = httpRequest(
+            path = "/api/process/${process.id}/start_date",
+            method = HttpMethod.PUT,
+            body = mapOf(
+                "date" to "01.01.2023"
+            ),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(getHrPartnerMail()))
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }.let {
+            expectThat(it?.startDate?.toLocalDate()).isEqualTo(LocalDate.of(2023, 1, 1))
+        }
+    }
+
+    @Test
+    @Order(10)
     fun `should be able to start process`() {
         val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
         process!!
@@ -189,17 +207,13 @@ class ProcessIntegration: BaseIntegration() {
     }
 
     @Test
-    @Order(10)
+    @Order(11)
     fun `should not be able to modify process in any way after it was started`() {
         val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
 
         process!!
 
         val errorMessage = "Process with id: ${process.id} has already been started, therefore it cannot be modified anymore!"
-
-        changeProcessEndDate("01.01.2022", process.id!!).let {
-            assertError(it, errorMessage)
-        }
 
         listOf("APPLIED", "HR_INTERVIEW", "HR_INTERVIEW", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED").let {
             updateProcesses(process.id, it, process.offer.creator.user.mail)
@@ -214,6 +228,17 @@ class ProcessIntegration: BaseIntegration() {
     private fun assertError(response: Response, errorMessage: String) {
         expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
         expectThat((response.body as Map<String, Any>)["message"]).isEqualTo(errorMessage)
+    }
+
+    @Test
+    @Order(12)
+    fun `should be able to change end date even if process was already started`() {
+        val process = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        val response = changeProcessEndDate("01.03.2023", process!!.id!!)
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+
+        val updated = getProcesses().firstOrNull { it.offer.creator.user.mail == getHrPartnerMail() }
+        expectThat(updated?.endDate?.toLocalDate()).isEqualTo(LocalDate.of(2023, 3, 1))
     }
 
     private fun changeProcessEndDate(date: String, id: Int) =

@@ -17,9 +17,9 @@ class ProcessExceptionHandler {
     fun handleInvalidStagesListException(ex: InvalidStagesListException) =
         ResponseEntity.badRequest().body(Message(ex.error))
 
-    @ExceptionHandler(InvalidEndDateException::class)
-    fun handleInvalidEndDateException(ex: InvalidEndDateException) =
-        ResponseEntity.badRequest().body(Message("Date you provided is before start date of process!"))
+    @ExceptionHandler(InvalidDateException::class)
+    fun handleInvalidEndDateException(ex: InvalidDateException) =
+        ResponseEntity.badRequest().body(Message("Date you provided validates logic (either before now or before start of process)!"))
 
     @ExceptionHandler(ProcessAlreadyStartedException::class)
     fun handleInvalidEndDateException(ex: ProcessAlreadyStartedException) =
