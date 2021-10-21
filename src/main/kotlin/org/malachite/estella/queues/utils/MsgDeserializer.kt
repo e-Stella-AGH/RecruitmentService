@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class MsgDeserializer() {
+class MsgDeserializer {
 
         fun toTaskResultRabbitDTO(msg: String): TaskResultRabbitDTO? {
             return try {
