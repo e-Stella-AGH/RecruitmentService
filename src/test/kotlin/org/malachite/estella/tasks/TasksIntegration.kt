@@ -8,6 +8,7 @@ import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
@@ -43,6 +44,9 @@ class TasksIntegration : BaseIntegration() {
 
     @Autowired
     private lateinit var securityService: SecurityService
+
+    @Autowired
+    private lateinit var recruitmentProcessService: RecruitmentProcessService
 
     @Autowired
     private lateinit var jobSeekerRepository: HibernateJobSeekerRepository
@@ -152,7 +156,32 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
+    @Transactional
     @Order(5)
+    fun `should be able to get task from taskStage`() {
+        val applicationStage = getApplication().applicationStages.last()
+        val organization = recruitmentProcessService.getProcessFromStage(applicationStage).offer.creator.organization
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+
+        val response = httpRequest(
+            path = "/api/tasks?taskStage=${applicationStage.tasksStage!!.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to password)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expect {
+            val tasksDto = (response.body as List<Map<String, Any>>).toTaskDto()
+            that(tasksDto.size).isEqualTo(2)
+            that(tasksDto)
+                .map { it.toAssertionTaskDto() }
+                .any {
+                    isEqualTo(AssertionTaskDto(encodedFile, descriptionFileName, encodedFile, timeLimit))
+                }
+        }
+    }
+
+    @Test
+    @Order(6)
     fun `should send unauthorized for bad password get tasks`() {
         val organization = organizationRepository.findAll().first()
         val response = httpRequest(
@@ -164,7 +193,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     fun `should send 400`() {
         val response = httpRequest(
             path = "/api/tasks",

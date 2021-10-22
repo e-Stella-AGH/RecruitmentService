@@ -27,6 +27,7 @@ class TaskService(
     @Autowired private val taskRepository: TaskRepository,
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val taskStageService: TaskStageService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Task>() {
 
@@ -45,9 +46,13 @@ class TaskService(
             .tasks
             .map { it.toTaskDto() }
 
-    fun getTasksByTasksStage(tasksStageId: String) =
-        taskStageService.getTaskStage(tasksStageId)
-                .tasksResult.map { it.task.toTaskDto() }
+    fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
+        val taskStage = taskStageService.getTaskStage(tasksStageId)
+        val organizationUuid = recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
+        checkDevPassword(organizationUuid, password)
+        return taskStage.tasksResult.map { it.task.toTaskDto() }
+    }
+
 
     fun getTaskById(taskId: Int) =
         withExceptionThrower { taskRepository.findById(taskId).get() }
@@ -100,8 +105,12 @@ class TaskService(
     fun addResult(result: TaskResultRabbitDTO) {
         val taskStage = taskStageService.getTaskStage(result.solverId)
         val task = getTaskById(result.taskId).toTask()
-        val startTime = result.startTime?.let { if (it == "null") null else Timestamp.valueOf(it) } ?: let { null }
-        val endTime = result.endTime?.let { if (it == "null") null else Timestamp.valueOf(it) } ?: let { null }
+        val startTime = result.startTime
+                ?.takeIf { it != "null" }
+                ?.let { Timestamp.valueOf(it) }
+        val endTime = result.endTime
+                ?.takeIf { it != "null" }
+                ?.let { Timestamp.valueOf(it) }
 
         taskStageService.addResult(TaskResult(null,
                 SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),

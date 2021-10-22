@@ -36,9 +36,8 @@ class RabbitMqConsumers(
                         taskService.addResult(it)
                         channel.basicAck(tag, false)
                     }
-                    ?: let {
-                        channel.basicNack(tag, false, false)
-                    }
+                    ?: channel.basicNack(tag, false, false)
+
 
     //add other consumers
 
