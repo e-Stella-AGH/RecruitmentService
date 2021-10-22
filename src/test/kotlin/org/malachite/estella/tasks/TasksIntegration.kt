@@ -3,6 +3,7 @@ package org.malachite.estella.tasks
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
+import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
@@ -41,6 +42,9 @@ class TasksIntegration : BaseIntegration() {
 
     @Autowired
     private lateinit var applicationRepository: ApplicationRepository
+
+    @Autowired
+    private lateinit var applicationStageRepository: ApplicationStageRepository
 
     @Autowired
     private lateinit var securityService: SecurityService
@@ -159,8 +163,9 @@ class TasksIntegration : BaseIntegration() {
     @Transactional
     @Order(5)
     fun `should be able to get task from taskStage`() {
-        val applicationStage = getApplication().applicationStages.last()
-        val organization = recruitmentProcessService.getProcessFromStage(applicationStage).offer.creator.organization
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = applicationStageRepository.findAll()
+                .first { recruitmentProcessService.getProcessFromStage(it).offer.creator.organization == organization }
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
 
         val response = httpRequest(
