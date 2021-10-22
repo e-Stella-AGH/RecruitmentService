@@ -5,7 +5,6 @@ import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,13 +33,8 @@ class TaskController(
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
-<<<<<<< HEAD
                     taskService.checkDevPassword(it, password)
                             .getTasksByOrganizationUuid(it)
-=======
-                    taskService.checkDevPassword(organizationUuid, password)
-                            .getTasksByOrganizationUuid(organizationUuid)
->>>>>>> a0f69a82e9c85242e0a7a304973df64e7707ad27
                 }
                 ?: taskStageUuid
                         ?.let { taskService.getTasksByTasksStage(it, password) }!!
