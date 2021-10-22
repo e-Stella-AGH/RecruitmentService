@@ -140,8 +140,14 @@ class InterviewIntegration : BaseIntegration() {
     @Test
     @Order(4)
     fun `should return interview with later date when new date is set`() {
-        var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf(), setOf())
+        var interview = Interview(
+                null,
+                Timestamp.valueOf(LocalDateTime.MIN),
+                null,
+                applicationStageData,
+                setOf(),
+                setOf()
+        )
         interviewRepository.save(interview)
         interview =
             Interview(null, Timestamp.valueOf(LocalDateTime.now()), null, applicationStageData, setOf(), setOf())

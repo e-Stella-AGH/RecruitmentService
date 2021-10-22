@@ -103,7 +103,7 @@ class TaskResultTest : BaseIntegration() {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     fun `task bad message parameter consuming`() {
         expectThat(taskStage.tasksResult.size).isEqualTo(0)
 

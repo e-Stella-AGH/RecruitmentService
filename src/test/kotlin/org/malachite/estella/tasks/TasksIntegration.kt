@@ -152,7 +152,32 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
+    @Transactional
     @Order(5)
+    fun `should be able to get task from taskStage`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.last()
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+
+        val response = httpRequest(
+            path = "/api/tasks?taskStage=${applicationStage.tasksStage!!.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to password)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expect {
+            val tasksDto = (response.body as List<Map<String, Any>>).toTaskDto()
+            that(tasksDto.size).isEqualTo(2)
+            that(tasksDto)
+                .map { it.toAssertionTaskDto() }
+                .any {
+                    isEqualTo(AssertionTaskDto(encodedFile, descriptionFileName, encodedFile, timeLimit))
+                }
+        }
+    }
+
+    @Test
+    @Order(6)
     fun `should send unauthorized for bad password get tasks`() {
         val organization = organizationRepository.findAll().first()
         val response = httpRequest(
@@ -164,7 +189,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     fun `should send 400`() {
         val response = httpRequest(
             path = "/api/tasks",

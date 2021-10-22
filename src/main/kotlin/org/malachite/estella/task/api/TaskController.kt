@@ -18,31 +18,41 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/tasks")
 class TaskController(
-    @Autowired private val taskService: TaskService,
-    @Autowired private val organizationService: OrganizationService,
+        @Autowired private val taskService: TaskService,
+        @Autowired private val organizationService: OrganizationService,
 ) {
 
     @CrossOrigin
     @Transactional
     @GetMapping
-    fun getTaskByRecruitmentProcess(
-        @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.devPassword) password: String
-    ): ResponseEntity<List<TaskDto>> =
-        taskService.checkDevPassword(organizationUuid, password)
-            .getTasksByOrganizationUuid(organizationUuid)
-            .let { ResponseEntity.ok(it) }
+    fun getTasks(
+            @RequestParam("owner", required = false) organizationUuid: String?,
+            @RequestParam("taskStage", required = false) taskStageUuid: String?,
+            @RequestHeader(EStellaHeaders.devPassword) password: String
+    ): ResponseEntity<Any> {
+        if ((organizationUuid == null && taskStageUuid == null) || (organizationUuid != null && taskStageUuid != null))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
+        val tasks: List<TaskDto> = organizationUuid
+                ?.let {
+                    taskService.checkDevPassword(organizationUuid, password)
+                            .getTasksByOrganizationUuid(organizationUuid)
+                }
+                ?: taskStageUuid
+                        ?.let { taskService.getTasksByTasksStage(it, password) }!!
+       return ResponseEntity.ok(tasks)
+    }
+
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @GetMapping("/{taskId}")
     fun getTaskById(
-        @RequestParam("owner") organizationUuid: String,
-        @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.devPassword) password: String
+            @RequestParam("owner") organizationUuid: String,
+            @PathVariable taskId: Int,
+            @RequestHeader(EStellaHeaders.devPassword) password: String
     ) =
-        ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) /*taskService.getTaskById(taskId)
+            ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) /*taskService.getTaskById(taskId)
         .let { ResponseEntity.ok(it) }*/
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
@@ -50,11 +60,11 @@ class TaskController(
     @Transactional
     @GetMapping("/{taskId}/tests")
     fun getTaskTests(
-        @RequestParam("owner") organizationUuid: String,
-        @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.devPassword) password: String
+            @RequestParam("owner") organizationUuid: String,
+            @PathVariable taskId: Int,
+            @RequestHeader(EStellaHeaders.devPassword) password: String
     ) =
-        ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
+            ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
     /*taskService.getTestsFromTask(taskId)
         .let { ResponseEntity.ok(it) } */
 
@@ -62,25 +72,25 @@ class TaskController(
     @Transactional
     @PostMapping
     fun addTask(
-        @RequestParam("owner") organizationUuid: String,
-        @RequestHeader(EStellaHeaders.devPassword) password: String,
-        @RequestBody task: TaskDto
+            @RequestParam("owner") organizationUuid: String,
+            @RequestHeader(EStellaHeaders.devPassword) password: String,
+            @RequestBody task: TaskDto
     ) = taskService.checkDevPassword(organizationUuid, password).addTask(task)
-        .let { organizationService.updateTasks(organizationUuid, setOf(it)) }
-        .let { OwnResponses.SUCCESS }
+            .let { organizationService.updateTasks(organizationUuid, setOf(it)) }
+            .let { OwnResponses.SUCCESS }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
     @Transactional
     @PutMapping("/{taskId}/tests/file")
     fun setTestsWithFile(
-        @RequestParam("owner") organizationUuid: String,
-        @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.devPassword) password: String,
-        @RequestBody testsBase64: String
+            @RequestParam("owner") organizationUuid: String,
+            @PathVariable taskId: Int,
+            @RequestHeader(EStellaHeaders.devPassword) password: String,
+            @RequestBody testsBase64: String
     ) = ResponseEntity(
-        Message("Not Implemented"),
-        HttpStatus.NOT_IMPLEMENTED
+            Message("Not Implemented"),
+            HttpStatus.NOT_IMPLEMENTED
     ) //taskService.setTests(taskId, testsBase64)
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
@@ -88,10 +98,10 @@ class TaskController(
     @Transactional
     @PutMapping("/{taskId}/tests/object")
     fun setTestsWithObject(
-        @RequestParam("owner") organizationUuid: String,
-        @PathVariable taskId: Int,
-        @RequestHeader(EStellaHeaders.devPassword) password: String,
-        @RequestBody tests: List<TaskTestCaseDto>
+            @RequestParam("owner") organizationUuid: String,
+            @PathVariable taskId: Int,
+            @RequestHeader(EStellaHeaders.devPassword) password: String,
+            @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 
 }
