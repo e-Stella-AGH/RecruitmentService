@@ -9,7 +9,9 @@ import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.NoteRepository
+import org.malachite.estella.interview.domain.TagRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -20,7 +22,7 @@ class ApplicationStageDataService(
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val interviewService: InterviewService,
-    @Autowired private val noteRepository: NoteRepository,
+    @Autowired private val noteService: NoteService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
@@ -60,11 +62,10 @@ class ApplicationStageDataService(
         }
 
 
-    fun setNotesToInterview(id: UUID, password: String, notes: Set<Note> ) {
+    fun setNotesToInterview(id: UUID, password: String, notes: Set<NotesFilePayload> ) {
         if (!canDevUpdate(id, password)) throw UnauthenticatedException()
         val interview = interviewService.getInterview(id)
-        val savedNotes = mutableSetOf<Note>()
-        notes.forEach { savedNotes.add(noteRepository.save(it)) }
+        val savedNotes = noteService.updateNotes(notes)
         applicationStageRepository.save(interview.applicationStage.copy(notes = savedNotes))    }
 
     private fun canDevUpdate(id: UUID?, password: String): Boolean {

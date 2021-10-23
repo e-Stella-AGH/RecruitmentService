@@ -302,7 +302,7 @@ class InterviewIntegration : BaseIntegration() {
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
         val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val notes = setOf(NotesFilePayload(null, noteA), NotesFilePayload(null, noteB))
+        val notes = setOf(NotesFilePayload(null,noteA,setOf("Git"),"test@test.com"), NotesFilePayload(null, noteB,setOf("Git"),"test@test.com"))
         val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
         var response = httpRequest(
@@ -319,8 +319,8 @@ class InterviewIntegration : BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.applicationStage.notes.size).isEqualTo(2)
-        val interviewNoteA = interview.applicationStage.notes.elementAt(0).note.characterStream.readText()
-        val interViewNoteB = interview.applicationStage.notes.elementAt(1).note.characterStream.readText()
+        val interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
+        val interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
 
         expectThat(listOf(this.noteA, this.noteB))
             .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB))
@@ -336,7 +336,7 @@ class InterviewIntegration : BaseIntegration() {
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
         val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val notes = setOf(NotesFilePayload(null, noteA), NotesFilePayload(null, noteB))
+        val notes = setOf(NotesFilePayload(null,noteA,setOf("Git"),"test@test.com"), NotesFilePayload(null, noteB,setOf("Git"),"test@test.com"))
         val badPassword = "xd"
 
         var response = httpRequest(

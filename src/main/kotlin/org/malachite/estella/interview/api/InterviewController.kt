@@ -72,17 +72,14 @@ class InterviewController(
         applicationStageDataService.setNotesToInterview(
             meetingId.toUUID(),
             password,
-            notes.notes.map { it.toNotes() }.toSet()
+            notes.notes
         ).let { OwnResponses.SUCCESS }
-
-    fun NotesFilePayload.toNotes() =
-        Note(this.id, SerialClob(String(Base64.getDecoder().decode(this.fileBase64)).toCharArray()))
 
 }
 
 
 data class JobseekerName(val firstName: String?, val lastName: String?)
-data class NotesFilePayload(val id: Int?, val fileBase64: String)
+data class NotesFilePayload(val id: Int?, val fileBase64: String, val tags: Set<String>, val author:String)
 data class MeetingNotes(val notes: Set<NotesFilePayload>)
 data class MeetingHosts(val hostsMails: List<String>)
 data class MeetingDate(val dateTime: Timestamp)

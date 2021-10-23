@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface HibernateInterviewNoteRepository: CrudRepository<Note, Int>, NoteRepository {
+interface HibernateNoteRepository: CrudRepository<Note, Int>, NoteRepository {
 }
