@@ -5,7 +5,7 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
-import org.malachite.estella.commons.models.interviews.InterviewNote
+import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -22,15 +22,13 @@ class InterviewService(
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val mailService: MailService,
     @Autowired private val hrPartnerService: HrPartnerService,
-    @Autowired private val offerService: OfferService,
-    @Autowired private val interviewNoteRepository: InterviewNoteRepository,
     @Autowired private val securityService: SecurityService
 ): EStellaService<Interview>() {
     override val throwable: Exception = InterviewNotFoundException()
 
     fun createInterview(applicationStage: ApplicationStageData, payload: InterviewPayload = InterviewPayload()): Interview {
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
-        return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, listOf(), setOf()).let {
+        return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, listOf()).let {
             interviewRepository.save(it)
         }.also { mailService.sendInterviewInvitationMail(offer, it) }
     }
@@ -79,14 +77,6 @@ class InterviewService(
 
     }
 
-    fun setNotes(id: UUID, password: String, notes: Set<InterviewNote> ) {
-        if (!canDevUpdate(id, password)) throw UnauthenticatedException()
-        val savedNotes = mutableSetOf<InterviewNote>()
-        notes.forEach { savedNotes.add(interviewNoteRepository.save(it)) }
-        val interview = getInterview(id)
-        interviewRepository.save(interview.copy(notes = savedNotes))
-
-    }
 
     private fun canHrUpdate(id: UUID?): Boolean {
         val userDetails = securityService.getUserDetailsFromContext()
@@ -103,15 +93,6 @@ class InterviewService(
         return false
     }
 
-    private fun canDevUpdate(id: UUID?, password: String): Boolean {
-        id?: let { return false }
-        id.let {
-            val organization = recruitmentProcessService
-                    .getProcessFromStage(getInterview(it).applicationStage)
-                    .offer.creator.organization
-            return securityService.compareOrganizationWithPassword(organization, password)
-        }
-    }
 
     private fun getAllByApplicationId(applicationId: Int): List<Interview> = interviewRepository
             .findAll()

@@ -3,18 +3,25 @@ package org.malachite.estella.services
 import org.malachite.estella.aplication.domain.ApplicationNotFoundException
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.interview.domain.NoteRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class ApplicationStageDataService(
     @Autowired private val applicationStageRepository: ApplicationStageRepository,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val interviewService: InterviewService,
+    @Autowired private val noteRepository: NoteRepository,
+    @Autowired private val securityService: SecurityService
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
 
@@ -24,7 +31,8 @@ class ApplicationStageDataService(
             recruitmentStage,
             application,
             null,
-            null
+            null,
+            setOf()
         ).let { applicationStageRepository.save(it) }
         val taskAndInterview = getTaskStageAndInterview(recruitmentStage, applicationStage)
         return applicationStage.copy(
@@ -51,4 +59,21 @@ class ApplicationStageDataService(
             else -> Pair(null, null)
         }
 
+
+    fun setNotesToInterview(id: UUID, password: String, notes: Set<Note> ) {
+        if (!canDevUpdate(id, password)) throw UnauthenticatedException()
+        val interview = interviewService.getInterview(id)
+        val savedNotes = mutableSetOf<Note>()
+        notes.forEach { savedNotes.add(noteRepository.save(it)) }
+        applicationStageRepository.save(interview.applicationStage.copy(notes = savedNotes))    }
+
+    private fun canDevUpdate(id: UUID?, password: String): Boolean {
+        id?: let { return false }
+        id.let {
+            val organization = recruitmentProcessService
+                .getProcessFromStage(interviewService.getInterview(it).applicationStage)
+                .offer.creator.organization
+            return securityService.compareOrganizationWithPassword(organization, password)
+        }
+    }
 }
