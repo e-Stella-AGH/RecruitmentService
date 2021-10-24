@@ -21,6 +21,7 @@ class TaskController(
         @Autowired private val organizationService: OrganizationService,
 ) {
 
+    @Deprecated("Not tested yet - draft implementation, should be tested as part of ES-162")
     @CrossOrigin
     @Transactional
     @GetMapping

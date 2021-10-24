@@ -44,13 +44,7 @@ class TasksIntegration : BaseIntegration() {
     private lateinit var applicationRepository: ApplicationRepository
 
     @Autowired
-    private lateinit var applicationStageRepository: ApplicationStageRepository
-
-    @Autowired
     private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var recruitmentProcessService: RecruitmentProcessService
 
     @Autowired
     private lateinit var jobSeekerRepository: HibernateJobSeekerRepository
@@ -160,33 +154,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Transactional
     @Order(5)
-    fun `should be able to get task from taskStage`() {
-        val organization = organizationRepository.findAll().first()
-        val applicationStage = applicationStageRepository.findAll()
-                .first { recruitmentProcessService.getProcessFromStage(it).offer.creator.organization == organization }
-        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-
-        val response = httpRequest(
-            path = "/api/tasks?taskStage=${applicationStage.tasksStage!!.id}",
-            method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.devPassword to password)
-        )
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        expect {
-            val tasksDto = (response.body as List<Map<String, Any>>).toTaskDto()
-            that(tasksDto.size).isEqualTo(2)
-            that(tasksDto)
-                .map { it.toAssertionTaskDto() }
-                .any {
-                    isEqualTo(AssertionTaskDto(encodedFile, descriptionFileName, encodedFile, timeLimit))
-                }
-        }
-    }
-
-    @Test
-    @Order(6)
     fun `should send unauthorized for bad password get tasks`() {
         val organization = organizationRepository.findAll().first()
         val response = httpRequest(
@@ -198,7 +166,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(7)
+    @Order(6)
     fun `should send 400`() {
         val response = httpRequest(
             path = "/api/tasks",
