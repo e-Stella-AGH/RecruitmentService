@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
@@ -11,6 +12,7 @@ import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
+import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.hrPartners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
@@ -55,6 +57,7 @@ class TasksIntegration : BaseIntegration() {
 
 
     fun onStart(){
+        startOffer(getOffer())
         applicationId =
             (applyForOffer(getJobSeeker(), password, getOffer()).body as Map<String, Any>).toApplicationDTO().id!!
         updateStage(applicationId, hrPartner.user.mail, password)
@@ -64,6 +67,11 @@ class TasksIntegration : BaseIntegration() {
 
     fun getApplication() =
         applicationRepository.findAll()[0]
+
+    @BeforeEach
+    fun setup() {
+        EmailServiceStub.stubForSendEmail()
+    }
 
     @Test
     @Transactional
@@ -172,6 +180,14 @@ class TasksIntegration : BaseIntegration() {
             headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    private fun startOffer(offer: Offer) {
+        httpRequest(
+            path = "/api/process/${offer.id}/start",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a"))
+        )
     }
 
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))

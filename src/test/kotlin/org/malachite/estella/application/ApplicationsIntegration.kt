@@ -1,9 +1,6 @@
 package org.malachite.estella.application
 
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
@@ -38,10 +35,14 @@ class ApplicationsIntegration : BaseIntegration() {
     @Autowired
     private lateinit var offerRepository: HibernateOfferRepository
 
-
     @Test
     @Order(1)
     fun `should be able to apply for offer as logged in user`() {
+
+        //@BeforeAll has to be static and I cannot get offerRepository (which I need to get offer id from to companion object)
+        startProcess(getOffer(0).id!!).let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
+        startProcess(getOffer(1).id!!).let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
+
         EmailServiceStub.stubForSendEmail()
 
         val offer = getOffer()
@@ -56,6 +57,7 @@ class ApplicationsIntegration : BaseIntegration() {
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val responseBody = (response.body as Map<String, Any>).toApplicationDTO()
+
         val applications = getApplications()
         applications.find { it.id == responseBody.id }.let {
             expectThat(it).isNotNull()
@@ -231,6 +233,47 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(updatedApplication.status).isEqualTo(ApplicationStatus.REJECTED)
     }
 
+    @Test
+    @Order(10)
+    fun `should not be able to apply on an offer that's process hasn't started yet - not logged`() {
+        val offer = getOffer(2)
+
+        httpRequest(
+            path = "/api/applications/apply/${offer.id}/no-user",
+            method = HttpMethod.POST,
+            body = mapOf(
+                "firstName" to "Tolek",
+                "lastName" to "Bolek",
+                "mail" to applicationMail,
+                "files" to setOf(getJobSeekerFilePayload("file2"))
+            )
+        ).let {
+            expectThat(it.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        }
+        getOfferApplications(offer).let {
+            expectThat(it.size).isEqualTo(0)
+        }
+    }
+
+    @Test
+    @Order(11)
+    fun `should not be able to apply on an offer that's process hasn't started yet - logged in user`() {
+        val offer = getOffer(2)
+        val jobSeeker = getJobSeeker()
+
+        httpRequest(
+            path = "/api/applications/apply/${offer.id}/user",
+            method = HttpMethod.POST,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobSeeker.user.mail, password)),
+            body = mapOf("files" to setOf<JobSeekerFilePayload>())
+        ).let {
+            expectThat(it.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+        }
+        getOfferApplications(offer).let {
+            expectThat(it.size).isEqualTo(0)
+        }
+    }
+
     private fun getApplications() =
         httpRequest(
             path = "/api/applications/",
@@ -265,16 +308,34 @@ class ApplicationsIntegration : BaseIntegration() {
 
     }
 
-
     private fun getJobSeeker() = jobSeekerRepository.findAll().first()
 
     private fun getOffer(which: Int = 0) =
         offerRepository.findAll().filter { it.creator.user.mail == hrPartner.user.mail }.get(which)
 
+    private val hrPartner = hrPartners[1]
+
+    private fun startProcess(which: Int) = httpRequest(
+        path = "/api/process/${which}/start",
+        method = HttpMethod.PUT,
+        headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail))
+    )
+
+    private fun getAuthToken(mail: String): String =
+        loginUser(mail).headers!![EStellaHeaders.authToken]!![0]
+
+    private fun loginUser(userMail: String): Response {
+        return httpRequest(
+            path = "/api/users/login",
+            method = HttpMethod.POST,
+            body = mapOf(
+                "mail" to userMail,
+                "password" to "a"
+            )
+        )
+    }
 
     private val applicationMail = "examplemail@application.pl"
     private val password = "a"
-    private val hrPartner = hrPartners[1]
-
 
 }

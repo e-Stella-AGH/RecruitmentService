@@ -72,4 +72,21 @@ class RecruitmentProcessController(
         @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "dd.MM.yyyy")
         val date: Date
     )
+
+    @CrossOrigin
+    @PutMapping("/{processId}/start")
+    fun startProcess(
+        @PathVariable("processId") processId: Int
+    ) = processService.startProcess(processId).let {
+        OwnResponses.SUCCESS
+    }
+
+    @CrossOrigin
+    @PutMapping("/{processId}/start_date")
+    fun scheduleProcess(
+        @PathVariable("processId") processId: Int,
+        @RequestBody dateRequest: DateRequest
+    ) = processService.updateStartDate(processId, dateRequest.date).let {
+        OwnResponses.SUCCESS
+    }
 }

@@ -125,12 +125,29 @@ class OffersIntegration: BaseIntegration() {
         expectThat(deletedOffer).isNull()
     }
 
-    private fun setNewPassword(password: String) {
-        getHrPartner().user.let {
-            it.password = password
-            userRepository.save(it)
+    @Test
+    @Order(4)
+    fun `for job_seeker should only get offers that's processes are started`() {
+        val offers = getOffers().filter { it.creator.user.mail == getHrPartner().user.mail }
+        startProcess(offers[0].id!!)
+
+        val jobSeekerOffers = httpRequest(
+            path = "/api/offers?only_started=true",
+            method = HttpMethod.GET
+        ).let {
+            (it.body as List<Map<String, Any>>).map { it.toOfferResponse() }
+        }
+        expect {
+            that(jobSeekerOffers.size).isEqualTo(1)
+            that(jobSeekerOffers[0].id).isEqualTo(offers[0].id)
         }
     }
+
+    private fun startProcess(processId: Int) = httpRequest(
+        path = "/api/process/$processId/start",
+        headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(getHrPartner().user.mail, "a")),
+        method = HttpMethod.PUT
+    )
 
     private fun getHrPartner() = hrPartnerService.getHrPartners().first()
 

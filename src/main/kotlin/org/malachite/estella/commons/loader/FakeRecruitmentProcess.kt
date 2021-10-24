@@ -16,8 +16,8 @@ object FakeRecruitmentProcess {
     }
 
     data class ProcessPayload(
-        val startDate: Date = Date.valueOf(LocalDate.now().minusDays(getRandomNumber())),
-        val endDate: Date = Date.valueOf(LocalDate.now().plusDays(getRandomNumber())),
+        val startDate: Date? = null,
+        val endDate: Date? = null,
         val recruitmentStages: List<RecruitmentStage>,
         val tasks: List<Task> = listOf(), val quizzes: List<Quiz> = listOf()
     ) {

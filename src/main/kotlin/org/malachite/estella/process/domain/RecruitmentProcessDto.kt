@@ -15,7 +15,7 @@ import javax.sql.rowset.serial.SerialClob
 
 data class RecruitmentProcessDto(
     val id: Int?,
-    val startDate: Date,
+    val startDate: Date?,
     val endDate: Date?,
     val offer: OfferResponse,
     val stages: List<RecruitmentStage>,
