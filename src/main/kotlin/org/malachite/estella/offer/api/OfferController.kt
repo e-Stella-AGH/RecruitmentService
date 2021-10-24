@@ -24,9 +24,9 @@ class OfferController(
         @RequestParam("only_started", required = false) onlyStarted: Boolean
     ): ResponseEntity<List<OfferResponse>> =
         offerService.getOffers()
-            .let {
-                if (onlyStarted) { it.filter { it.recruitmentProcess?.isStarted() == true } }
-                else it
+            .let { offers ->
+                if (onlyStarted) { offers.filter { offer -> offer.recruitmentProcess?.isStarted() == true } }
+                else offers
             }
             .map { it.toOfferResponse() }
             .let { ResponseEntity.ok(it) }

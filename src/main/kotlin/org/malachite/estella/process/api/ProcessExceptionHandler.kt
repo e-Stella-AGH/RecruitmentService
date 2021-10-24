@@ -22,11 +22,11 @@ class ProcessExceptionHandler {
         ResponseEntity.badRequest().body(Message("Date you provided validates logic (either before now or before start of process)!"))
 
     @ExceptionHandler(ProcessAlreadyStartedException::class)
-    fun handleInvalidEndDateException(ex: ProcessAlreadyStartedException) =
+    fun handleProcessAlreadyStartedExcception(ex: ProcessAlreadyStartedException) =
         ResponseEntity.badRequest().body(Message(ex.message!!))
 
     @ExceptionHandler(ProcessNotFoundException::class)
-    fun handleNotFoundException(ex: ProcessNotFoundException) =
+    fun handleProcessNotFoundException(ex: ProcessNotFoundException) =
         ResponseEntity.badRequest().body(Message("Process wasn't found!"))
 
     @ExceptionHandler(ProcessNotStartedException::class)
