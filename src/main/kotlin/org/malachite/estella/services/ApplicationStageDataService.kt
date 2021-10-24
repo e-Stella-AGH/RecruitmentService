@@ -4,14 +4,11 @@ import org.malachite.estella.aplication.domain.ApplicationNotFoundException
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
-import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.interview.api.NotesFilePayload
-import org.malachite.estella.interview.domain.NoteRepository
-import org.malachite.estella.interview.domain.TagRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*

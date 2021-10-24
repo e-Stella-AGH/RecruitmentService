@@ -1,12 +1,9 @@
 package org.malachite.estella.services
 
-import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
-import org.malachite.estella.commons.models.interviews.Note
-import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.interview.domain.*

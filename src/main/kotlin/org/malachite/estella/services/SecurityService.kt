@@ -19,10 +19,8 @@ import org.malachite.estella.security.UserContextDetails
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.crypto.encrypt.Encryptors
 import org.springframework.stereotype.Service
 import java.util.*
-
 
 
 @Service

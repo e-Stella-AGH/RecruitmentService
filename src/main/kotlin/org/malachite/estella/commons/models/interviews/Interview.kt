@@ -1,7 +1,6 @@
 package org.malachite.estella.commons.models.interviews
 
 import org.malachite.estella.commons.models.offers.ApplicationStageData
-import org.malachite.estella.commons.models.tasks.TaskStage
 import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*

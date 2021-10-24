@@ -6,7 +6,9 @@ import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.interviews.Interview
-import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.models.offers.Application
+import org.malachite.estella.commons.models.offers.ApplicationStageData
+import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
