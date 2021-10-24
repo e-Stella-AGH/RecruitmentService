@@ -5,7 +5,6 @@ import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.springframework.beans.factory.annotation.Autowired

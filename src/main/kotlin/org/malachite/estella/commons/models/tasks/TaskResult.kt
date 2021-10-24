@@ -1,6 +1,5 @@
 package org.malachite.estella.commons.models.tasks
 
-import org.malachite.estella.commons.models.offers.Application
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Timestamp

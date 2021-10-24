@@ -2,7 +2,6 @@ package org.malachite.estella.commons.models.tasks
 
 import java.sql.Blob
 import java.sql.Clob
-import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity

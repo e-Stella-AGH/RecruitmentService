@@ -1,7 +1,6 @@
 package org.malachite.estella.aplication.domain
 
 import org.malachite.estella.commons.models.offers.Application
-import org.malachite.estella.commons.models.offers.RecruitmentStage
 import java.util.*
 
 interface ApplicationRepository {
