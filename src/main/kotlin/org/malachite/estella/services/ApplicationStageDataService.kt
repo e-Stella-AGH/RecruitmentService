@@ -62,19 +62,18 @@ class ApplicationStageDataService(
         }
 
 
-    fun setNotesToInterview(id: UUID, password: String, notes: Set<NotesFilePayload> ) {
+    fun setNotesToInterview(id: UUID, password: String, notes: Set<NotesFilePayload>) {
         if (!canDevUpdate(id, password)) throw UnauthenticatedException()
         val interview = interviewService.getInterview(id)
-        val savedNotes = noteService.updateNotes(notes)
-        applicationStageRepository.save(interview.applicationStage.copy(notes = savedNotes))    }
+        val savedNotes = interview.applicationStage.notes.plus(noteService.updateNotes(notes))
+        applicationStageRepository.save(interview.applicationStage.copy(notes = savedNotes))
+    }
 
-    private fun canDevUpdate(id: UUID?, password: String): Boolean {
-        id?: let { return false }
-        id.let {
+    private fun canDevUpdate(id: UUID?, password: String): Boolean =
+        id?.let {
             val organization = recruitmentProcessService
                 .getProcessFromStage(interviewService.getInterview(it).applicationStage)
                 .offer.creator.organization
-            return securityService.compareOrganizationWithPassword(organization, password)
-        }
-    }
+            securityService.compareOrganizationWithPassword(organization, password)
+        } ?: false
 }

@@ -2,11 +2,9 @@ package org.malachite.estella.interview.api
 
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewId
 import org.malachite.estella.interview.domain.toInterviewDTO
-import org.malachite.estella.services.ApplicationService
 import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.InterviewService
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,8 +12,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
-import java.util.*
-import javax.sql.rowset.serial.SerialClob
 
 @RestController
 @RequestMapping("/api/interview")
@@ -44,26 +40,26 @@ class InterviewController(
         interviewService.getLastInterviewFromApplicationId(applicationId).let { ResponseEntity.ok(it.toInterviewDTO()) }
 
     @CrossOrigin
-    @PutMapping("/{meetingId}/set-hosts")
+    @PutMapping("/{meetingId}/set_hosts")
     fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody hosts: MeetingHosts): ResponseEntity<Any> =
         interviewService.setHosts(meetingId.toUUID(), hosts.hostsMails)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @PutMapping("/{meetingId}/set-length")
-    fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody length: MeetingLength): ResponseEntity<Any> =
-        interviewService.setLength(meetingId.toUUID(), length.minutesLength)
+    @PutMapping("/{meetingId}/set_duration")
+    fun setDuration(@PathVariable meetingId: InterviewId, @RequestBody length: MeetingLength): ResponseEntity<Any> =
+        interviewService.setDuration(meetingId.toUUID(), length.minutesLength)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @PutMapping("/{meetingId}/pick-date")
+    @PutMapping("/{meetingId}/pick_date")
     fun pickDate(@PathVariable meetingId: InterviewId, @RequestBody date: MeetingDate): ResponseEntity<Any> =
         interviewService.setDate(meetingId.toUUID(), date.dateTime)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @Transactional
-    @PutMapping("/{meetingId}/add-notes")
+    @PutMapping("/{meetingId}/add_notes")
     fun addNotes(
         @PathVariable meetingId: InterviewId,
         @RequestHeader(EStellaHeaders.devPassword) password: String,

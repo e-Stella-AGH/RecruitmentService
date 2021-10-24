@@ -60,7 +60,7 @@ class InterviewService(
         hostsMails.forEach { mail -> mailService.sendInterviewDevInvitationMail(offer, savedInterview, application.application, mail) }
     }
 
-    fun setLength(id: UUID, length: Int) {
+    fun setDuration(id: UUID, length: Int) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
         val interview = getInterview(id)
         interviewRepository.save(interview.copy(minutesLength= length))

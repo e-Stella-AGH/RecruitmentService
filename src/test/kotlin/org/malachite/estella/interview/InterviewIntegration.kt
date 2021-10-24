@@ -182,7 +182,7 @@ class InterviewIntegration : BaseIntegration() {
         val hosts = listOf("a@host.com", "b@host.com")
 
         var response = httpRequest(
-            "/api/interview/${interview.id}/set-hosts",
+            "/api/interview/${interview.id}/set_hosts",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
             body = mapOf(
@@ -206,7 +206,7 @@ class InterviewIntegration : BaseIntegration() {
         expectThat(interview.hosts.size).isEqualTo(0)
 
         val response = httpRequest(
-            "/api/interview/${interview.id}/set-hosts",
+            "/api/interview/${interview.id}/set_hosts",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseeker.user.mail, password)),
             body = mapOf(
@@ -232,7 +232,7 @@ class InterviewIntegration : BaseIntegration() {
         val length = 30
 
         var response = httpRequest(
-            "/api/interview/${interview.id}/set-length",
+            "/api/interview/${interview.id}/set_duration",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, password)),
             body = mapOf("minutesLength" to length)
@@ -255,7 +255,7 @@ class InterviewIntegration : BaseIntegration() {
         val length = 30
 
         val response = httpRequest(
-            "/api/interview/${interview.id}/set-length",
+            "/api/interview/${interview.id}/set_duration",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(jobseeker.user.mail, password)),
             body = mapOf("minutesLength" to length)
@@ -279,7 +279,7 @@ class InterviewIntegration : BaseIntegration() {
         val dateTime = Timestamp.from(Instant.MIN)
 
         var response = httpRequest(
-            "/api/interview/${interview.id}/pick-date",
+            "/api/interview/${interview.id}/pick_date",
             method = HttpMethod.PUT,
             body = mapOf(
                 "dateTime" to dateTime
@@ -295,18 +295,20 @@ class InterviewIntegration : BaseIntegration() {
 
     @Test
     @Order(11)
-    fun `should be able to set notes`() {
+    fun `should be able to set notes and then add new note`() {
         var interview =
             Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, listOf())
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
         val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val notes = setOf(NotesFilePayload(null,noteA,setOf("Git"),"test@test.com"), NotesFilePayload(null, noteB,setOf("Git"),"test@test.com"))
+        val author = "test@test.com"
+        val tags = setOf<String>("Git")
+        val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
         val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
         var response = httpRequest(
-            "/api/interview/${interview.id}/add-notes",
+            "/api/interview/${interview.id}/add_notes",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
             body = mapOf(
@@ -319,11 +321,44 @@ class InterviewIntegration : BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.applicationStage.notes.size).isEqualTo(2)
-        val interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
-        val interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
-
+        var interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
+        var interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
         expectThat(listOf(this.noteA, this.noteB))
             .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB))
+        var authors = interview.applicationStage.notes.map { it.author }
+        expectThat(authors).containsExactlyInAnyOrder(listOf(author, author))
+        var noteTags: List<String> = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }
+        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags).flatMap { it })
+
+
+//      Second part of test adding next notes
+        val newAuthor = "test2@test2.com"
+        val newTags = setOf<String>("Bad answer")
+        val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
+
+        response = httpRequest(
+            "/api/interview/${interview.id}/add_notes",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.devPassword to password),
+            body = mapOf(
+                "notes" to newNotes
+            )
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+
+        interview = interviewRepository.findAll().first()
+
+        expectThat(interview.applicationStage.notes.size).isEqualTo(3)
+        interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
+        interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
+        val interviewNoteC = interview.applicationStage.notes.elementAt(2).text!!.characterStream.readText()
+        expectThat(listOf(this.noteA, this.noteB, this.noteA))
+            .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB, interviewNoteC))
+        authors = interview.applicationStage.notes.map { it.author }
+        expectThat(authors).containsExactlyInAnyOrder(listOf(author, author, newAuthor))
+        noteTags = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }
+        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags, newTags).flatMap{it})
     }
 
 
@@ -336,11 +371,14 @@ class InterviewIntegration : BaseIntegration() {
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
         val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val notes = setOf(NotesFilePayload(null,noteA,setOf("Git"),"test@test.com"), NotesFilePayload(null, noteB,setOf("Git"),"test@test.com"))
+        val notes = setOf(
+            NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
+            NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
+        )
         val badPassword = "xd"
 
         var response = httpRequest(
-            "/api/interview/${interview.id}/add-notes",
+            "/api/interview/${interview.id}/add_notes",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to badPassword),
             body = mapOf(
