@@ -324,9 +324,9 @@ class InterviewIntegration : BaseIntegration() {
 
         expectThat(interview.applicationStage.notes.size).isEqualTo(2)
         var interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
-        var interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
+        var interviewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
         expectThat(listOf(this.noteA, this.noteB))
-            .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB))
+            .containsExactlyInAnyOrder(listOf(interviewNoteA, interviewNoteB))
         var authors = interview.applicationStage.notes.map { it.author }
         expectThat(authors).containsExactlyInAnyOrder(listOf(author, author))
         var noteTags: List<String> = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }
@@ -352,11 +352,11 @@ class InterviewIntegration : BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.applicationStage.notes.size).isEqualTo(3)
-        interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
-        interViewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
-        val interviewNoteC = interview.applicationStage.notes.elementAt(2).text!!.characterStream.readText()
+        val savedInterviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
+        val savedInterviewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
+        val savedInterviewNoteC = interview.applicationStage.notes.elementAt(2).text!!.characterStream.readText()
         expectThat(listOf(this.noteA, this.noteB, this.noteA))
-            .containsExactlyInAnyOrder(listOf(interviewNoteA, interViewNoteB, interviewNoteC))
+            .containsExactlyInAnyOrder(listOf(savedInterviewNoteA, savedInterviewNoteB, savedInterviewNoteC))
         authors = interview.applicationStage.notes.map { it.author }
         expectThat(authors).containsExactlyInAnyOrder(listOf(author, author, newAuthor))
         noteTags = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }

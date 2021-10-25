@@ -36,6 +36,7 @@ class RabbitMqConsumers(
                         taskService.addResult(it)
                         channel.basicAck(tag, false)
                     }
+                    ?.also { println("received Message with task results: $message") }
                     ?: channel.basicNack(tag, false, false)
 
 
