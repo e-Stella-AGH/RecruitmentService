@@ -4,15 +4,13 @@ import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStatus
-import org.malachite.estella.commons.models.offers.StageType
-import org.malachite.estella.commons.models.offers.*
+import org.malachite.estella.commons.models.offers.RecruitmentProcess
+import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.JobSeeker
-import org.malachite.estella.interview.domain.InterviewPayload
+import org.malachite.estella.process.domain.ProcessNotStartedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import reactor.util.function.Tuple3
 import java.util.*
-import kotlin.collections.ArrayList
 
 @Service
 class ApplicationService(
@@ -20,7 +18,6 @@ class ApplicationService(
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val applicationStageDataService: ApplicationStageDataService,
-    @Autowired private val interviewService: InterviewService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {
 
@@ -34,7 +31,8 @@ class ApplicationService(
 
     fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
-        val stage = offer.recruitmentProcess?.stages?.getOrNull(0)
+        if (offer.recruitmentProcess == null || !offer.recruitmentProcess.isStarted()) throw ProcessNotStartedException()
+        val stage = offer.recruitmentProcess.stages.getOrNull(0)
         return stage?.let {
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
@@ -46,7 +44,6 @@ class ApplicationService(
     fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
         jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
             .let { insertApplication(offerId, it, applicationPayload) }
-
 
     fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess) {
         val application = applicationRepository.findById(applicationId).get()

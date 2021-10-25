@@ -20,8 +20,14 @@ class OfferController(
 
     @CrossOrigin
     @GetMapping
-    fun getOffers(): ResponseEntity<List<OfferResponse>> =
+    fun getOffers(
+        @RequestParam("only_started", required = false) onlyStarted: Boolean
+    ): ResponseEntity<List<OfferResponse>> =
         offerService.getOffers()
+            .let { offers ->
+                if (onlyStarted) { offers.filter { offer -> offer.recruitmentProcess?.isStarted() == true } }
+                else offers
+            }
             .map { it.toOfferResponse() }
             .let { ResponseEntity.ok(it) }
 

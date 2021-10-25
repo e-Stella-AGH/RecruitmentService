@@ -52,39 +52,11 @@ import java.util.concurrent.TimeUnit
 )
 class BaseIntegration {
 
-    private val restTemplate = TestRestTemplate()
-    val objectMapper = jacksonObjectMapper()
-
     private val file = Files.readAllBytes(Paths.get("src/main/kotlin/org/malachite/estella/stop-cv-format.pdf"))
     private val encodedFile: String = Base64.getEncoder().encodeToString(file)
 
     final fun getJobSeekerFilePayload(fileName: String, id: Int? = null): JobSeekerFilePayload =
         JobSeekerFilePayload(id, fileName, encodedFile)
-
-    fun httpRequest(
-        path: String,
-        method: HttpMethod,
-        headers: Map<String, String> = mapOf(),
-        body: Map<String, Any> = mapOf()
-    ): Response {
-        val httpHeaders = HttpHeaders().also {
-            headers.forEach { (key, value) -> it.add(key, value) }
-        }
-        val uri = URI.create("http://localhost:8080$path")
-
-        val requestEntity = RequestEntity(body, httpHeaders, method, uri)
-
-        return try {
-            val response = restTemplate.exchange(requestEntity, String::class.java)
-            val statusCode = response.statusCode
-            val responseBody = objectMapper.readValue(response.body, Any::class.java)
-            Response(statusCode, responseBody, response.headers)
-        } catch (exception: HttpStatusCodeException) {
-            val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
-            val statusCode = exception.statusCode
-            Response(statusCode, responseBody, exception.responseHeaders)
-        }
-    }
 
     @Test
     fun `test for httpRequest`() {
@@ -223,7 +195,7 @@ class BaseIntegration {
     fun Map<String, Any>.toRecruitmentProcessDto() =
         RecruitmentProcessDto(
             this["id"] as Int?,
-            Date.valueOf(this["startDate"] as String),
+            (this["startDate"] as String?)?.let { Date.valueOf(it) },
             (this["endDate"] as String?)?.let { Date.valueOf(it) },
             (this["offer"] as Map<String, Any>).toOfferResponse(),
             (this["stages"] as List<Map<String, Any>>).toRecruitmentStagesList(),
@@ -272,8 +244,7 @@ class BaseIntegration {
             (this["dateTime"] as String?)?.toTimestamp(),
             this["minutesLength"] as Int,
             (this["application"] as Map<String, Any>).toApplicationDTO(),
-        (this["hosts"] as List<String>?),
-            (this["notes"] as List<Map<String, Any>>?)?.toInterviewNotesDTO()
+            this["hosts"] as Set<String>?
     )
 
     fun List<Map<String, Any>>.toInterviewNotesDTO() =
@@ -325,6 +296,34 @@ class BaseIntegration {
                     "should_fake_load=false",
                     "cloud_amqp_url=amqp://localhost:5672"
                 )
+            }
+        }
+
+        private val restTemplate = TestRestTemplate()
+        val objectMapper = jacksonObjectMapper()
+
+        fun httpRequest(
+            path: String,
+            method: HttpMethod,
+            headers: Map<String, String> = mapOf(),
+            body: Map<String, Any> = mapOf()
+        ): Response {
+            val httpHeaders = HttpHeaders().also {
+                headers.forEach { (key, value) -> it.add(key, value) }
+            }
+            val uri = URI.create("http://localhost:8080$path")
+
+            val requestEntity = RequestEntity(body, httpHeaders, method, uri)
+
+            return try {
+                val response = restTemplate.exchange(requestEntity, String::class.java)
+                val statusCode = response.statusCode
+                val responseBody = objectMapper.readValue(response.body, Any::class.java)
+                Response(statusCode, responseBody, response.headers)
+            } catch (exception: HttpStatusCodeException) {
+                val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
+                val statusCode = exception.statusCode
+                Response(statusCode, responseBody, exception.responseHeaders)
             }
         }
     }

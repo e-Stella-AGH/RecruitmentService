@@ -3,7 +3,6 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.Permission
 import org.malachite.estella.commons.UnauthenticatedException
-import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.DesiredSkill
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.people.HrPartner

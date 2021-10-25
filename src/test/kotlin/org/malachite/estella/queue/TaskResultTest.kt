@@ -69,7 +69,7 @@ class TaskResultTest : BaseIntegration() {
                 mutableSetOf(),
                 mutableListOf())
         val savedApplication = applicationRepository.save(application)
-        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null)
+        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
         val savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
         this.taskStage = TaskStage(null, listOf(), savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)

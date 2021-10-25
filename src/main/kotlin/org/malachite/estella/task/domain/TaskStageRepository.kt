@@ -1,6 +1,5 @@
 package org.malachite.estella.task.domain
 
-import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskStage
 import java.util.*
 
