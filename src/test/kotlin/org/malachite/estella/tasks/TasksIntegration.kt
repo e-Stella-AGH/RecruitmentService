@@ -3,12 +3,14 @@ package org.malachite.estella.tasks
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
+import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset

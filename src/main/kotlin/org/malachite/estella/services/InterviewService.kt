@@ -25,7 +25,7 @@ class InterviewService(
 
     fun createInterview(applicationStage: ApplicationStageData, payload: InterviewPayload = InterviewPayload()): Interview {
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
-        return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, listOf()).let {
+        return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, setOf()).let {
             interviewRepository.save(it)
         }.also { mailService.sendInterviewInvitationMail(offer, it) }
     }
@@ -48,7 +48,7 @@ class InterviewService(
                 a.dateTime?.compareTo(b.dateTime) ?: -1
             }.first() }
 
-    fun setHosts(id: UUID, hostsMails: List<String>) {
+    fun setHosts(id: UUID, hostsMails: Set<String>) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
         val interview = getInterview(id)
         val savedInterview = interviewRepository.save(interview.copy(hosts=hostsMails))

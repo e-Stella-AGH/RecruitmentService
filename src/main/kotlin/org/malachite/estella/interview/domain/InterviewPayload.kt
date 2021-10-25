@@ -35,7 +35,7 @@ fun Interview.toInterviewDTO() = InterviewDTO(
 fun Note.toInterviewNoteDTO() = InterviewNoteDTO(this.id, String(Base64.getDecoder().decode(this.text.toString())))
 data class InterviewDTO(
     val id: String?, val dateTime: Timestamp?, val minutesLength: Int?,
-    val application: ApplicationDTO, val hosts: List<String>?
+    val application: ApplicationDTO, val hosts: Set<String>?
 )
 
 data class InterviewNoteDTO(val id: Int?, val note: String)

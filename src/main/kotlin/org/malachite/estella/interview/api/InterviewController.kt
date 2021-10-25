@@ -77,7 +77,7 @@ class InterviewController(
 data class JobseekerName(val firstName: String?, val lastName: String?)
 data class NotesFilePayload(val id: Int?, val fileBase64: String, val tags: Set<String>, val author:String)
 data class MeetingNotes(val notes: Set<NotesFilePayload>)
-data class MeetingHosts(val hostsMails: List<String>)
+data class MeetingHosts(val hostsMails: Set<String>)
 data class MeetingDate(val dateTime: Timestamp)
 data class MeetingLength(val minutesLength: Int)
 

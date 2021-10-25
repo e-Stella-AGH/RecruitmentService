@@ -11,12 +11,10 @@ data class Application(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
     val applicationDate: Date, @Enumerated(EnumType.STRING) val status: ApplicationStatus,
     @ManyToOne val jobSeeker: JobSeeker,
-    @ManyToMany(cascade = [CascadeType.ALL]) @JoinTable(
+    @ManyToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER) @JoinTable(
         name = "application_files",
         joinColumns = [JoinColumn(name = "application_id")],
         inverseJoinColumns = [JoinColumn(name = "job_seeker_file_id")]
     ) val seekerFiles: MutableSet<JobSeekerFile>,
-    @OneToMany(
-        mappedBy = "application"
-    ) val applicationStages: MutableList<ApplicationStageData>
+    @OneToMany(mappedBy = "application") val applicationStages: MutableList<ApplicationStageData>
 )

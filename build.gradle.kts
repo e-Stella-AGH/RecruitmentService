@@ -41,6 +41,7 @@ dependencies {
     testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
     testImplementation("org.apache.httpcomponents:httpclient:4.5.13")
     testImplementation("org.testcontainers:testcontainers:1.16.0")
+    testImplementation("org.awaitility:awaitility-kotlin:4.1.0")
 
 
 }
