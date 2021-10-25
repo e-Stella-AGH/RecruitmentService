@@ -7,6 +7,7 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.toTask
@@ -48,9 +49,18 @@ class TaskService(
 
     fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
         val taskStage = taskStageService.getTaskStage(tasksStageId)
-        val organizationUuid = recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
+        val organizationUuid = getOrganizationUuidFromTaskStage(taskStage)
         checkDevPassword(organizationUuid, password)
         return taskStage.tasksResult.map { it.task.toTaskDto() }
+    }
+
+    private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
+            recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
+
+    fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
+        val tasksStages = taskStageService.getAll().filter { it.devs.contains(devMail) }
+        tasksStages.forEach{ checkDevPassword(getOrganizationUuidFromTaskStage(it), password) }
+        return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
     }
 
 

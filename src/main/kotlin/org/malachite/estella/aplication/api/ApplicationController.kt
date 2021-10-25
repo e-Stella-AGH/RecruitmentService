@@ -97,13 +97,14 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/next")
     fun updateApplicationStage(
-        @PathVariable applicationId: Int
+        @PathVariable applicationId: Int,
+        @RequestBody(required = false) devs: ApplicationStageDevs?
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
             recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH
-            applicationService.setNextStageOfApplication(applicationId, it).let { SUCCESS }
+            applicationService.setNextStageOfApplication(applicationId, it, devs?.devs).let { SUCCESS }
         }
 
 
@@ -179,3 +180,5 @@ class ApplicationController(
         }
 
 }
+
+data class ApplicationStageDevs(val devs: Set<String>)

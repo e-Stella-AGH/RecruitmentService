@@ -38,66 +38,67 @@ class ApplicationService(
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
             mailService.sendApplicationConfirmationMail(offer, application)
-            application.addNewApplicationStageData(it)
+            application.addNewApplicationStageData(it, null)
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
     fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
-        jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
-            .let { insertApplication(offerId, it, applicationPayload) }
+            jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
+                    .let { insertApplication(offerId, it, applicationPayload) }
 
-    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess) {
+    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: Set<String>?) {
         val application = applicationRepository.findById(applicationId).get()
 
         if (application.status != ApplicationStatus.IN_PROGRESS)
             throw UnsupportedOperationException("Cannot change stage of resolved application!")
 
         val recruitmentProcessStages = recruitmentProcess
-            .stages
-            .sortedBy { it.id }
+                .stages
+                .sortedBy { it.id }
 
         val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
 
         if (applicationRecruitmentStages.isEmpty()) {
-            application.addNewApplicationStageData(recruitmentProcess.stages.first())
+            application.addNewApplicationStageData(recruitmentProcess.stages.first(), devs)
             return
         }
 
         val indexOfRecruitmentStage = recruitmentProcessStages.indexOf(applicationRecruitmentStages.last())
 
         if (isNotLastStage(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
-            application.addNewApplicationStageData(recruitmentProcessStages[indexOfRecruitmentStage + 1])
-                .let {
-                    if (shouldBeAccepted(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
-                        it.copy(status = ApplicationStatus.ACCEPTED)
-                    else
-                        it
-                }.let {
-                    applicationRepository.save(it)
-                }
+            application.addNewApplicationStageData(recruitmentProcessStages[indexOfRecruitmentStage + 1], devs)
+                    .let {
+                        if (shouldBeAccepted(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
+                            it.copy(status = ApplicationStatus.ACCEPTED)
+                        else
+                            it
+                    }.let {
+                        applicationRepository.save(it)
+                    }
     }
 
     private fun isNotLastStage(currentIndex: Int, lastIndex: Int) = currentIndex < lastIndex
 
     private fun shouldBeAccepted(currentIndex: Int, lastIndex: Int) = currentIndex == lastIndex - 1
 
-    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage) =
-        applicationStageDataService.createApplicationStageData(
-            this,
-            recruitmentStage
-        ).let {
-            val stages = ArrayList(this.applicationStages.plus(it))
-            val newApplication = this.copy(applicationStages = stages)
-            newApplication
-        }.let { applicationRepository.save(it) }
+    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: Set<String>?) =
+            applicationStageDataService.createApplicationStageData(
+                    this,
+                    recruitmentStage,
+                    devs
+            ).let {
+                val stages = ArrayList(this.applicationStages.plus(it))
+                val newApplication = this.copy(applicationStages = stages)
+                newApplication
+            }.let { applicationRepository.save(it) }
 
 
     fun getApplicationById(applicationId: Int): Application =
-        withExceptionThrower { applicationRepository.findById(applicationId).get() }
+            withExceptionThrower { applicationRepository.findById(applicationId).get() }
 
     fun getAllApplications(): List<Application> =
-        applicationRepository
-            .findAll()
+            applicationRepository
+                    .findAll()
 
 
     fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationWithStagesAndOfferName> =
