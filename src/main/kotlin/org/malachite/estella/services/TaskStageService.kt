@@ -21,8 +21,10 @@ class TaskStageService(
 
 
     fun createTaskStage(applicationStage: ApplicationStageData, interview: Interview?): TaskStage =
-            TaskStage(null, listOf(), applicationStage)
+            TaskStage(null, listOf(), applicationStage, setOf())
                     .let { taskStageRepository.save(it) }
+
+    fun getAll() = taskStageRepository.findAll()
 
     fun getTaskStage(taskStageId: UUID) = withExceptionThrower { taskStageRepository.findById(taskStageId).get() }
 
@@ -43,5 +45,9 @@ class TaskStageService(
         val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
         taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
     }
+
+    fun setDevs(id: UUID, devs: Set<String>) =
+        getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
+
 
 }

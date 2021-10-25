@@ -29,9 +29,10 @@ class TaskController(
     fun getTasks(
             @RequestParam("owner", required = false) organizationUuid: String?,
             @RequestParam("taskStage", required = false) taskStageUuid: String?,
+            @RequestParam("devMail", required = false) devMail: String?,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<Any> {
-        if ((organizationUuid == null && taskStageUuid == null) || (organizationUuid != null && taskStageUuid != null))
+        if (areParamsValid(organizationUuid, taskStageUuid, devMail))
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
@@ -39,8 +40,17 @@ class TaskController(
                             .getTasksByOrganizationUuid(it)
                 }
                 ?: taskStageUuid
-                        ?.let { taskService.getTasksByTasksStage(it, password) }!!
+                        ?.let { taskService.getTasksByTasksStage(it, password) }
+                ?: devMail
+                        ?.let { taskService.getTasksByDev(it, password) }!!
        return ResponseEntity.ok(tasks)
+    }
+
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean {
+        if (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()) return false
+        if (organizationId != null && taskStageUuid != null) return false
+        if (devMail != null && organizationId == null) return false
+        return true
     }
 
 
