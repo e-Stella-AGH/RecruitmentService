@@ -29,9 +29,18 @@ class TaskStageService(
     fun getTaskStage(taskStageId: String) = withExceptionThrower { getTaskStage(UUID.fromString(taskStageId)) }
 
     fun addResult(result: TaskResult) {
-        val savedResult = taskResultRepository.save(result)
+        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == result.task.id && it.taskStage.id == result.taskStage.id }
+                ?.copy(results = result.results,
+                        code = result.code,
+                        startTime = result.startTime,
+                        endTime = result.endTime,
+                        task = result.task,
+                        taskStage = result.taskStage
+                )
+                ?: result
+        val savedResult = taskResultRepository.save(resultToSave)
         val taskStage = savedResult.taskStage
-        val newTaskResults = taskStage.tasksResult.plus(savedResult)
+        val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
         taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
     }
 
