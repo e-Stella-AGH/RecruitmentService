@@ -3,8 +3,7 @@ package org.malachite.estella
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Test
-import org.malachite.estella.aplication.domain.ApplicationDTO
-import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
+import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
@@ -39,8 +38,7 @@ import java.sql.Date
 import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalDateTime
+import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -227,30 +225,51 @@ class BaseIntegration {
         timeLimit = this["timeLimit"] as Int,
     )
 
+    fun Map<String, Any>.toApplicationNoteDTO() = ApplicationNoteDTO(
+        author = this["author"] as String,
+        tags = this["tags"] as List<String>,
+        text = (this["text"] as String).decodeBase64()
+    )
+
+    fun Map<String, Any>.toApplicationNotes() = ApplicationNotes(
+        notes = (this["notes"] as List<Map<String, Any>>).map { it.toApplicationNoteDTO() }
+    )
+
+    fun Map<String, Any>.toTaskResultWithTestDTO(): TaskResultWithTestDTO = TaskResultWithTestDTO(
+        code = (this["code"] as String).decodeBase64(),
+        results = (this["results"] as String).decodeBase64(),
+        tests = (this["tests"] as String).decodeBase64(),
+        description = (this["tests"] as String).decodeBase64()
+    )
+
+    fun Map<String, Any>.toTasksNotesDTO(): TasksNotesDTO = TasksNotesDTO(
+        tasks = (this["tasks"] as List<Map<String, Any>>).map { it.toTaskResultWithTestDTO() },
+        notes = (this["notes"] as List<Map<String,Any>>).map{it.toApplicationNoteDTO()}
+    )
+
     fun String.toTimestamp(): Timestamp {
-        val pattern = "yyyy-MM-dd'T'HH:mm:ss"
-        val formatter = DateTimeFormatter.ofPattern(pattern)
-        val localDateTime = LocalDateTime.from(formatter.parse(this.subSequence(0, 19)))
-        return Timestamp.valueOf(localDateTime)
+        val dateTime = ZonedDateTime.parse(this).toLocalDateTime().atZone(ZoneId.of("+01:00")).toLocalDateTime()
+        return Timestamp.valueOf(dateTime)
     }
 
     fun Map<String, Any>.toJobSeekerNameDTO() = JobseekerName(
-            firstName = this["firstName"] as String,
-            lastName = this["lastName"] as String
+        firstName = this["firstName"] as String,
+        lastName = this["lastName"] as String
     )
 
     fun Map<String, Any>.toInterviewDTO() = InterviewDTO(
-            this["id"] as String?,
-            (this["dateTime"] as String?)?.toTimestamp(),
-            this["minutesLength"] as Int,
-            (this["application"] as Map<String, Any>).toApplicationDTO(),
-            this["hosts"] as Set<String>?
+        this["id"] as String?,
+        (this["dateTime"] as String?)?.toTimestamp(),
+        this["minutesLength"] as Int,
+        (this["application"] as Map<String, Any>).toApplicationDTO(),
+        this["hosts"] as Set<String>?
     )
 
     fun List<Map<String, Any>>.toInterviewNotesDTO() =
-            this.map { it.toInterviewNoteDTO() }.toSet()
+        this.map { it.toInterviewNoteDTO() }.toSet()
+
     fun Map<String, Any>.toInterviewNoteDTO() =
-            InterviewNoteDTO(this["id"] as Int, this["note"] as String)
+        InterviewNoteDTO(this["id"] as Int, this["note"] as String)
 
 
     fun applyForOffer(jobSeeker: JobSeeker, password: String, offer: Offer): Response = httpRequest(

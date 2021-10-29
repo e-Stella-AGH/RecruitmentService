@@ -1,6 +1,7 @@
 package org.malachite.estella.process.domain
 
 import kotlinx.serialization.Serializable
+import org.malachite.estella.aplication.domain.toBase64String
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.tasks.Task
@@ -46,10 +47,9 @@ fun TaskDto.toTask(): Task =
 
 fun Task.toTaskDto() = TaskDto(
     id,
-    Base64.getEncoder().encodeToString(this.tests.getBytes(1, this.tests.length().toInt())),
+    this.tests.toBase64String(),
     this.descriptionFileName,
-    Base64.getEncoder()
-        .encodeToString(this.description.getSubString(1, this.description.length().toInt()).toByteArray()),
+    this.description.toBase64String(),
     timeLimit
 )
 

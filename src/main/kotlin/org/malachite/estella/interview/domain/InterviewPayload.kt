@@ -2,6 +2,8 @@ package org.malachite.estella.interview.domain
 
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.toApplicationDTO
+import org.malachite.estella.aplication.domain.toBase64String
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.interviews.Note
 import java.sql.Timestamp
@@ -12,18 +14,9 @@ data class InterviewPayload(
     val minutesLength: Int? = null
 )
 
-data class InterviewId(val interviewId: String) {
-    fun toUUID(): UUID {
-        try {
-            return UUID.fromString(interviewId)
-        } catch (ex: IllegalArgumentException) {
-            ex.printStackTrace()
-            throw InvalidUUIDException()
-        }
-    }
-}
 
-fun Interview.getId() = InterviewId(this.id.toString())
+
+fun Interview.getId() = PayloadUUID(this.id.toString())
 fun Interview.toInterviewDTO() = InterviewDTO(
     this.id.toString(),
     this.dateTime,
@@ -32,7 +25,7 @@ fun Interview.toInterviewDTO() = InterviewDTO(
     this.hosts
 )
 
-fun Note.toInterviewNoteDTO() = InterviewNoteDTO(this.id, String(Base64.getDecoder().decode(this.text.toString())))
+fun Note.toInterviewNoteDTO() = InterviewNoteDTO(this.id, this.text.toBase64String())
 data class InterviewDTO(
     val id: String?, val dateTime: Timestamp?, val minutesLength: Int?,
     val application: ApplicationDTO, val hosts: Set<String>?

@@ -2,8 +2,8 @@ package org.malachite.estella.interview.api
 
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.interview.domain.InterviewDTO
-import org.malachite.estella.interview.domain.InterviewId
 import org.malachite.estella.interview.domain.toInterviewDTO
 import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.InterviewService
@@ -22,7 +22,7 @@ class InterviewController(
 
     @CrossOrigin
     @GetMapping("/jobseeker/{interviewId}")
-    fun getJobseekerName(@PathVariable interviewId: InterviewId): ResponseEntity<JobseekerName> =
+    fun getJobseekerName(@PathVariable interviewId: PayloadUUID): ResponseEntity<JobseekerName> =
         interviewService.getUserFromInterviewUuid(interviewId.toUUID())
             .let {
                 ResponseEntity.ok(JobseekerName(it?.firstName, it?.lastName))
@@ -31,7 +31,7 @@ class InterviewController(
 
     @CrossOrigin
     @GetMapping("/newest/{applicationId}")
-    fun getNewestInterviewId(@PathVariable applicationId: Int): ResponseEntity<InterviewId> =
+    fun getNewestInterviewId(@PathVariable applicationId: Int): ResponseEntity<PayloadUUID> =
         interviewService.getLastInterviewIdFromApplicationId(applicationId).let { ResponseEntity.ok(it) }
 
     @CrossOrigin
@@ -41,36 +41,21 @@ class InterviewController(
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_hosts")
-    fun setHosts(@PathVariable meetingId: InterviewId, @RequestBody hosts: MeetingHosts): ResponseEntity<Any> =
+    fun setHosts(@PathVariable meetingId: PayloadUUID, @RequestBody hosts: MeetingHosts): ResponseEntity<Any> =
         interviewService.setHosts(meetingId.toUUID(), hosts.hostsMails)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_duration")
-    fun setDuration(@PathVariable meetingId: InterviewId, @RequestBody length: MeetingLength): ResponseEntity<Any> =
+    fun setDuration(@PathVariable meetingId: PayloadUUID, @RequestBody length: MeetingLength): ResponseEntity<Any> =
         interviewService.setDuration(meetingId.toUUID(), length.minutesLength)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/pick_date")
-    fun pickDate(@PathVariable meetingId: InterviewId, @RequestBody date: MeetingDate): ResponseEntity<Any> =
+    fun pickDate(@PathVariable meetingId: PayloadUUID, @RequestBody date: MeetingDate): ResponseEntity<Any> =
         interviewService.setDate(meetingId.toUUID(), date.dateTime)
             .let { OwnResponses.SUCCESS }
-
-    @CrossOrigin
-    @Transactional
-    @PutMapping("/{meetingId}/add_notes")
-    fun addNotes(
-        @PathVariable meetingId: InterviewId,
-        @RequestHeader(EStellaHeaders.devPassword) password: String,
-        @RequestBody notes: MeetingNotes
-    ): ResponseEntity<Any> =
-        applicationStageDataService.setNotesToInterview(
-            meetingId.toUUID(),
-            password,
-            notes.notes
-        ).let { OwnResponses.SUCCESS }
-
 }
 
 
