@@ -17,10 +17,10 @@ import org.malachite.estella.process.domain.RecruitmentStageRepository
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.malachite.estella.util.DatabaseReset
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.beans.factory.annotation.Autowired
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.sql.Date

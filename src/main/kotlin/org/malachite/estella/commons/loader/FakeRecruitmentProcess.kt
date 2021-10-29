@@ -7,7 +7,6 @@ import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.quizes.Quiz
 import org.malachite.estella.commons.models.tasks.Task
 import java.sql.Date
-import java.time.LocalDate
 
 object FakeRecruitmentProcess {
 

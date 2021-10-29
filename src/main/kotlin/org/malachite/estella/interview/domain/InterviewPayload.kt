@@ -2,12 +2,11 @@ package org.malachite.estella.interview.domain
 
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.toApplicationDTO
-import org.malachite.estella.aplication.domain.toBase64String
 import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.interviews.Note
+import org.malachite.estella.commons.toBase64String
 import java.sql.Timestamp
-import java.util.*
 
 data class InterviewPayload(
     val dateTime: Timestamp? = null,

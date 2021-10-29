@@ -13,7 +13,6 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.TaskStage
-import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.InterviewRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.process.domain.RecruitmentStageRepository

@@ -1,12 +1,16 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
-import org.malachite.estella.commons.*
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.interview.api.MeetingNotes
-import org.malachite.estella.services.*
+import org.malachite.estella.services.ApplicationService
+import org.malachite.estella.services.ApplicationStageDataService
+import org.malachite.estella.services.RecruitmentProcessService
+import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
@@ -155,7 +159,7 @@ class ApplicationController(
             ).toApplicationNotesDTO()
             interviewUUID != null -> applicationStageDataService.getNotesByInterviewId(interviewUUID.toUUID(), password)
                 .toApplicationNotesDTO()
-            else -> throw NotSpecifiedWhichNoteGet()
+            else -> throw NotSpecifiedWhichNoteToGet()
         }.let { response: Any ->
             ResponseEntity.ok(response)
         }

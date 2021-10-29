@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.encodeToBase64
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
@@ -13,6 +14,8 @@ import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
+import org.malachite.estella.commons.toBlob
+import org.malachite.estella.commons.toClob
 import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.InterviewRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
@@ -38,8 +41,7 @@ import java.util.*
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class NotesIntegration: BaseIntegration() {
-
+class NotesIntegration : BaseIntegration() {
 
 
     @Autowired
@@ -104,8 +106,10 @@ class NotesIntegration: BaseIntegration() {
 
         zonedDateTime = ZonedDateTime.of(LocalDateTime.MIN, ZoneId.systemDefault())
         val task = taskRepository.findAll().first()
-        val taskResult = TaskResult(null, "xd".encodeToBase64().toBlob(),"xd".encodeToBase64().toClob(),
-            Timestamp.valueOf(zonedDateTime.toLocalDateTime()),null,task,taskStage = taskStage)
+        val taskResult = TaskResult(
+            null, "xd".encodeToBase64().toBlob(), "xd".encodeToBase64().toClob(),
+            Timestamp.valueOf(zonedDateTime.toLocalDateTime()), null, task, taskStage = taskStage
+        )
             .let { taskResultRepository.save(it) }
 
         taskStage = taskStageRepository.save(taskStage.copy(tasksResult = listOf(taskResult)))
@@ -137,7 +141,7 @@ class NotesIntegration: BaseIntegration() {
         val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
         val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
-        var response = BaseIntegration.httpRequest(
+        val firstResponse = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
@@ -146,13 +150,13 @@ class NotesIntegration: BaseIntegration() {
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(firstResponse.statusCode).isEqualTo(HttpStatus.OK)
 
         interview = interviewRepository.findAll().first()
 
         val stage = interview.applicationStage
 
-        checkFirstPut(stage,author,tags)
+        checkFirstPut(stage, author, tags)
 
 
 //      Second part of test adding next notes
@@ -160,7 +164,7 @@ class NotesIntegration: BaseIntegration() {
         val newTags = setOf<String>("Bad answer")
         val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
 
-        response = BaseIntegration.httpRequest(
+        val secondResponse = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
@@ -169,15 +173,18 @@ class NotesIntegration: BaseIntegration() {
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        response = httpRequest(
+        //      Third part get notes from endpoint
+
+
+        val thirdResponse = httpRequest(
             "/api/applications/get_notes?interview_note=${interview.id}",
             method = HttpMethod.GET,
             headers = mapOf(EStellaHeaders.devPassword to password),
         )
 
-        checkGetResponse(response.statusCode,response.body as Map<String,Any>,author,newAuthor,tags,newTags)
+        checkGetResponse(thirdResponse.statusCode, thirdResponse.body as Map<String, Any>, author, newAuthor, tags, newTags)
     }
 
     @Test
@@ -195,7 +202,7 @@ class NotesIntegration: BaseIntegration() {
         )
         val badPassword = "xd"
 
-        var response = httpRequest(
+        val response = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to badPassword),
@@ -220,21 +227,21 @@ class NotesIntegration: BaseIntegration() {
         val tags = setOf<String>("Git")
         val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
 
-        var response = httpRequest(
+        val firstResponse = httpRequest(
             "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail,hrPassword)),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
                 "notes" to notes
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(firstResponse.statusCode).isEqualTo(HttpStatus.OK)
 
         var appplicationFromDB = applicationRepository.findById(application.id!!).get()
         var stage = appplicationFromDB.applicationStages.first()
 
-        checkFirstPut(stage,author,tags)
+        checkFirstPut(stage, author, tags)
 
 
 //      Second part of test adding next notes
@@ -242,24 +249,26 @@ class NotesIntegration: BaseIntegration() {
         val newTags = setOf<String>("Bad answer")
         val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
 
-        response = BaseIntegration.httpRequest(
+        val secondResponse = httpRequest(
             "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail,hrPassword)),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
                 "notes" to newNotes
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        response = httpRequest(
+        //      Third part get notes from endpoint
+
+        val thirdResponse = httpRequest(
             "/api/applications/get_notes?cv_note=${applicationStageData.application.id}",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail,hrPassword))
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword))
         )
 
-        checkGetResponse(response.statusCode,response.body as Map<String,Any>,author,newAuthor,tags, newTags)
+        checkGetResponse(thirdResponse.statusCode, thirdResponse.body as Map<String, Any>, author, newAuthor, tags, newTags)
     }
 
 
@@ -278,7 +287,7 @@ class NotesIntegration: BaseIntegration() {
         )
         val badPassword = "xd"
 
-        var response = httpRequest(
+        val response = httpRequest(
             "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to badPassword),
@@ -305,7 +314,7 @@ class NotesIntegration: BaseIntegration() {
         val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
 
-        var response = BaseIntegration.httpRequest(
+        val firstResponse = httpRequest(
             "/api/applications/add_notes?task_note=${applicationStageData.tasksStage!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
@@ -314,12 +323,11 @@ class NotesIntegration: BaseIntegration() {
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(firstResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        var stage = applicationStageDataRepository.findById(applicationStageData.id!!).get()
+        val stage = applicationStageDataRepository.findById(applicationStageData.id!!).get()
 
-        checkFirstPut(stage,author,tags)
-
+        checkFirstPut(stage, author, tags)
 
 
 //      Second part of test adding next notes
@@ -327,7 +335,7 @@ class NotesIntegration: BaseIntegration() {
         val newTags = setOf<String>("Bad answer")
         val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
 
-        response = BaseIntegration.httpRequest(
+        val secondResponse = httpRequest(
             "/api/applications/add_notes?task_note=${applicationStageData.tasksStage!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
@@ -336,21 +344,25 @@ class NotesIntegration: BaseIntegration() {
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        response = httpRequest(
+        //      Third part get notes with task from endpoint
+
+        val thirdResponse = httpRequest(
             "/api/applications/get_notes?task_note=${applicationStageData.tasksStage!!.id}&with_tasks=true",
             method = HttpMethod.GET,
             headers = mapOf(EStellaHeaders.devPassword to password)
         )
 
-        val body = response.body as Map<String,Any>
+        val body = thirdResponse.body as Map<String, Any>
 
-        checkGetResponse(response.statusCode,body,
-            author,newAuthor, tags, newTags)
+        checkGetResponse(
+            thirdResponse.statusCode, body,
+            author, newAuthor, tags, newTags
+        )
 
 
-        val tasksResponse = (body["tasks"] as List<Map<String,Any>>).map{it.toTaskResultWithTestDTO()}
+        val tasksResponse = (body["tasks"] as List<Map<String, Any>>).map { it.toTaskResultWithTestDTO() }
         expectThat(tasksResponse[0].code).isEqualTo("xd")
         expectThat(tasksResponse[0].results).isEqualTo("xd")
     }
@@ -371,7 +383,7 @@ class NotesIntegration: BaseIntegration() {
         )
         val badPassword = "xd"
 
-        var response = httpRequest(
+        val response = httpRequest(
             "/api/applications/add_notes?task_note=${applicationStageData.tasksStage!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to badPassword),
@@ -401,19 +413,19 @@ class NotesIntegration: BaseIntegration() {
         val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
         val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
 
-        var response = BaseIntegration.httpRequest(
+        val firstResponse = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail,hrPassword)),
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
                 "notes" to notes
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(firstResponse.statusCode).isEqualTo(HttpStatus.OK)
         interview = interviewRepository.findAll().first()
-        var stage = interview.applicationStage
-        checkFirstPut(stage,author,tags)
+        val stage = interview.applicationStage
+        checkFirstPut(stage, author, tags)
 
 
 //      Second part of test adding next notes
@@ -421,7 +433,7 @@ class NotesIntegration: BaseIntegration() {
         val newTags = setOf<String>("Bad answer")
         val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
 
-        response = BaseIntegration.httpRequest(
+        val secondResponse = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.devPassword to password),
@@ -430,20 +442,17 @@ class NotesIntegration: BaseIntegration() {
             )
         )
 
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        interview = interviewRepository.findAll().first()
-        stage = interview.applicationStage
-        expectThat(stage.notes.size).isEqualTo(3)
-        val savedInterviewNoteA = stage.notes.elementAt(0).text!!.characterStream.readText()
-        val savedInterviewNoteB = stage.notes.elementAt(1).text!!.characterStream.readText()
-        val savedInterviewNoteC = stage.notes.elementAt(2).text!!.characterStream.readText()
-        expectThat(listOf(this.noteA, this.noteB, this.noteA))
-            .containsExactlyInAnyOrder(listOf(savedInterviewNoteA, savedInterviewNoteB, savedInterviewNoteC))
-        val authors = stage.notes.map { it.author }
-        expectThat(authors).containsExactlyInAnyOrder(listOf(author, author, newAuthor))
-        val noteTags = stage.notes.flatMap { it.tags.map { it.text } }
-        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags, newTags).flatMap{it})
+        //      Third part get notes with task from endpoint
+
+        val thirdResponse = httpRequest(
+            "/api/applications/get_notes?interview_note=${interview.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to password),
+        )
+
+        checkGetResponse(thirdResponse.statusCode, thirdResponse.body as Map<String,Any>, author, newAuthor, tags, newTags)
     }
 
 
@@ -462,7 +471,7 @@ class NotesIntegration: BaseIntegration() {
         )
         val badPassword = "xd"
 
-        var response = httpRequest(
+        val response = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to badPassword),
@@ -478,7 +487,7 @@ class NotesIntegration: BaseIntegration() {
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
     }
 
-    private fun checkFirstPut(stage: ApplicationStageData,author: String, tags: Set<String>) {
+    private fun checkFirstPut(stage: ApplicationStageData, author: String, tags: Set<String>) {
         expectThat(stage.notes.size).isEqualTo(2)
         var interviewNoteA = stage.notes.elementAt(0).text!!.characterStream.readText()
         var interviewNoteB = stage.notes.elementAt(1).text!!.characterStream.readText()
@@ -491,8 +500,14 @@ class NotesIntegration: BaseIntegration() {
     }
 
 
-
-    private fun checkGetResponse(status:HttpStatus,body: Map<String,Any>, author: String, newAuthor:String, tags: Set<String>,newTags: Set<String>){
+    private fun checkGetResponse(
+        status: HttpStatus,
+        body: Map<String, Any>,
+        author: String,
+        newAuthor: String,
+        tags: Set<String>,
+        newTags: Set<String>
+    ) {
         expectThat(status).isEqualTo(HttpStatus.OK)
 
 
@@ -507,7 +522,7 @@ class NotesIntegration: BaseIntegration() {
         val authors = responseBody.notes.map { it.author }
         expectThat(authors).containsExactlyInAnyOrder(listOf(author, author, newAuthor))
         val noteTags = responseBody.notes.flatMap { it.tags }
-        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags, newTags).flatMap{it})
+        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags, newTags).flatMap { it })
     }
 
     private val noteA = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +

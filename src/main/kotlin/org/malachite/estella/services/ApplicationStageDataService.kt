@@ -126,7 +126,6 @@ class ApplicationStageDataService(
             .getProcessFromStage(applicationStage)
             .offer.creator.let { hrPartner ->
                 securityService.getUserDetailsFromContext()
-                    .also { println("Context: ${it}") }
                     ?.let { it.user == hrPartner.user }
                     ?: false
             }

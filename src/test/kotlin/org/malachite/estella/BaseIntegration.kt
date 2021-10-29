@@ -5,6 +5,7 @@ import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Test
 import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -38,8 +39,9 @@ import java.sql.Date
 import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.time.*
-import java.time.format.DateTimeFormatter
+import java.time.Duration
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.TimeUnit
 

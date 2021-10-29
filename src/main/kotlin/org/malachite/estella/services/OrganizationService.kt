@@ -55,15 +55,15 @@ class OrganizationService(
         organizationRepository.deleteById(id)
     }
 
-    fun verifyOrganization(uuid: String): Organization =
+    fun verifyOrganization(uuid: UUID): Organization =
         changeOrganizationVerification(uuid, true)
 
-    fun deverifyOrganization(uuid: String): Organization =
+    fun deverifyOrganization(uuid: UUID): Organization =
         changeOrganizationVerification(uuid, false)
 
-    private fun changeOrganizationVerification(uuid: String, verified: Boolean): Organization = withExceptionThrower {
+    private fun changeOrganizationVerification(uuid: UUID, verified: Boolean): Organization = withExceptionThrower {
         val organization = addOrganization(
-            getOrganization(UUID.fromString(uuid))
+            getOrganization(uuid)
                 .copy(verified = verified)
         )
 

@@ -7,7 +7,10 @@ import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.interview.domain.*
+import org.malachite.estella.interview.domain.InterviewNotFoundException
+import org.malachite.estella.interview.domain.InterviewPayload
+import org.malachite.estella.interview.domain.InterviewRepository
+import org.malachite.estella.interview.domain.getId
 import org.malachite.estella.security.Authority
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

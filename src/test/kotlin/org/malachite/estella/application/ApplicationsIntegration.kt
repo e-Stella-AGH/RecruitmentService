@@ -1,6 +1,9 @@
 package org.malachite.estella.application
 
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName

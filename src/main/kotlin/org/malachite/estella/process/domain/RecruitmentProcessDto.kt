@@ -1,10 +1,10 @@
 package org.malachite.estella.process.domain
 
 import kotlinx.serialization.Serializable
-import org.malachite.estella.aplication.domain.toBase64String
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
 import java.sql.Date

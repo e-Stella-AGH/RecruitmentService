@@ -1,6 +1,5 @@
 package org.malachite.estella.interview.api
 
-import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.interview.domain.InterviewDTO
@@ -9,7 +8,6 @@ import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.InterviewService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
 

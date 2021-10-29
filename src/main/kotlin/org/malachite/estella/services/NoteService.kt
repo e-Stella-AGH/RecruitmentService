@@ -1,18 +1,13 @@
 package org.malachite.estella.services
 
-import org.malachite.estella.aplication.domain.toClob
 import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.commons.models.interviews.Tag
+import org.malachite.estella.commons.toClob
 import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.NoteRepository
 import org.malachite.estella.interview.domain.TagRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.sql.Blob
-import java.sql.Clob
-import java.util.*
-import javax.sql.rowset.serial.SerialBlob
-import javax.sql.rowset.serial.SerialClob
 
 @Service
 class NoteService(

@@ -1,7 +1,7 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.ApplicationNotFoundException
-import org.malachite.estella.aplication.domain.NotSpecifiedWhichNoteGet
+import org.malachite.estella.aplication.domain.NotSpecifiedWhichNoteToGet
 import org.malachite.estella.aplication.domain.NoteNotAttachedException
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
@@ -23,7 +23,7 @@ class NotePostExceptionHandler {
 }
 @ControllerAdvice
 class NoteGetExceptionHandler {
-    @ExceptionHandler(NotSpecifiedWhichNoteGet::class)
-    fun handleNoSuchElementException(ex: NotSpecifiedWhichNoteGet): ResponseEntity<Message> =
+    @ExceptionHandler(NotSpecifiedWhichNoteToGet::class)
+    fun handleNoSuchElementException(ex: NotSpecifiedWhichNoteToGet): ResponseEntity<Message> =
         OwnResponses.NO_RESOURCE("You don't specify which type of notes should be returned")
 }
