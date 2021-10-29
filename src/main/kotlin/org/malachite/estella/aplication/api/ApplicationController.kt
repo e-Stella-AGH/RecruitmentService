@@ -4,6 +4,9 @@ import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
+import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.people.domain.toJobSeekerDTO
+import org.malachite.estella.people.domain.toJobSeekerFileDTO
 import org.malachite.estella.services.ApplicationService
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
@@ -66,13 +69,24 @@ class ApplicationController(
 
     @CrossOrigin
     @GetMapping("/job-seeker")
-    fun getAllApplicationsByJobSeeker(): ResponseEntity<Any> =
+    fun getAllApplicationsByJobSeeker(): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
         securityService.getJobSeekerFromContext()
             ?.id
             ?.let { applicationService.getApplicationsByJobSeeker(it) }
-            ?.map { it.toApplicationDTO() }
+            ?.map { it.toDto() }
             ?.let { ResponseEntity.ok(it) }
-            ?: UNAUTH
+            ?: throw UnauthenticatedException()
+
+    private fun ApplicationService.ApplicationWithStagesAndOfferName.toDto() = ApplicationDTOWithStagesListAndOfferName(
+        this.application.id,
+        this.application.applicationDate,
+        this.application.status,
+        this.application.applicationStages.last().stage,
+        this.application.jobSeeker.toJobSeekerDTO(),
+        this.application.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
+        this.stages,
+        this.offerName
+    )
 
 
     @CrossOrigin
