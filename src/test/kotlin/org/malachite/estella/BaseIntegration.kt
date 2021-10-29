@@ -1,6 +1,7 @@
 package org.malachite.estella
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Test
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
@@ -38,9 +39,11 @@ import java.sql.Date
 import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ContextConfiguration(
@@ -241,8 +244,7 @@ class BaseIntegration {
             (this["dateTime"] as String?)?.toTimestamp(),
             this["minutesLength"] as Int,
             (this["application"] as Map<String, Any>).toApplicationDTO(),
-            this["hosts"] as List<String>?,
-            (this["notes"] as List<Map<String, Any>>?)?.toInterviewNotesDTO()
+            this["hosts"] as Set<String>?
     )
 
     fun List<Map<String, Any>>.toInterviewNotesDTO() =
@@ -275,6 +277,14 @@ class BaseIntegration {
 
     fun getAuthToken(mail: String, password: String): String =
         loginUser(mail, password).headers!![EStellaHeaders.authToken]!![0]
+
+    fun eventually(fn: () -> Unit) {
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(fn)
+    }
+
+    fun coolDown(fn: () -> Unit) {
+        await().during(Duration.ofSeconds(1)).untilAsserted(fn)
+    }
 
     companion object {
         class PropertyOverride : ApplicationContextInitializer<ConfigurableApplicationContext> {

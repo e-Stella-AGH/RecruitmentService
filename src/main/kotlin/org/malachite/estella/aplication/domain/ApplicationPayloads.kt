@@ -1,6 +1,5 @@
 package org.malachite.estella.aplication.domain
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
@@ -13,8 +12,6 @@ import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.people.domain.*
 import java.sql.Date
 import java.time.LocalDate
-import java.util.*
-import javax.persistence.*
 
 interface ApplicationPayload {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>): Application

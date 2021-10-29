@@ -1,8 +1,6 @@
 package org.malachite.estella.interview.api
 
 import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.interview.domain.InterviewNotFoundException
 import org.malachite.estella.interview.domain.InvalidUUIDException
 import org.springframework.http.HttpStatus
