@@ -34,24 +34,6 @@ class TaskResultTest : BaseIntegration() {
     @Autowired
     lateinit var rabbitTemplate: RabbitTemplate
 
-    @Autowired
-    private lateinit var taskRepository: TaskRepository
-
-    @Autowired
-    private lateinit var jobSeekerRepository: JobSeekerRepository
-
-    @Autowired
-    private lateinit var recruitmentStageRepository: RecruitmentStageRepository
-
-    @Autowired
-    private lateinit var applicationRepository: ApplicationRepository
-
-    @Autowired
-    private lateinit var applicationStageDataRepository: ApplicationStageRepository
-
-    @Autowired
-    private lateinit var taskStageRepository: TaskStageRepository
-
 
     private lateinit var task: Task
     private lateinit var taskStage: TaskStage

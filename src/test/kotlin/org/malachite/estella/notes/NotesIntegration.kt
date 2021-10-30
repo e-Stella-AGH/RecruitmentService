@@ -44,36 +44,6 @@ import java.util.*
 class NotesIntegration : BaseIntegration() {
 
 
-    @Autowired
-    private lateinit var interviewRepository: InterviewRepository
-
-    @Autowired
-    private lateinit var jobSeekerRepository: JobSeekerRepository
-
-    @Autowired
-    private lateinit var recruitmentStageRepository: RecruitmentStageRepository
-
-    @Autowired
-    private lateinit var applicationRepository: ApplicationRepository
-
-    @Autowired
-    private lateinit var applicationStageDataRepository: ApplicationStageRepository
-
-    @Autowired
-    private lateinit var taskStageRepository: TaskStageRepository
-
-    @Autowired
-    private lateinit var taskRepository: TaskRepository
-
-    @Autowired
-    private lateinit var taskResultRepository: TaskResultRepository
-
-    @Autowired
-    private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var recruitmentProcessService: RecruitmentProcessService
-
     private lateinit var application: Application
     private lateinit var applicationStageData: ApplicationStageData
     private lateinit var organization: Organization

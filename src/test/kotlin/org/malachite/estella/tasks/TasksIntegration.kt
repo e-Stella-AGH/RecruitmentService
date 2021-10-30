@@ -34,24 +34,6 @@ import java.util.*
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class TasksIntegration : BaseIntegration() {
 
-    @Autowired
-    private lateinit var organizationRepository: OrganizationRepository
-
-    @Autowired
-    private lateinit var tasksRepository: TaskRepository
-
-    @Autowired
-    private lateinit var applicationRepository: ApplicationRepository
-
-    @Autowired
-    private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var jobSeekerRepository: HibernateJobSeekerRepository
-
-    @Autowired
-    private lateinit var offerRepository: HibernateOfferRepository
-
 
     private var applicationId = 0
 

@@ -14,11 +14,22 @@ import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.interview.api.JobseekerName
 import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewNoteDTO
+import org.malachite.estella.interview.domain.InterviewRepository
+import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
+import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.process.domain.RecruitmentProcessDto
+import org.malachite.estella.process.domain.RecruitmentStageRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.services.RecruitmentProcessService
+import org.malachite.estella.services.SecurityService
+import org.malachite.estella.task.domain.TaskRepository
+import org.malachite.estella.task.domain.TaskResultRepository
+import org.malachite.estella.task.domain.TaskStageRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.context.ApplicationContextInitializer
@@ -348,5 +359,46 @@ class BaseIntegration {
             }
         }
     }
+
+
+    @Autowired
+    lateinit var interviewRepository: InterviewRepository
+
+    @Autowired
+    lateinit var jobSeekerRepository: JobSeekerRepository
+
+    @Autowired
+    lateinit var recruitmentStageRepository: RecruitmentStageRepository
+
+    @Autowired
+    lateinit var applicationRepository: ApplicationRepository
+
+    @Autowired
+    lateinit var applicationStageDataRepository: ApplicationStageRepository
+
+    @Autowired
+    lateinit var taskStageRepository: TaskStageRepository
+
+    @Autowired
+    lateinit var taskRepository: TaskRepository
+
+    @Autowired
+    lateinit var taskResultRepository: TaskResultRepository
+
+    @Autowired
+    lateinit var securityService: SecurityService
+
+    @Autowired
+    lateinit var recruitmentProcessService: RecruitmentProcessService
+
+    @Autowired
+    lateinit var offerRepository: HibernateOfferRepository
+
+    @Autowired
+    lateinit var organizationRepository: OrganizationRepository
+
+    @Autowired
+    lateinit var tasksRepository: TaskRepository
+
 
 }

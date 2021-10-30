@@ -32,12 +32,6 @@ import strikt.assertions.isNotNull
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ApplicationsIntegration : BaseIntegration() {
 
-    @Autowired
-    private lateinit var jobSeekerRepository: HibernateJobSeekerRepository
-
-    @Autowired
-    private lateinit var offerRepository: HibernateOfferRepository
-
     @Test
     @Order(1)
     fun `should be able to apply for offer as logged in user`() {
