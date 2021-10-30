@@ -25,7 +25,7 @@ class OrganizationService(
 
     fun getOrganization(id: UUID): Organization = withExceptionThrower { organizationRepository.findById(id).get() }
     fun getOrganization(id: String): Organization = withExceptionThrower {
-        UUID.fromString(id).let { getOrganization(it) }
+        getOrganization(UUID.fromString(id))
     }
 
     fun addOrganization(organization: Organization): Organization {
@@ -39,16 +39,30 @@ class OrganizationService(
             .let { organizationRepository.save(it) }
     }
 
+    fun addTask(uuid: String, task: Task) =
+        getOrganization(uuid)
+            .let {
+                val updatedTasks = it.tasks.plus(task)
+                it.copy(tasks = updatedTasks)
+            }
+            .let { organizationRepository.save(it) }
+
+    fun deleteTask(uuid: String, taskId: Int) =
+        getOrganization(uuid)
+            .let {
+                val updatedTasks = it.tasks.filter { it.id != taskId }.toSet()
+                it.copy(tasks = updatedTasks)
+            }
+            .let { organizationRepository.save(it) }
+
     fun updateTasks(uuid: String, tasks: Set<Task>) =
         getOrganization(uuid)
             .let {
                 val ids = tasks.map { it.id }
-                val newTasks = it.tasks.filterNot { ids.contains(it.id) }.toSet()
-                it.copy(tasks = newTasks)
+                val oldTasks = it.tasks.filterNot { ids.contains(it.id) }.toSet()
+                it.copy(tasks = oldTasks.plus(tasks))
             }
-            .let { it.copy(tasks = it.tasks.plus(tasks)) }
             .let { organizationRepository.save(it) }
-
 
     fun deleteOrganization(id: UUID) {
         if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()

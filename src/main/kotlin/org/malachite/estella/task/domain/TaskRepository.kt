@@ -8,4 +8,5 @@ interface TaskRepository {
     fun findAll(): List<Task>
     fun findById(id: Int): Optional<Task>
     fun delete(task: Task)
+    fun deleteById(taskId: Int)
 }

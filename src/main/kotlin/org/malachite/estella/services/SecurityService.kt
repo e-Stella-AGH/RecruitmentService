@@ -50,22 +50,31 @@ class SecurityService(
             .let { Base64.getEncoder().encode(it) }
             .let { String(it) }
 
-    private fun decryptDevPassword(password: String) =
-        password.toByteArray()
-            .let { Base64.getDecoder().decode(it) }
-            .let { String(it) }
-            .split(":")
+    private fun decryptDevPassword(password: String): Pair<UUID, UUID>? {
+        val passwordParts: List<UUID> = try {
+            Base64.getDecoder()
+                    .decode(password.toByteArray())
+                    .decodeToString()
+                    .split(":")
+                    .map { UUID.fromString(it)!! }
+        } catch (ex: Exception) {
+            Collections.emptyList()
+        }
 
-
-    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean {
-        val decrypted = decryptDevPassword(password)
-        if (decrypted.size != 2) throw UnauthenticatedException()
-        return decrypted[1].let {
-            taskStageRepository.findById(UUID.fromString(it))
-        }.let {
-            decrypted[0] == organization.id!!.toString() && it.isPresent
+        return when (passwordParts.size) {
+            2    -> Pair(passwordParts[0], passwordParts[1])
+            else -> null
         }
     }
+
+
+    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean =
+        decryptDevPassword(password)?.let {
+            devPasswordComponents ->
+                val organizationUUID = devPasswordComponents.first
+                val taskStageUUID = devPasswordComponents.second
+                organizationUUID == organization.id!! && taskStageRepository.findById(taskStageUUID).isPresent
+        } ?: false
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
@@ -156,9 +165,9 @@ class SecurityService(
     fun checkOrganizationRights(id: Int) =
         checkUserRights(id) && getOrganizationFromContext() != null
 
-    fun checkOfferRights(offer: Offer): Boolean {
-        getUserFromContext().let {
-            return when (it!!.getUserType()) {
+    fun checkOfferRights(offer: Offer): Boolean =
+        getUserFromContext()?.let {
+            return when (it.getUserType()) {
                 "organization" ->
                     checkOrganizationRights(offer.creator.organization.user.id!!)
                 "hr" ->
@@ -166,8 +175,7 @@ class SecurityService(
                 else ->
                     false
             }
-        }
-    }
+        } ?: throw UnauthenticatedException()
 
     fun checkOrganizationHrRights(hrId: Int) =
         getOrganizationFromContext()?.let {

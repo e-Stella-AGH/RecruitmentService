@@ -161,7 +161,7 @@ fun TaskResult.toTaskResultWithTestDTO(): TaskResultWithTestDTO =
         code.toBase64String(),
         this.results.toBase64String(),
         task.tests.toBase64String(),
-        task.description.toBase64String()
+        task.description
     )
 
 fun TasksNotes.toTasksNotesDTO(): TasksNotesDTO =

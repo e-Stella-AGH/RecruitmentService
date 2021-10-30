@@ -40,7 +40,7 @@ class TaskResultTest : BaseIntegration() {
 
     @BeforeEach
     fun prepareTask() {
-        task = Task(null, SerialBlob("xd".toByteArray()), SerialClob("xd".toCharArray()), "filename", 10)
+        task = Task(null, "xd".toByteArray().toTypedArray(), "xd", "filename", 10)
         val jobseeker = jobSeekerRepository.findAll().first()
 
         val stage = recruitmentStageRepository.findAll().first()

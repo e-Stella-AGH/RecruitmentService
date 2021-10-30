@@ -15,6 +15,9 @@ fun Clob?.toBase64String(): String =
 fun Blob.toBase64String(): String =
     Base64.getEncoder().encodeToString(this.getBytes(1, this.length().toInt()))
 
+fun Array<Byte>.toBase64String(): String =
+    Base64.getEncoder().encodeToString(this.toByteArray())
+
 fun String.toClob(): Clob =
     SerialClob(String(Base64.getDecoder().decode(this)).toCharArray())
 

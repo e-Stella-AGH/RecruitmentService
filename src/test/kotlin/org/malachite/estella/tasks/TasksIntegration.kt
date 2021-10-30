@@ -5,11 +5,16 @@ import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.process.domain.TaskTestCaseDto
+import org.malachite.estella.process.domain.encodeToJson
+import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.services.SecurityService
+import org.malachite.estella.task.api.TaskController
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
@@ -20,10 +25,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Transactional
 import strikt.api.expect
 import strikt.api.expectThat
-import strikt.assertions.any
-import strikt.assertions.isEqualTo
-import strikt.assertions.isNotEmpty
-import strikt.assertions.map
+import strikt.assertions.*
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.sql.Timestamp
@@ -44,7 +46,6 @@ class TasksIntegration : BaseIntegration() {
             (applyForOffer(getJobSeeker(), password, getOffer()).body as Map<String, Any>).toApplicationDTO().id!!
         updateStage(applicationId, hrPartner.user.mail, password)
         updateStage(applicationId, hrPartner.user.mail, password)
-//        updateStage(applicationId, hrPartner.user.mail, password)
     }
 
     fun getApplication() =
@@ -61,14 +62,14 @@ class TasksIntegration : BaseIntegration() {
     fun `should be able to post task to organization`() {
         onStart()
         val organization = organizationRepository.findAll().first()
-        val applicationStage = getApplication().applicationStages.sortedBy { it.id }.last()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.POST,
             mapOf(EStellaHeaders.devPassword to password, "Content-Type" to "application/json"),
             body = mapOf(
-                "testsBase64" to encodedFile,
+                "testsBase64" to anotherEncodedFile,
                 "descriptionFileName" to descriptionFileName,
                 "descriptionBase64" to encodedFile,
                 "timeLimit" to timeLimit,
@@ -101,7 +102,6 @@ class TasksIntegration : BaseIntegration() {
     @Test
     @Order(3)
     fun `should respond with 400 without parameter`() {
-        val organization = organizationRepository.findAll().first()
         val response = httpRequest(
             "/api/tasks",
             method = HttpMethod.POST,
@@ -117,8 +117,98 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Transactional
     @Order(4)
+    fun `should update tests with file`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val oldTask = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/file?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("testsBase64" to encodedFile),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedTask = taskRepository.findById(oldTask.id!!).get()
+        expectThat(updatedTask.tests.toBase64String()).isEqualTo(encodedFile)
+    }
+
+
+    @Test
+    @Order(5)
+    fun `should unath on update tests with file`() {
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${task.id!!}/tests/file?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("testsBase64" to encodedFile),
+            headers = mapOf(
+                EStellaHeaders.devPassword to "wrong_pass",
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Transactional
+    @Order(6)
+    fun `should bad request on update tests with file`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+
+        val task = organization.tasks.first()
+        val response1 = httpRequest(
+            "/api/tasks/${task.id!!}/tests/file?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("testsBase64" to encodedFile),
+            headers = mapOf(
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response1.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+
+        val response2 = httpRequest(
+            "/api/tasks/${task.id!!}/tests/file",
+            method = HttpMethod.PUT,
+            body = mapOf("testsBase64" to encodedFile),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response2.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(7)
+    fun `should update tests with object`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val oldTask = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedTask = taskRepository.findById(oldTask.id!!).get()
+        expectThat(updatedTask.tests.toBase64String()).isEqualTo(Base64.getEncoder().encode(testObjects.encodeToJson().toByteArray()).decodeToString())
+    }
+
+    @Test
+    @Order(7)
     fun `should be able to get task from organization`() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.last()
@@ -142,7 +232,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(5)
+    @Order(8)
     fun `should send unauthorized for bad password get tasks`() {
         val organization = organizationRepository.findAll().first()
         val response = httpRequest(
@@ -154,7 +244,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(6)
+    @Order(9)
     fun `should send 400`() {
         val response = httpRequest(
             path = "/api/tasks",
@@ -175,6 +265,14 @@ class TasksIntegration : BaseIntegration() {
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))
     private val encodedFile = Base64.getEncoder().encodeToString(testsFile)
 
+    private val anotherTestsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests2.json"))
+    private val anotherEncodedFile = Base64.getEncoder().encodeToString(anotherTestsFile)
+
+    private val testObjects = listOf(
+        TaskTestCaseDto(null, "xd", "xd"),
+        TaskTestCaseDto(null, "xdd", "xdd"),
+    )
+
     private val descriptionFileName = "description.pdf"
     private val timeLimit = 30
     private val deadline = Timestamp.from(Instant.now())
@@ -193,7 +291,7 @@ class TasksIntegration : BaseIntegration() {
     private val password = "a"
 
     private fun getOffer(which: Int = 0) =
-        offerRepository.findAll().filter { it.creator.user.mail == hrPartner.user.mail }.get(which)
+        offerRepository.findAll().filter { it.creator.user.mail == hrPartner.user.mail }[which]
 
 
     private data class AssertionTaskDto(

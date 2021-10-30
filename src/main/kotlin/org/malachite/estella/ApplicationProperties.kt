@@ -36,7 +36,6 @@ fun getApplicationPropertiesForH2(): String {
         spring.datasource.driver-class-name=org.h2.Driver
         spring.datasource.driverClassName=org.h2.Driver
         spring.h2.console.enabled=true
-        springdoc.swagger-ui.path=/docs
     """.trimIndent()
 }
 

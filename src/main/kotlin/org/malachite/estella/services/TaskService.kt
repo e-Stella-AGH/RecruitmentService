@@ -5,13 +5,13 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
-import org.malachite.estella.process.domain.TaskDto
-import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.process.domain.toTask
-import org.malachite.estella.process.domain.toTaskDto
+import org.malachite.estella.commons.toBase64String
+import org.malachite.estella.process.domain.*
 import org.malachite.estella.queues.utils.TaskResultRabbitDTO
+import org.malachite.estella.task.domain.InvalidTestFileException
 import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -41,10 +41,18 @@ class TaskService(
         }
 
 
-    fun getTasksByOrganizationUuid(organizationUuid: String) =
+    fun getTasksByOrganizationUuid(organizationUuid: String): List<TaskDto> =
         organizationService.getOrganization(organizationUuid)
             .tasks
             .map { it.toTaskDto() }
+
+
+    fun getTaskTestsWithinOrganization(organizationUuid: String, taskId: Int): String =
+        organizationService.getOrganization(organizationUuid)
+            .tasks
+            .find { it.id == taskId }
+            ?.tests
+            ?.toBase64String() ?: throw TaskNotFoundException()
 
     fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
         val taskStage = taskStageService.getTaskStage(tasksStageId)
@@ -62,19 +70,24 @@ class TaskService(
         taskRepository
             .findById(taskId)
             .get()
-            .tests.binaryStream
-            .readAllBytes()
-            .contentToString()
-            .let { Json.decodeFromString<List<TaskTestCaseDto>>(it) }
+            .tests
+            .toBase64String()
+            .let { Json.decodeFromString(it) }
 
-    fun addTask(task: TaskDto) =
+    fun addTask(organizationUuid: String, taskDto: TaskDto) =
         withExceptionThrower {
-            if (!checkTestsFormat(task.testsBase64)) throw IllegalArgumentException("Tests in wrong format")
-            taskRepository.save(task.toTask())
+            checkTestsFormat(taskDto.testsBase64)
+            val task = taskRepository.save(taskDto.toTask())
+            organizationService.addTask(organizationUuid, task)
+            task
         }
 
+    fun updateTask(taskDto: TaskDto) = taskDto.id?.let {
+        updateTask(it, taskDto.toTask())
+    } ?: throw TaskNotFoundException()
+
     fun updateTask(id: Int, task: Task) {
-        if (!checkTestsFormat(task.toTaskDto().testsBase64)) throw IllegalArgumentException()
+        checkTestsFormat(task.toTaskDto().testsBase64)
         val currTask: Task = taskRepository.findById(id).get()
         val updated: Task = currTask.copy(
             id = task.id,
@@ -85,11 +98,17 @@ class TaskService(
         taskRepository.save(updated)
     }
 
+    fun deleteTask(organizationUuid: String, taskId: Int) {
+        organizationService.deleteTask(organizationUuid, taskId)
+        taskRepository.deleteById(taskId)
+    }
+
+
     fun setTests(taskId: Int, testsBase64: String) = taskRepository.findById(taskId)
         .get()
         .let {
-            if (!checkTestsFormat(testsBase64)) throw IllegalArgumentException()
-            updateTask(taskId, it.copy(tests = SerialBlob(testsBase64.toByteArray())))
+            checkTestsFormat(testsBase64)
+            updateTask(taskId, it.copy(tests = testsBase64.decodeBase64().toByteArray().toTypedArray()))
         }
 
     fun setTests(taskId: Int, tests: List<TaskTestCaseDto>) =
@@ -98,7 +117,7 @@ class TaskService(
             .let {
                 updateTask(
                     taskId,
-                    it.copy(tests = SerialBlob(Base64.getEncoder().encode(tests.toString().encodeToByteArray())))
+                    it.copy(tests = tests.encodeToJson().toByteArray().toTypedArray())
                 )
             }
 
@@ -106,30 +125,41 @@ class TaskService(
         val taskStage = taskStageService.getTaskStage(result.solverId)
         val task = getTaskById(result.taskId).toTask()
         val startTime = result.startTime
-                ?.takeIf { it != "null" }
-                ?.let { Timestamp.valueOf(it) }
+            ?.takeIf { it != "null" }
+            ?.let { Timestamp.valueOf(it) }
         val endTime = result.endTime
-                ?.takeIf { it != "null" }
-                ?.let { Timestamp.valueOf(it) }
+            ?.takeIf { it != "null" }
+            ?.let { Timestamp.valueOf(it) }
 
         taskStageService.addResult(TaskResult(null,
-                SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
-                SerialClob(result.solverId.toCharArray()),
-                startTime,
-                endTime,
-                task,
-                taskStage
+            SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
+            SerialClob(result.solverId.toCharArray()),
+            startTime,
+            endTime,
+            task,
+            taskStage
         ))
     }
 
 
     private fun checkTestsFormat(tests: String) = try {
         val decoded = String(Base64.getDecoder().decode(tests))
-        Json.decodeFromString<List<TaskTestCaseDto>>(decoded)
-        true
+        TaskTestCaseDto.decodeFromJson(decoded)
     } catch (e: SerializationException) {
         e.printStackTrace()
-        false
+        throw InvalidTestFileException()
     }
+
+    fun checkOrganizationRights(organizationUuid: String, taskId: Int): TaskService =
+        try {
+            organizationService
+                .getOrganization(organizationUuid)
+                .tasks
+                .find { it.id == taskId } ?: throw TaskNotFoundException()
+            this
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw UnauthenticatedException()
+        }
 
 }
