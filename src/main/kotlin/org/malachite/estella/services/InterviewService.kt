@@ -1,12 +1,16 @@
 package org.malachite.estella.services
 
 import org.malachite.estella.commons.EStellaService
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
-import org.malachite.estella.interview.domain.*
+import org.malachite.estella.interview.domain.InterviewNotFoundException
+import org.malachite.estella.interview.domain.InterviewPayload
+import org.malachite.estella.interview.domain.InterviewRepository
+import org.malachite.estella.interview.domain.getId
 import org.malachite.estella.security.Authority
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -38,7 +42,7 @@ class InterviewService(
     fun getOrganizationFromPartner(hrPartnerId: Int): Organization =
             hrPartnerService.getHrPartner(hrPartnerId).organization
 
-    fun getLastInterviewIdFromApplicationId(applicationId: Int): InterviewId =
+    fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
             withExceptionThrower { getAllByApplicationId(applicationId).sortedWith { a, b ->
                 a.dateTime?.compareTo(b.dateTime) ?: -1
             }.first() }.getId()

@@ -13,7 +13,6 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.TaskStage
-import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.interview.domain.InterviewRepository
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.process.domain.RecruitmentStageRepository
@@ -39,29 +38,7 @@ import java.util.*
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class InterviewIntegration : BaseIntegration() {
 
-    @Autowired
-    private lateinit var interviewRepository: InterviewRepository
 
-    @Autowired
-    private lateinit var jobSeekerRepository: JobSeekerRepository
-
-    @Autowired
-    private lateinit var recruitmentStageRepository: RecruitmentStageRepository
-
-    @Autowired
-    private lateinit var applicationRepository: ApplicationRepository
-
-    @Autowired
-    private lateinit var applicationStageDataRepository: ApplicationStageRepository
-
-    @Autowired
-    private lateinit var taskStageRepository: TaskStageRepository
-
-    @Autowired
-    private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var recruitmentProcessService: RecruitmentProcessService
 
     private lateinit var application: Application
     private lateinit var applicationStageData: ApplicationStageData
@@ -153,7 +130,7 @@ class InterviewIntegration : BaseIntegration() {
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as Map<String, String>
-        expectThat(response.body["interviewId"]).isEqualTo(interview.id.toString())
+        expectThat(response.body["uuid"]).isEqualTo(interview.id.toString())
     }
 
     @Test
@@ -170,7 +147,7 @@ class InterviewIntegration : BaseIntegration() {
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as Map<String, Any>
-        expectThat(response.body["interviewId"]).isEqualTo(interview.id.toString())
+        expectThat(response.body["uuid"]).isEqualTo(interview.id.toString())
     }
 
     @Test
@@ -295,122 +272,7 @@ class InterviewIntegration : BaseIntegration() {
         expectThat(interview.dateTime.toString()).isEqualTo(dateTime.toString())
     }
 
-    @Test
-    @Order(11)
-    fun `should be able to set notes and then add new note`() {
-        var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
-        interview = interviewRepository.save(interview)
-        expectThat(interview.applicationStage.notes.size).isEqualTo(0)
-        val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
-        val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val author = "test@test.com"
-        val tags = setOf<String>("Git")
-        val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
-        val password = securityService.hashOrganization(organization, applicationStageData.tasksStage!!)
-
-        var response = httpRequest(
-            "/api/interview/${interview.id}/add_notes",
-            method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.devPassword to password),
-            body = mapOf(
-                "notes" to notes
-            )
-        )
-
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-
-        interview = interviewRepository.findAll().first()
-
-        expectThat(interview.applicationStage.notes.size).isEqualTo(2)
-        var interviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
-        var interviewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
-        expectThat(listOf(this.noteA, this.noteB))
-            .containsExactlyInAnyOrder(listOf(interviewNoteA, interviewNoteB))
-        var authors = interview.applicationStage.notes.map { it.author }
-        expectThat(authors).containsExactlyInAnyOrder(listOf(author, author))
-        var noteTags: List<String> = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }
-        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags).flatMap { it })
-
-
-//      Second part of test adding next notes
-        val newAuthor = "test2@test2.com"
-        val newTags = setOf<String>("Bad answer")
-        val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
-
-        response = httpRequest(
-            "/api/interview/${interview.id}/add_notes",
-            method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.devPassword to password),
-            body = mapOf(
-                "notes" to newNotes
-            )
-        )
-
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-
-        interview = interviewRepository.findAll().first()
-
-        expectThat(interview.applicationStage.notes.size).isEqualTo(3)
-        val savedInterviewNoteA = interview.applicationStage.notes.elementAt(0).text!!.characterStream.readText()
-        val savedInterviewNoteB = interview.applicationStage.notes.elementAt(1).text!!.characterStream.readText()
-        val savedInterviewNoteC = interview.applicationStage.notes.elementAt(2).text!!.characterStream.readText()
-        expectThat(listOf(this.noteA, this.noteB, this.noteA))
-            .containsExactlyInAnyOrder(listOf(savedInterviewNoteA, savedInterviewNoteB, savedInterviewNoteC))
-        authors = interview.applicationStage.notes.map { it.author }
-        expectThat(authors).containsExactlyInAnyOrder(listOf(author, author, newAuthor))
-        noteTags = interview.applicationStage.notes.flatMap { it.tags.map { it.text } }
-        expectThat(noteTags).containsExactlyInAnyOrder(listOf(tags, tags, newTags).flatMap{it})
-    }
-
-
-    @Test
-    @Order(12)
-    fun `should return unauthorized when trying to set notes`() {
-        var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
-        interview = interviewRepository.save(interview)
-        expectThat(interview.applicationStage.notes.size).isEqualTo(0)
-        val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
-        val noteB = String(Base64.getEncoder().encode(noteB.encodeToByteArray()))
-        val notes = setOf(
-            NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
-            NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
-        )
-        val badPassword = "xd"
-
-        var response = httpRequest(
-            "/api/interview/${interview.id}/add_notes",
-            method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.devPassword to badPassword),
-            body = mapOf(
-                "notes" to notes
-            )
-        )
-
-        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-
-        interview = interviewRepository.findAll().first()
-
-        expectThat(interview.applicationStage.notes.size).isEqualTo(0)
-    }
-
     private val password = "a"
-    private val noteA = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-            "Mauris sit amet erat bibendum, condimentum ex vehicula, rhoncus magna. " +
-            "Mauris mattis, sem non aliquam fermentum, dolor eros porttitor ligula, " +
-            "at semper diam lorem in libero. Integer imperdiet felis at arcu suscipit iaculis. " +
-            "Maecenas pellentesque egestas nunc, aliquet mattis enim egestas in. " +
-            "Cras quis facilisis lorem. Aenean sed varius odio. " +
-            "Ut eget orci at ante lobortis interdum vel sit amet dolor." +
-            " Praesent varius blandit tortor ac condimentum. Aenean congue odio sem, " +
-            "a egestas eros sollicitudin ac. Phasellus rutrum enim at mi eleifend tincidunt." +
-            " Duis ac ligula arcu. Integer ultricies iaculis pretium. Duis et molestie purus. "
-    private val noteB = "Nam quis lectus massa. Praesent vehicula arcu quis rutrum consectetur. " +
-            "Vestibulum mattis turpis in tortor ornare iaculis. Nam enim mauris, " +
-            "iaculis id iaculis et, porta in neque. Aenean sit amet blandit augue. " +
-            "Integer nec nibh nec est viverra varius. Nam in pellentesque ante. "
-
 
     private fun withStatusAndMessage(response: Response, message: String, status: HttpStatus) {
         expectThat(response.statusCode).isEqualTo(status)

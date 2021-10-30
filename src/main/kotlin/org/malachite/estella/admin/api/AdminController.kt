@@ -3,6 +3,7 @@ package org.malachite.estella.admin.api
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,10 +24,10 @@ class AdminController(
     @PostMapping("/verify/{organizationUUID}")
     fun verifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: String): ResponseEntity<Any> =
+        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Any> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
-                .verifyOrganization(organizationUUID)
+                .verifyOrganization(organizationUUID.toUUID())
                 .let { SUCCESS }
         else
             UNAUTH
@@ -35,17 +36,11 @@ class AdminController(
     @PostMapping("/deverify/{organizationUUID}")
     fun deverifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: String): ResponseEntity<Any> =
+        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Any> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
-                .deverifyOrganization(organizationUUID)
+                .deverifyOrganization(organizationUUID.toUUID())
                 .let { SUCCESS }
         else
             UNAUTH
-
-    data class OrganizationDto(
-        val uuid: String,
-        val name: String,
-        val verified: Boolean
-    )
 }

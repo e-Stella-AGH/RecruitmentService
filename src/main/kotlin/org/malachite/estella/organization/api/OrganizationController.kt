@@ -2,6 +2,7 @@ package org.malachite.estella.organization.api
 
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.OwnResponses.UNAUTH
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
 import org.malachite.estella.people.domain.HrPartnerResponse
@@ -33,8 +34,8 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/{organizationId}")
-    fun getOrganization(@PathVariable organizationId: OrganizationID): ResponseEntity<Organization> =
-        ResponseEntity(organizationService.getOrganization(organizationId.toId()), HttpStatus.OK)
+    fun getOrganization(@PathVariable organizationId: PayloadUUID): ResponseEntity<Organization> =
+        ResponseEntity(organizationService.getOrganization(organizationId.toUUID()), HttpStatus.OK)
 
     @CrossOrigin
     @GetMapping("/organization")
@@ -61,19 +62,19 @@ class OrganizationController(
     @CrossOrigin
     @PutMapping("/{organizationId}")
     fun updateOrganization(
-        @PathVariable("organizationId") organizationId: OrganizationID,
+        @PathVariable("organizationId") organizationId: PayloadUUID,
         @RequestBody organizationRequest: OrganizationRequest
     ): ResponseEntity<Any> =
-        organizationService.updateOrganization(organizationId.toId(), organizationRequest.toOrganization())
+        organizationService.updateOrganization(organizationId.toUUID(), organizationRequest.toOrganization())
             .let { OwnResponses.SUCCESS }
 
 
     @CrossOrigin
     @DeleteMapping("/{organizationId}")
     fun deleteOrganization(
-        @PathVariable("organizationId") organizationId: OrganizationID
+        @PathVariable("organizationId") organizationId: PayloadUUID
     ): ResponseEntity<Any> =
-        organizationService.deleteOrganization(organizationId.toId()).let { OwnResponses.SUCCESS }
+        organizationService.deleteOrganization(organizationId.toUUID()).let { OwnResponses.SUCCESS }
 
 
 
@@ -92,9 +93,7 @@ class OrganizationController(
         User(null, name, "", mail, password), false
     )
 
-    fun OrganizationID.toId(): UUID = UUID.fromString(organizationId)
 }
 
 
 data class OrganizationRequest(val name: String, val mail: String, val password: String)
-data class OrganizationID(val organizationId: String)

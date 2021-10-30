@@ -5,10 +5,10 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 
 class UserContextDetails(
-        val user: User,
-        val token: String?,
-        val _authorities: Collection<Authority>,
-        val _enabled: Boolean
+    val user: User,
+    val token: String?,
+    val _authorities: Collection<Authority>,
+    val _enabled: Boolean
 ) : UserDetails {
     override fun getAuthorities(): Collection<Authority> = _authorities
     override fun getPassword(): String = user.password
@@ -21,12 +21,12 @@ class UserContextDetails(
 
     companion object {
         fun fromContext(): UserContextDetails? = SecurityContextHolder
-                .getContext()
-                ?.authentication
-                ?.principal
-                ?.let {
-                    if (it is UserContextDetails) it
-                    else null
-                }
+            .getContext()
+            ?.authentication
+            ?.principal
+            ?.let {
+                if (it is UserContextDetails) it
+                else null
+            }
     }
 }

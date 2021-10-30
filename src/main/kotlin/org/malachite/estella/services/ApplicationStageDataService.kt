@@ -4,10 +4,12 @@ import org.malachite.estella.aplication.domain.ApplicationNotFoundException
 import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.commons.models.interviews.Note
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.interview.api.NotesFilePayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -59,18 +61,76 @@ class ApplicationStageDataService(
         }
 
 
-    fun setNotesToInterview(id: UUID, password: String, notes: Set<NotesFilePayload>) {
-        if (!canDevUpdate(id, password)) throw UnauthenticatedException()
-        val interview = interviewService.getInterview(id)
-        val savedNotes = interview.applicationStage.notes.plus(noteService.updateNotes(notes))
-        applicationStageRepository.save(interview.applicationStage.copy(notes = savedNotes))
-    }
+    fun setNotesToInterview(id: UUID, password: String?, notes: Set<NotesFilePayload>) =
+        interviewService.getInterview(id).applicationStage
+            .let { setNotesToApplicationStage(it, password, notes) }
 
-    private fun canDevUpdate(id: UUID?, password: String): Boolean =
-        id?.let {
-            val organization = recruitmentProcessService
-                .getProcessFromStage(interviewService.getInterview(it).applicationStage)
-                .offer.creator.organization
-            securityService.compareOrganizationWithPassword(organization, password)
-        } ?: false
+    fun setNotesToTaskStage(id: UUID, password: String?, notes: Set<NotesFilePayload>) =
+        taskStageService.getTaskStage(id).applicationStage.let { setNotesToApplicationStage(it, password, notes) }
+
+    fun setNotesToApplied(application: Application, password: String?, notes: Set<NotesFilePayload>) =
+        application.applicationStages.first().let { setNotesToApplicationStage(it, password, notes) }
+
+    private fun setNotesToApplicationStage(
+        applicationStage: ApplicationStageData,
+        password: String?,
+        notes: Set<NotesFilePayload>
+    ) = assertAccessApplicationStageData(applicationStage, password)
+        .let { applicationStage.notes.plus(noteService.updateNotes(notes)) }
+        .let { applicationStageRepository.save(applicationStage.copy(notes = it)) }
+
+
+    fun getNotesByApplication(application: Application, password: String?): List<Note> =
+        application.applicationStages.first()
+            .let { getNotesByApplicationStage(it, password) }
+
+
+    fun getNotesByInterviewId(id: UUID, password: String?): List<Note> =
+        interviewService.getInterview(id).applicationStage
+            .let { getNotesByApplicationStage(it, password) }
+
+
+    fun getNotesByTaskId(id: UUID, password: String?): List<Note> =
+        taskStageService.getTaskStage(id).applicationStage
+            .let { getNotesByApplicationStage(it, password) }
+
+    private fun getNotesByApplicationStage(applicationStage: ApplicationStageData, password: String?): List<Note> =
+        assertAccessApplicationStageData(applicationStage, password)
+            .let { applicationStage.application.applicationStages.flatMap { it.notes } }
+
+    fun getNotesByTaskIdWithTask(id: UUID, password: String?): TasksNotes =
+        taskStageService.getTaskStage(id).applicationStage
+            .let { getNotesWithTaskResults(it, password) }
+
+    private fun getNotesWithTaskResults(applicationStage: ApplicationStageData, password: String?): TasksNotes =
+        applicationStage
+            .also { assertAccessApplicationStageData(it, password) }
+            .let { Pair(it.tasksStage!!.tasksResult, it.notes.toList()) }
+
+
+    private fun assertAccessApplicationStageData(applicationStage: ApplicationStageData, password: String?): Unit =
+        when {
+            password != null && !canDevUpdate(applicationStage, password) -> throw UnauthenticatedException()
+            password == null && !canHrUpdate(applicationStage) -> throw UnauthenticatedException()
+            else -> Unit
+        }
+
+    private fun canDevUpdate(applicationStage: ApplicationStageData, password: String): Boolean =
+        recruitmentProcessService
+            .getProcessFromStage(applicationStage)
+            .offer.creator.organization.let {
+                securityService.compareOrganizationWithPassword(it, password)
+            }
+
+    private fun canHrUpdate(applicationStage: ApplicationStageData): Boolean =
+        recruitmentProcessService
+            .getProcessFromStage(applicationStage)
+            .offer.creator.let { hrPartner ->
+                securityService.getUserDetailsFromContext()
+                    ?.let { it.user == hrPartner.user }
+                    ?: false
+            }
+
 }
+
+typealias TasksNotes = Pair<List<TaskResult>, List<Note>>

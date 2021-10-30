@@ -56,6 +56,4 @@ class TaskStageController(
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
-
-
 }
