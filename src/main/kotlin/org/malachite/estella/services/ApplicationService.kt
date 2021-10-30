@@ -100,7 +100,7 @@ class ApplicationService(
             .findAll()
 
 
-    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<Triple<Application, List<RecruitmentStage>, String>> =
+    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationWithStagesAndOfferName> =
         offerService.getOffer(offerId)
             .let {
                 val stages = it.recruitmentProcess?.stages
@@ -110,7 +110,7 @@ class ApplicationService(
                             .map { it.stage }
                             .let { stages.intersect(it).isNotEmpty() }
                     }.map { application ->
-                        Triple(application, stages, it.name)
+                        ApplicationWithStagesAndOfferName(application, stages, it.name)
                     }
                 else
                     Collections.emptyList()

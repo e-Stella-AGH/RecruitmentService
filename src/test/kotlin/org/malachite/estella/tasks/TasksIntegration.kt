@@ -3,14 +3,12 @@ package org.malachite.estella.tasks
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationRepository
-import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
-import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
@@ -35,24 +33,6 @@ import java.util.*
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class TasksIntegration : BaseIntegration() {
-
-    @Autowired
-    private lateinit var organizationRepository: OrganizationRepository
-
-    @Autowired
-    private lateinit var tasksRepository: TaskRepository
-
-    @Autowired
-    private lateinit var applicationRepository: ApplicationRepository
-
-    @Autowired
-    private lateinit var securityService: SecurityService
-
-    @Autowired
-    private lateinit var jobSeekerRepository: HibernateJobSeekerRepository
-
-    @Autowired
-    private lateinit var offerRepository: HibernateOfferRepository
 
 
     private var applicationId = 0

@@ -1,13 +1,17 @@
 package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
+import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.UnauthenticatedException
+import org.malachite.estella.interview.api.MeetingNotes
 import org.malachite.estella.people.domain.toJobSeekerDTO
 import org.malachite.estella.people.domain.toJobSeekerFileDTO
 import org.malachite.estella.services.ApplicationService
+import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.RecruitmentProcessService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.*
 class ApplicationController(
     @Autowired private val applicationService: ApplicationService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val applicationStageDataService: ApplicationStageDataService,
     @Autowired private val securityService: SecurityService
 ) {
 
@@ -64,7 +69,7 @@ class ApplicationController(
     fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
         applicationService
             .getApplicationsWithStagesAndOfferName(offerId)
-            .map { it.first.toApplicationDTOWithStagesListAndOfferName(it.second,it.third) }
+            .map { it.toApplicationDtoWithStagesListAndOfferName() }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
@@ -115,4 +120,62 @@ class ApplicationController(
                 if (!securityService.checkOfferRights(it.offer)) return UNAUTH
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
             }
+
+    @CrossOrigin
+    @Transactional
+    @PutMapping("/add_notes")
+    fun addNotes(
+        @RequestParam("cv_note") applicationId: Int?,
+        @RequestParam("task_note") taskStageUUID: PayloadUUID?,
+        @RequestParam("interview_note") interviewUUID: PayloadUUID?,
+        @RequestHeader(EStellaHeaders.devPassword) password: String?,
+        @RequestBody notes: MeetingNotes
+    ): ResponseEntity<Any> =
+        when {
+            applicationId != null -> applicationService.getApplicationById(applicationId)
+                .let { applicationStageDataService.setNotesToApplied(it, password, notes.notes) }
+            taskStageUUID != null -> applicationStageDataService.setNotesToTaskStage(
+                taskStageUUID.toUUID(),
+                password,
+                notes.notes
+            )
+            interviewUUID != null -> applicationStageDataService.setNotesToInterview(
+                interviewUUID.toUUID(),
+                password,
+                notes.notes
+            )
+            else -> throw NoteNotAttachedException()
+        }.let {
+            SUCCESS
+        }
+
+    @CrossOrigin
+    @Transactional
+    @GetMapping("/get_notes")
+    fun getNotesFromStage(
+        @RequestParam("cv_note") applicationId: Int?,
+        @RequestParam("task_note") taskStageUUID: PayloadUUID?,
+        @RequestParam("interview_note") interviewUUID: PayloadUUID?,
+        @RequestParam("with_tasks") includeTasks: Boolean = false,
+        @RequestHeader(EStellaHeaders.devPassword) password: String?
+    ): ResponseEntity<Any> =
+        when {
+            applicationId != null -> applicationService.getApplicationById(applicationId)
+                .let { applicationStageDataService.getNotesByApplication(it, password) }
+                .toApplicationNotesDTO()
+            taskStageUUID != null && includeTasks -> applicationStageDataService.getNotesByTaskIdWithTask(
+                taskStageUUID.toUUID(),
+                password
+            ).toTasksNotesDTO()
+            taskStageUUID != null && !includeTasks -> applicationStageDataService.getNotesByTaskId(
+                taskStageUUID.toUUID(),
+                password
+            ).toApplicationNotesDTO()
+            interviewUUID != null -> applicationStageDataService.getNotesByInterviewId(interviewUUID.toUUID(), password)
+                .toApplicationNotesDTO()
+            else -> throw NotSpecifiedWhichNoteToGet()
+        }.let { response: Any ->
+            ResponseEntity.ok(response)
+        }
+
 }

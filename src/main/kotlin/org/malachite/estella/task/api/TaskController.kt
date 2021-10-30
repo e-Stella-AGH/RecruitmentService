@@ -3,6 +3,7 @@ package org.malachite.estella.task.api
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.services.OrganizationService
@@ -60,7 +61,7 @@ class TaskController(
     @Transactional
     @GetMapping("/{taskId}/tests")
     fun getTaskTests(
-            @RequestParam("owner") organizationUuid: String,
+            @RequestParam("owner") organizationUuid: PayloadUUID,
             @PathVariable taskId: Int,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ) =
@@ -103,5 +104,6 @@ class TaskController(
             @RequestHeader(EStellaHeaders.devPassword) password: String,
             @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
+
 
 }
