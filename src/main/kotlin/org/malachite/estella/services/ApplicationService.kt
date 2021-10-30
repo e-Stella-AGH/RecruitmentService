@@ -18,6 +18,7 @@ class ApplicationService(
     @Autowired private val offerService: OfferService,
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val applicationStageDataService: ApplicationStageDataService,
+    @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {
 
@@ -72,7 +73,7 @@ class ApplicationService(
                     else
                         it
                 }.let {
-                        applicationRepository.save(it)
+                    applicationRepository.save(it)
                 }
     }
 
@@ -99,7 +100,7 @@ class ApplicationService(
             .findAll()
 
 
-    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<Triple<Application, List<RecruitmentStage>, String>> =
+    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationWithStagesAndOfferName> =
         offerService.getOffer(offerId)
             .let {
                 val stages = it.recruitmentProcess?.stages
@@ -109,15 +110,24 @@ class ApplicationService(
                             .map { it.stage }
                             .let { stages.intersect(it).isNotEmpty() }
                     }.map { application ->
-                        Triple(application, stages, it.name)
+                        ApplicationWithStagesAndOfferName(application, stages, it.name)
                     }
                 else
                     Collections.emptyList()
             } ?: Collections.emptyList()
 
-    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<Application> =
+    fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationWithStagesAndOfferName> =
         applicationRepository
             .getAllByJobSeekerId(jobSeekerId)
+            .map { application ->
+                Pair(application, recruitmentProcessService.getProcessFromStage(application.applicationStages[0]))
+            }.map { pairs ->
+                ApplicationWithStagesAndOfferName(
+                    pairs.first,
+                    pairs.second.stages,
+                    pairs.second.offer.name
+                )
+            }
 
     fun deleteApplication(applicationId: Int) =
         applicationRepository.deleteById(applicationId)
@@ -127,5 +137,11 @@ class ApplicationService(
             applicationRepository.save(it.get().copy(status = ApplicationStatus.REJECTED))
         }
     }
+
+    data class ApplicationWithStagesAndOfferName(
+        val application: Application,
+        val stages: List<RecruitmentStage>,
+        val offerName: String
+    )
 
 }

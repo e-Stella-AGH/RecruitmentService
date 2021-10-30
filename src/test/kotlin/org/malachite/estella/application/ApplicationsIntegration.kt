@@ -178,7 +178,7 @@ class ApplicationsIntegration : BaseIntegration() {
             method = HttpMethod.GET,
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        val applications = (response.body as List<Map<String, Any>>).map { it.toApplicationDTO() }
+        val applications = (response.body as List<Map<String, Any>>).map { it.toApplicationDTOWithStagesAndOfferName() }
         expectThat(applications.size).isGreaterThanOrEqualTo(1)
     }
 
