@@ -73,11 +73,11 @@ class ApplicationController(
         securityService.getJobSeekerFromContext()
             ?.id
             ?.let { applicationService.getApplicationsByJobSeeker(it) }
-            ?.map { it.toDto() }
+            ?.map { it.toApplicationDtoWithStagesListAndOfferName() }
             ?.let { ResponseEntity.ok(it) }
             ?: throw UnauthenticatedException()
 
-    private fun ApplicationService.ApplicationWithStagesAndOfferName.toDto() = ApplicationDTOWithStagesListAndOfferName(
+    private fun ApplicationService.ApplicationWithStagesAndOfferName.toApplicationDtoWithStagesListAndOfferName() = ApplicationDTOWithStagesListAndOfferName(
         this.application.id,
         this.application.applicationDate,
         this.application.status,
