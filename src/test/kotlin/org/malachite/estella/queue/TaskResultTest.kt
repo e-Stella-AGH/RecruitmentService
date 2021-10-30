@@ -62,13 +62,29 @@ class TaskResultTest : BaseIntegration() {
     @Order(1)
     fun `task result consuming`() {
         expectThat(taskStage.tasksResult.size).isEqualTo(0)
+        val xd1 = "xd"
+        val xd2 = "xdd"
+        val code = SerialClob(xd1.toCharArray())
+        val results =  SerialBlob(xd1.toByteArray())
 
-        val taskResult = TaskResult(null, SerialBlob("xd".toByteArray()), SerialClob("xd".toCharArray()), null, null, task, taskStage)
+        val taskResult = TaskResult(null, results, code, null, null, task, taskStage)
         publish(taskResult)
 
         eventually {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
             expectThat(taskStage.tasksResult.size).isEqualTo(1)
+            expectThat(code.characterStream.readText()).isEqualTo(xd1)
+            val savedResults = taskStage.tasksResult[0].results.binaryStream.readAllBytes()
+            expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
+        }
+        // Test if results is updated and not added as new
+        publish(taskResult.copy(code = SerialClob(xd2.toCharArray())))
+        eventually {
+            taskStage = taskStageRepository.findById(taskStage.id!!).get()
+            expectThat(taskStage.tasksResult.size).isEqualTo(1)
+            expectThat(taskStage.tasksResult[0].code.characterStream.readText()).isEqualTo(xd2)
+            val savedResults = taskStage.tasksResult[0].results.binaryStream.readAllBytes()
+            expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
         }
     }
 
