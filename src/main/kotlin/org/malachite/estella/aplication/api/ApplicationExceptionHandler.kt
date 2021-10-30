@@ -12,18 +12,18 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 @ControllerAdvice
 class ApplicationExceptionHandler {
     @ExceptionHandler(ApplicationNotFoundException::class)
-    fun handleNoSuchElementException(ex: NoSuchElementException): ResponseEntity<Message> =
+    fun handleApplicationNotFoundException(ex: ApplicationNotFoundException): ResponseEntity<Message> =
         OwnResponses.NO_RESOURCE("We couldn't find this application")
 }
 @ControllerAdvice
 class NotePostExceptionHandler {
     @ExceptionHandler(NoteNotAttachedException::class)
-    fun handleNoSuchElementException(ex: NoteNotAttachedException): ResponseEntity<Message> =
-        OwnResponses.NO_RESOURCE("You don't pass parameter where attach note")
+    fun handleNoteNotAttachedException(ex: NoteNotAttachedException): ResponseEntity<Message> =
+        OwnResponses.NO_RESOURCE("You haven't specified where to attach note")
 }
 @ControllerAdvice
 class NoteGetExceptionHandler {
     @ExceptionHandler(NotSpecifiedWhichNoteToGet::class)
-    fun handleNoSuchElementException(ex: NotSpecifiedWhichNoteToGet): ResponseEntity<Message> =
-        OwnResponses.NO_RESOURCE("You don't specify which type of notes should be returned")
+    fun handleNotSpecifiedWhichNoteToGet(ex: NotSpecifiedWhichNoteToGet): ResponseEntity<Message> =
+        OwnResponses.NO_RESOURCE("You haven't specified which type of notes should be returned")
 }

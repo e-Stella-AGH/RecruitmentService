@@ -75,7 +75,7 @@ class ApplicationStageDataService(
         applicationStage: ApplicationStageData,
         password: String?,
         notes: Set<NotesFilePayload>
-    ) = canAccessApplicationStageData(applicationStage, password)
+    ) = assertAccessApplicationStageData(applicationStage, password)
         .let { applicationStage.notes.plus(noteService.updateNotes(notes)) }
         .let { applicationStageRepository.save(applicationStage.copy(notes = it)) }
 
@@ -95,7 +95,7 @@ class ApplicationStageDataService(
             .let { getNotesByApplicationStage(it, password) }
 
     private fun getNotesByApplicationStage(applicationStage: ApplicationStageData, password: String?): List<Note> =
-        canAccessApplicationStageData(applicationStage, password)
+        assertAccessApplicationStageData(applicationStage, password)
             .let { applicationStage.application.applicationStages.flatMap { it.notes } }
 
     fun getNotesByTaskIdWithTask(id: UUID, password: String?): TasksNotes =
@@ -104,15 +104,16 @@ class ApplicationStageDataService(
 
     private fun getNotesWithTaskResults(applicationStage: ApplicationStageData, password: String?): TasksNotes =
         applicationStage
-            .also { canAccessApplicationStageData(it,password) }
+            .also { assertAccessApplicationStageData(it, password) }
             .let { Pair(it.tasksStage!!.tasksResult, it.notes.toList()) }
 
 
-    private fun canAccessApplicationStageData(applicationStage: ApplicationStageData, password: String?) =
-        if (password != null && !canDevUpdate(applicationStage, password)) throw UnauthenticatedException()
-        else if (password == null && !canHrUpdate(applicationStage)) throw UnauthenticatedException()
-        else true
-
+    private fun assertAccessApplicationStageData(applicationStage: ApplicationStageData, password: String?): Unit =
+        when {
+            password != null && !canDevUpdate(applicationStage, password) -> throw UnauthenticatedException()
+            password == null && !canHrUpdate(applicationStage) -> throw UnauthenticatedException()
+            else -> Unit
+        }
 
     private fun canDevUpdate(applicationStage: ApplicationStageData, password: String): Boolean =
         recruitmentProcessService
