@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
+@Transactional
 @RequestMapping("/api/tasks")
 class TaskController(
     @Autowired private val taskService: TaskService,
@@ -22,7 +23,6 @@ class TaskController(
 
     @Deprecated("Not tested yet - draft implementation, should be tested as part of ES-162")
     @CrossOrigin
-    @Transactional
     @GetMapping
     fun getTasks(
         @RequestParam("owner", required = false) organizationUuid: String?,
@@ -41,7 +41,6 @@ class TaskController(
     }
 
     @CrossOrigin
-    @Transactional
     @GetMapping("/{taskId}")
     fun getTaskById(
         @RequestParam("owner") organizationUuid: String,
@@ -54,7 +53,6 @@ class TaskController(
         .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
-    @Transactional
     @GetMapping("/{taskId}/tests")
     fun getTaskTests(
         @RequestParam("owner") organizationUuid: String,
@@ -66,7 +64,6 @@ class TaskController(
         .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
-    @Transactional
     @PostMapping
     fun addTask(
         @RequestParam("owner") organizationUuid: String,
@@ -77,7 +74,6 @@ class TaskController(
         .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @Transactional
     @DeleteMapping("/{taskId}")
     fun deleteTask(
         @RequestParam("owner") organizationUuid: String,
@@ -90,7 +86,6 @@ class TaskController(
         .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @Transactional
     @PutMapping
     fun updateTask(
         @RequestParam("owner") organizationUuid: String,
@@ -105,7 +100,6 @@ class TaskController(
     }
 
     @CrossOrigin
-    @Transactional
     @PutMapping("/{taskId}/tests/file")
     fun setTestsWithFile(
         @RequestParam("owner") organizationUuid: String,
@@ -119,7 +113,6 @@ class TaskController(
         .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
-    @Transactional
     @PutMapping("/{taskId}/tests/object")
     fun setTestsWithObject(
         @RequestParam("owner") organizationUuid: String,

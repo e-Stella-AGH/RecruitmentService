@@ -1,5 +1,6 @@
 package org.malachite.estella
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Test
@@ -15,7 +16,6 @@ import org.malachite.estella.interview.api.JobseekerName
 import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewNoteDTO
 import org.malachite.estella.interview.domain.InterviewRepository
-import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
@@ -350,8 +350,12 @@ class BaseIntegration {
             return try {
                 val response = restTemplate.exchange(requestEntity, String::class.java)
                 val statusCode = response.statusCode
-                val responseBody = objectMapper.readValue(response.body, Any::class.java)
-                Response(statusCode, responseBody, response.headers)
+                try {
+                    val responseBody = objectMapper.readValue(response.body, Any::class.java)
+                    Response(statusCode, responseBody, response.headers)
+                } catch (e: JsonParseException) {
+                    Response(statusCode, response.body!!, response.headers)
+                }
             } catch (exception: HttpStatusCodeException) {
                 val responseBody = objectMapper.readValue(exception.responseBodyAsString, Any::class.java)
                 val statusCode = exception.statusCode

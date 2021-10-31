@@ -72,8 +72,7 @@ class TasksIntegration : BaseIntegration() {
                 "testsBase64" to anotherEncodedFile,
                 "descriptionFileName" to descriptionFileName,
                 "descriptionBase64" to encodedFile,
-                "timeLimit" to timeLimit,
-                "deadline" to deadline
+                "timeLimit" to timeLimit
             )
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
@@ -92,8 +91,7 @@ class TasksIntegration : BaseIntegration() {
                 "testsBase64" to encodedFile,
                 "descriptionFileName" to descriptionFileName,
                 "descriptionBase64" to encodedFile,
-                "timeLimit" to timeLimit,
-                "deadline" to deadline
+                "timeLimit" to timeLimit
             )
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
@@ -116,8 +114,88 @@ class TasksIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 
+
+
     @Test
     @Order(4)
+    fun `should update tests with object`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val oldTask = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedTask = taskRepository.findById(oldTask.id!!).get()
+        expectThat(updatedTask.tests.toBase64String()).isEqualTo(Base64.getEncoder().encode(testObjects.encodeToJson().toByteArray()).decodeToString())
+    }
+
+    @Test
+    @Order(5)
+    fun `should unauth on update tests with object`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val oldTask = organization.tasks.first()
+        val response1 = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/object",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response1.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+
+        val response2 = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response2.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+
+        val response3 = httpRequest(
+            "/api/tasks/abc/tests/object?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response3.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(6)
+    fun `should bad request on update tests with object`() {
+        val organization = organizationRepository.findAll().first()
+        val oldTask = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
+            method = HttpMethod.PUT,
+            body = mapOf("tests" to testObjects),
+            headers = mapOf(
+                EStellaHeaders.devPassword to "haha",
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Order(7)
     fun `should update tests with file`() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
@@ -139,7 +217,7 @@ class TasksIntegration : BaseIntegration() {
 
 
     @Test
-    @Order(5)
+    @Order(8)
     fun `should unath on update tests with file`() {
         val organization = organizationRepository.findAll().first()
         val task = organization.tasks.first()
@@ -157,7 +235,7 @@ class TasksIntegration : BaseIntegration() {
 
     @Test
     @Transactional
-    @Order(6)
+    @Order(9)
     fun `should bad request on update tests with file`() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
@@ -187,28 +265,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(7)
-    fun `should update tests with object`() {
-        val organization = organizationRepository.findAll().first()
-        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
-        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val oldTask = organization.tasks.first()
-        val response = httpRequest(
-            "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
-            method = HttpMethod.PUT,
-            body = mapOf("tests" to testObjects),
-            headers = mapOf(
-                EStellaHeaders.devPassword to password,
-                "Content-Type" to "application/json"
-            )
-        )
-        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        val updatedTask = taskRepository.findById(oldTask.id!!).get()
-        expectThat(updatedTask.tests.toBase64String()).isEqualTo(Base64.getEncoder().encode(testObjects.encodeToJson().toByteArray()).decodeToString())
-    }
-
-    @Test
-    @Order(7)
+    @Order(10)
     fun `should be able to get task from organization`() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.last()
@@ -232,7 +289,59 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(8)
+    @Order(11)
+    fun `should be able to get task tests`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.last()
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val task = organization.tasks.first()
+
+        val response = httpRequest(
+            path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to password)
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        expectThat(response.body).isEqualTo(encodedFile)
+    }
+
+    @Test
+    @Order(12)
+    fun `should unauth on get task tests`() {
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+
+        val response = httpRequest(
+            path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to "xdd")
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+
+    @Test
+    @Order(13)
+    fun `should bad request on get task tests`() {
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+
+        val response1 = httpRequest(
+            path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
+            method = HttpMethod.GET
+        )
+        expectThat(response1.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+
+        val response2 = httpRequest(
+            path = "/api/tasks/${task.id}/tests",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to "xdd")
+        )
+        expectThat(response2.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(14)
     fun `should send unauthorized for bad password get tasks`() {
         val organization = organizationRepository.findAll().first()
         val response = httpRequest(
@@ -244,7 +353,7 @@ class TasksIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(9)
+    @Order(15)
     fun `should send 400`() {
         val response = httpRequest(
             path = "/api/tasks",
@@ -252,6 +361,136 @@ class TasksIntegration : BaseIntegration() {
             headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(16)
+    fun `should be able to update task`() {
+        onStart()
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val task = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.PUT,
+            mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            ),
+            body = mapOf(
+                "id" to task.id!!,
+                "testsBase64" to anotherEncodedFile,
+                "descriptionFileName" to descriptionFileName,
+                "descriptionBase64" to anotherEncodedFile,
+                "timeLimit" to updatedTimeLimit
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedTask = tasksRepository.findById(task.id!!).get()
+        expectThat(updatedTask.toTaskDto().toAssertionTaskDto()).isEqualTo(
+            AssertionTaskDto(anotherEncodedFile, descriptionFileName, anotherEncodedFile, updatedTimeLimit)
+        )
+    }
+
+    @Test
+    @Order(17)
+    fun `should unauth on update task`() {
+        onStart()
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.PUT,
+            mapOf(
+                EStellaHeaders.devPassword to "dd",
+                "Content-Type" to "application/json"
+            ),
+            body = mapOf(
+                "id" to task.id!!,
+                "testsBase64" to anotherEncodedFile,
+                "descriptionFileName" to descriptionFileName,
+                "descriptionBase64" to anotherEncodedFile,
+                "timeLimit" to updatedTimeLimit
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Order(18)
+    fun `should bad request on update task`() {
+        onStart()
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+        val response1 = httpRequest(
+            "/api/tasks",
+            method = HttpMethod.PUT,
+            mapOf(
+                EStellaHeaders.devPassword to "dd",
+                "Content-Type" to "application/json"
+            ),
+            body = mapOf(
+                "id" to task.id!!,
+                "testsBase64" to anotherEncodedFile,
+                "descriptionFileName" to descriptionFileName,
+                "descriptionBase64" to anotherEncodedFile,
+                "timeLimit" to updatedTimeLimit
+            )
+        )
+        expectThat(response1.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+
+        val response2 = httpRequest(
+            "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.PUT,
+            mapOf(
+                "Content-Type" to "application/json"
+            ),
+            body = mapOf(
+                "id" to task.id!!,
+                "testsBase64" to anotherEncodedFile,
+                "descriptionFileName" to descriptionFileName,
+                "descriptionBase64" to anotherEncodedFile,
+                "timeLimit" to updatedTimeLimit
+            )
+        )
+        expectThat(response2.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(19)
+    fun `should unauth on delete task`() {
+        val organization = organizationRepository.findAll().first()
+        val task = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${task.id}?owner=${organization.id}",
+            method = HttpMethod.DELETE,
+            headers = mapOf(
+                EStellaHeaders.devPassword to "abc",
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    @Order(20)
+    fun `should be able to delete task`() {
+        val organization = organizationRepository.findAll().first()
+        val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
+        val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
+        val task = organization.tasks.first()
+        val response = httpRequest(
+            "/api/tasks/${task.id}?owner=${organization.id}",
+            method = HttpMethod.DELETE,
+            headers = mapOf(
+                EStellaHeaders.devPassword to password,
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val updatedOrg = organizationRepository.findById(organization.id!!)
+        expectThat(updatedOrg.get().tasks.find { it.id == task.id }).isNull()
     }
 
     private fun startOffer(offer: Offer) {
@@ -276,6 +515,8 @@ class TasksIntegration : BaseIntegration() {
     private val descriptionFileName = "description.pdf"
     private val timeLimit = 30
     private val deadline = Timestamp.from(Instant.now())
+
+    private val updatedTimeLimit = 60
 
     private fun TaskDto.toAssertionTaskDto() = AssertionTaskDto(
         testsBase64,
