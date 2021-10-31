@@ -1,6 +1,7 @@
 package org.malachite.estella.queues
 
 import org.malachite.estella.queues.utils.MsgDeserializer
+import org.malachite.estella.services.InterviewService
 import org.malachite.estella.services.TaskService
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
@@ -36,6 +37,7 @@ class RabbitConsumersConfiguration {
     fun rabbitMqConsumers(
             rabbitTemplate: RabbitTemplate,
             taskService: TaskService,
+            interviewService: InterviewService,
             msgDeserializer: MsgDeserializer
     ): RabbitMqConsumers {
         RabbitAdmin(rabbitTemplate).apply {
@@ -43,6 +45,6 @@ class RabbitConsumersConfiguration {
             this.declareQueue(Queue("example_queue"))
             this.declareQueue(Queue("task_result"))
         }
-        return RabbitMqConsumers(taskService, msgDeserializer)
+        return RabbitMqConsumers(taskService,interviewService, msgDeserializer)
     }
 }

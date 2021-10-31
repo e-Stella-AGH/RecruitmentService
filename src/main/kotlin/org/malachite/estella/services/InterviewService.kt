@@ -24,10 +24,13 @@ class InterviewService(
     @Autowired private val mailService: MailService,
     @Autowired private val hrPartnerService: HrPartnerService,
     @Autowired private val securityService: SecurityService
-): EStellaService<Interview>() {
+) : EStellaService<Interview>() {
     override val throwable: Exception = InterviewNotFoundException()
 
-    fun createInterview(applicationStage: ApplicationStageData, payload: InterviewPayload = InterviewPayload()): Interview {
+    fun createInterview(
+        applicationStage: ApplicationStageData,
+        payload: InterviewPayload = InterviewPayload()
+    ): Interview {
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
         return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, setOf()).let {
             interviewRepository.save(it)
@@ -37,35 +40,49 @@ class InterviewService(
     fun getInterview(id: UUID): Interview = withExceptionThrower { interviewRepository.findById(id).get() }
 
     fun getUserFromInterviewUuid(interviewId: UUID): User? =
-            getInterview(interviewId).applicationStage.application.jobSeeker.user
+        getInterview(interviewId).applicationStage.application.jobSeeker.user
 
     fun getOrganizationFromPartner(hrPartnerId: Int): Organization =
-            hrPartnerService.getHrPartner(hrPartnerId).organization
+        hrPartnerService.getHrPartner(hrPartnerId).organization
 
     fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
-            withExceptionThrower { getAllByApplicationId(applicationId).sortedWith { a, b ->
+        withExceptionThrower {
+            getAllByApplicationId(applicationId).sortedWith { a, b ->
                 a.dateTime?.compareTo(b.dateTime) ?: -1
-            }.first() }.getId()
+            }.first()
+        }.getId()
 
     fun getLastInterviewFromApplicationId(applicationId: Int): Interview =
-            withExceptionThrower { getAllByApplicationId(applicationId).sortedWith { a, b ->
+        withExceptionThrower {
+            getAllByApplicationId(applicationId).sortedWith { a, b ->
                 a.dateTime?.compareTo(b.dateTime) ?: -1
-            }.first() }
+            }.first()
+        }
 
     fun setHosts(id: UUID, hostsMails: Set<String>) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
         val interview = getInterview(id)
-        val savedInterview = interviewRepository.save(interview.copy(hosts=hostsMails))
+        val savedInterview = interviewRepository.save(interview.copy(hosts = hostsMails))
         val application = savedInterview.applicationStage
         val offer = recruitmentProcessService.getProcessFromStage(application).offer
-        hostsMails.forEach { mail -> mailService.sendInterviewDevInvitationMail(offer, savedInterview, application.application, mail) }
+        hostsMails.forEach { mail ->
+            mailService.sendInterviewDevInvitationMail(
+                offer,
+                savedInterview,
+                application.application,
+                mail
+            )
+        }
     }
 
     fun setDuration(id: UUID, length: Int) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
         val interview = getInterview(id)
-        interviewRepository.save(interview.copy(minutesLength= length))
+        interviewRepository.save(interview.copy(minutesLength = length))
     }
+
+    fun setDurationRabbit(id: UUID, length: Int) = getInterview(id)
+        .let { interviewRepository.save(it.copy(minutesLength = length)) }
 
     fun setDate(id: UUID, dateTime: Timestamp) {
         val interview = getInterview(id)
@@ -73,9 +90,20 @@ class InterviewService(
         val applicationStage = interview.applicationStage
         val application = applicationStage.application
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
-        mailService.sendInterviewDateConfirmationMail(offer, savedInterview, application, application.jobSeeker.user.mail)
-        savedInterview.hosts.forEach { mail -> mailService.sendInterviewDateConfirmationMail(offer, savedInterview, application, mail) }
-
+        mailService.sendInterviewDateConfirmationMail(
+            offer,
+            savedInterview,
+            application,
+            application.jobSeeker.user.mail
+        )
+        savedInterview.hosts.forEach { mail ->
+            mailService.sendInterviewDateConfirmationMail(
+                offer,
+                savedInterview,
+                application,
+                mail
+            )
+        }
     }
 
 
@@ -89,20 +117,16 @@ class InterviewService(
         val interview = interviewRepository.findById(id!!).get()
 
         if (userAuthority == Authority.hr && user.id ==
-                recruitmentProcessService.getProcessFromStage(interview.applicationStage).offer.creator.id)
+            recruitmentProcessService.getProcessFromStage(interview.applicationStage).offer.creator.id
+        )
             return true
         return false
     }
 
 
     private fun getAllByApplicationId(applicationId: Int): List<Interview> = interviewRepository
-            .findAll()
-            .filter { it.applicationStage.application.id == applicationId }
-
-
-
-
-
+        .findAll()
+        .filter { it.applicationStage.application.id == applicationId }
 
 
 }
