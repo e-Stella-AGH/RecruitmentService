@@ -44,6 +44,7 @@ class RabbitConsumersConfiguration {
             //declare queues, exchanges, bindings, etc
             this.declareQueue(Queue("example_queue"))
             this.declareQueue(Queue("task_result"))
+            this.declareQueue(Queue("interview"))
         }
         return RabbitMqConsumers(taskService,interviewService, msgDeserializer)
     }
