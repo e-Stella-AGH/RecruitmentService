@@ -2,6 +2,7 @@ package org.malachite.estella.queues
 
 import com.rabbitmq.client.Channel
 import org.malachite.estella.queues.utils.MsgDeserializer
+import org.malachite.estella.services.InterviewService
 import org.malachite.estella.services.TaskService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.support.AmqpHeaders
@@ -9,7 +10,9 @@ import org.springframework.messaging.handler.annotation.Header
 
 class RabbitMqConsumers(
         private val taskService: TaskService,
-        private val msgDeserializer: MsgDeserializer) {
+        private val interviewService: InterviewService,
+        private val msgDeserializer: MsgDeserializer
+        ) {
 
 
     var expected = 0
@@ -34,6 +37,20 @@ class RabbitMqConsumers(
             msgDeserializer.toTaskResultRabbitDTO(message)
                     ?.let {
                         taskService.addResult(it)
+                        channel.basicAck(tag, false)
+                    }
+                    ?.also { println("received Message with task results: $message") }
+                    ?: channel.basicNack(tag, false, false)
+    @RabbitListener(
+            queues = ["interview"],
+            ackMode = "MANUAL",
+            containerFactory = "containerFactory"
+    )
+    fun interviewListener(message: String, channel: Channel, @Header(AmqpHeaders.DELIVERY_TAG) tag: Long) =
+            msgDeserializer.toInterviewResultRabbitDTO(message)
+                    ?.let {
+                        interviewService.setDate(it.meetingUUID,it.meetingDate)
+                        interviewService.setDurationRabbit(it.meetingUUID,it.meetingLength)
                         channel.basicAck(tag, false)
                     }
                     ?.also { println("received Message with task results: $message") }
