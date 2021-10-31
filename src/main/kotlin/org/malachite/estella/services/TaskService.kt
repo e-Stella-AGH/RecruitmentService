@@ -133,7 +133,7 @@ class TaskService(
 
         taskStageService.addResult(TaskResult(null,
             SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
-            SerialClob(result.solverId.toCharArray()),
+            SerialClob(result.code.toCharArray()),
             startTime,
             endTime,
             task,

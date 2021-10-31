@@ -107,18 +107,6 @@ data class ApplicationDTOWithStagesListAndOfferName(
     val offerName: String
 )
 
-fun Application.toApplicationDTOWithStagesListAndOfferName(stages: List<RecruitmentStage>, offerName: String) =
-    ApplicationDTOWithStagesListAndOfferName(
-        this.id,
-        this.applicationDate,
-        this.status,
-        this.applicationStages.last().stage,
-        this.jobSeeker.toJobSeekerDTO(),
-        this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
-        stages,
-        offerName
-    )
-
 data class ApplicationStageDTO(
     val id: Int,
     val stage: RecruitmentStage,
