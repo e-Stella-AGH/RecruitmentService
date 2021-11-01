@@ -41,12 +41,10 @@ class InterviewDateTest : BaseIntegration() {
     lateinit var rabbitTemplate: RabbitTemplate
 
 
-    private lateinit var task: Task
-    private lateinit var taskStage: TaskStage
     private lateinit var applicationStageData: ApplicationStageData
 
     @BeforeEach
-    fun prepareTask() {
+    fun prepareInterview() {
         EmailServiceStub.stubForSendEmail()
 
         val jobseeker = jobSeekerRepository.findAll().first()
@@ -67,7 +65,7 @@ class InterviewDateTest : BaseIntegration() {
 
     @Test
     @Order(1)
-    fun `task result consuming`() {
+    fun `interview date result consuming`() {
         var interview = Interview(null, null, null, applicationStageData, setOf())
             .let { interviewRepository.save(it) }
 
@@ -85,7 +83,7 @@ class InterviewDateTest : BaseIntegration() {
 
     @Test
     @Order(2)
-    fun `task bad message format consuming`() {
+    fun `interview bad message arguments consuming`() {
         var interview = Interview(null, null, null, applicationStageData, setOf())
             .let { interviewRepository.save(it) }
 
@@ -104,7 +102,7 @@ class InterviewDateTest : BaseIntegration() {
 
     @Test
     @Order(3)
-    fun `task bad message parameter consuming`() {
+    fun `interview message with bad parameters consuming`() {
         var interview = Interview(null, null, null, applicationStageData, setOf())
             .let { interviewRepository.save(it) }
 
@@ -112,6 +110,24 @@ class InterviewDateTest : BaseIntegration() {
         expectThat(interview.dateTime).isEqualTo(null)
 
         publishWithMistake()
+
+        coolDown {
+            interview = interviewRepository.findById(interview.id!!).get()
+            expectThat(interview.minutesLength).isEqualTo(null)
+            expectThat(interview.dateTime).isEqualTo(null)
+        }
+    }
+
+    @Test
+    @Order(4)
+    fun `interview message with bad interview length consuming`() {
+        var interview = Interview(null, null, null, applicationStageData, setOf())
+            .let { interviewRepository.save(it) }
+
+        expectThat(interview.minutesLength).isEqualTo(null)
+        expectThat(interview.dateTime).isEqualTo(null)
+
+        badPublishInterviewLength(interview.id!!)
 
         coolDown {
             interview = interviewRepository.findById(interview.id!!).get()
@@ -138,8 +154,16 @@ class InterviewDateTest : BaseIntegration() {
         send(resultBody)
     }
 
+    fun badPublishInterviewLength(uuid: UUID) {
+        val resultBody = mapOf(
+            "meetingUUID" to uuid.toString(),
+            "meetingDate" to "1655979300000",
+            "meetingLength" to "-1"
+        )
+        send(resultBody)
+    }
+
     fun publishWithMistake() {
-        // missing solverId
         val resultBody = mapOf(
             "results" to "xd",
             "code" to "xd",
