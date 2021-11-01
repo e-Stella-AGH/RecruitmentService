@@ -36,7 +36,7 @@ class SecurityService(
     private val authSecret = "secret"
     private val refreshSecret = "refreshSecret"
     private val refreshTime = 3600 * 1000 * 24 // 1 day
-    private val authTime = 15 * 60 * 1000 // 15 minutes
+    private val authTime = 6 * 60 * 60 * 1000 // 6 hour
 
     private val mailKey = "mail"
     private val firstNameKey = "firstName"
