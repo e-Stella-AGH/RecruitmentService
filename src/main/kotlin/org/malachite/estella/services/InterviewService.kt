@@ -28,12 +28,9 @@ class InterviewService(
     fun createInterview(
         applicationStage: ApplicationStageData,
         payload: InterviewPayload = InterviewPayload()
-    ): Interview {
-        val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
-        return Interview(null, payload.dateTime, payload.minutesLength, applicationStage, setOf()).let {
-            interviewRepository.save(it)
-        }.also { mailService.sendInterviewInvitationMail(offer, it) }
-    }
+    ): Interview =
+        Interview(null, payload.dateTime, payload.minutesLength, applicationStage, setOf())
+            .let { interviewRepository.save(it) }
 
     fun getInterview(id: UUID): Interview = withExceptionThrower { interviewRepository.findById(id).get() }
 
@@ -79,11 +76,15 @@ class InterviewService(
         interviewRepository.save(interview.copy(minutesLength = length))
     }
 
-    fun setDurationAndDate(id: UUID,length: Int, dateTime: Timestamp) {
-        if(length <= 0) throw InvalidInterviewLengthException()
+    fun setDurationAndDate(id: UUID, length: Int, dateTime: Timestamp) {
+        if (length <= 0) throw InvalidInterviewLengthException()
         else getInterview(id)
-            .let {  interviewRepository.save(it.copy(minutesLength = length))}
-            .also { setDate(id,dateTime) }
+            .let { interviewRepository.save(it.copy(minutesLength = length)) }
+            .also { setDate(id, dateTime) }
+            .also {
+                val offer = recruitmentProcessService.getProcessFromStage(it.applicationStage).offer
+                mailService.sendInterviewInvitationMail(offer, it)
+            }
     }
 
     fun setDate(id: UUID, dateTime: Timestamp) {
