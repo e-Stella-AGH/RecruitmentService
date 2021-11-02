@@ -2,6 +2,7 @@ package org.malachite.estella.interview.api
 
 import org.malachite.estella.commons.Message
 import org.malachite.estella.interview.domain.InterviewNotFoundException
+import org.malachite.estella.interview.domain.InvalidInterviewLengthException
 import org.malachite.estella.interview.domain.InvalidUUIDException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -18,4 +19,8 @@ class InterviewExceptionHandler {
     @ExceptionHandler(InvalidUUIDException::class)
     fun handleIllegalArgument(ex: InvalidUUIDException): ResponseEntity<Any> =
             ResponseEntity(Message("Invalid UUID"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(InvalidInterviewLengthException::class)
+    fun handleInvalidInterviewLength(ex: InvalidInterviewLengthException): ResponseEntity<Any> =
+            ResponseEntity(Message("Invalid interview length"), HttpStatus.BAD_REQUEST)
 }

@@ -138,6 +138,7 @@ class ApplicationService(
         }
     }
 
+
     data class ApplicationWithStagesAndOfferName(
         val application: Application,
         val stages: List<RecruitmentStage>,
