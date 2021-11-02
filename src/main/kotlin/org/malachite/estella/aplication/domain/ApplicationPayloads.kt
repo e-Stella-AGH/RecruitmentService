@@ -147,7 +147,7 @@ data class TaskResultWithTestDTO(
 fun TaskResult.toTaskResultWithTestDTO(): TaskResultWithTestDTO =
     TaskResultWithTestDTO(
         code.toBase64String(),
-        this.results.toBase64String(),
+        this.results!!.toBase64String(),
         task.tests.toBase64String(),
         task.description.toBase64String()
     )

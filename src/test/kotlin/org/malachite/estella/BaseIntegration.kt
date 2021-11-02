@@ -298,6 +298,13 @@ class BaseIntegration {
         headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password)),
     )
 
+    fun updateStage(applicationId: Int, mail: String, password: String, devs: Set<String>) = httpRequest(
+            path = "/api/applications/${applicationId}/next",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password)),
+            body = mapOf("devs" to devs)
+    )
+
     private fun loginUser(userMail: String, userPassword: String): Response = httpRequest(
         path = "/api/users/login",
         method = HttpMethod.POST,

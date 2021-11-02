@@ -3,9 +3,11 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.mails.MailTexts.getApplicationConfirmation
 import org.malachite.estella.mails.MailTexts.getHrPartnerRegistrationText
 import org.malachite.estella.mails.MailTexts.getRegistrationText
@@ -110,3 +112,16 @@ fun HrPartner.toRegistrationMailPayload(password: String) =
             this.user.mail, password, MAIN_URL),
         sender_email = MAIN_MAIL
     )
+
+fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val url = "${MAIN_URL}task_stage/${this.id}/${offer.creator.organization.id}"
+    return MailPayload(
+            subject = "You have been requested to assign task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position),
+            sender_email = MAIN_MAIL
+    )
+}
+

@@ -63,7 +63,7 @@ class InterviewIntegration : BaseIntegration() {
         val savedApplication = applicationRepository.save(application)
         val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
         var savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
-        var taskStage = TaskStage(null, listOf(), savedApplicationStageData)
+        var taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
         taskStage = taskStageRepository.save(taskStage)
         savedApplicationStageData =
             applicationStageDataRepository.save(savedApplicationStageData.copy(tasksStage = taskStage))

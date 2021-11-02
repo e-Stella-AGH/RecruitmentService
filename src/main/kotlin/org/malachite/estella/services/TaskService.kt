@@ -29,6 +29,7 @@ class TaskService(
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val interviewService: InterviewService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Task>() {
 
@@ -40,6 +41,21 @@ class TaskService(
                 throw UnauthenticatedException()
             this
         }
+
+    fun checkDevPasswordFromInterviewUuid(interviewUuid: String, password: String) =
+            interviewService.getInterview(UUID.fromString(interviewUuid)).applicationStage.tasksStage
+                    .let { getOrganizationUuidFromTaskStage(it!!) }
+                    .let { organizationService.getOrganization(it) }
+                    .let {
+                       checkDevPassword(it.id.toString(), password)
+                    }
+
+    fun checkDevPasswordFromTaskStage(taskStageUuid: String, password: String) =
+            getOrganizationUuidFromTaskStage(taskStageService.getTaskStage(taskStageUuid))
+                    .let { organizationService.getOrganization(it) }
+                    .let {
+                        checkDevPassword(it.id.toString(), password)
+                    }
 
 
     fun getTasksByOrganizationUuid(organizationUuid: String) =

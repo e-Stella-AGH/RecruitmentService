@@ -181,4 +181,4 @@ class ApplicationController(
 
 }
 
-data class ApplicationStageDevs(val devs: Set<String>)
+data class ApplicationStageDevs(val devs: MutableList<String>?)
