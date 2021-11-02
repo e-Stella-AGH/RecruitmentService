@@ -27,13 +27,13 @@ class TaskController(
     @Transactional
     @GetMapping
     fun getTasks(
-            @RequestParam("owner", required = false) organizationUuid: String?,
-            @RequestParam("taskStage", required = false) taskStageUuid: String?,
-            @RequestParam("devMail", required = false) devMail: String?,
+            @RequestParam("owner") organizationUuid: String?,
+            @RequestParam("taskStage") taskStageUuid: String?,
+            @RequestParam("devMail") devMail: String?,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<Any> {
-        if (areParamsValid(organizationUuid, taskStageUuid, devMail))
-            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
+        if (!areParamsValid(organizationUuid, taskStageUuid, devMail))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
                     taskService.checkDevPassword(it, password)
@@ -115,5 +115,6 @@ class TaskController(
             @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 
-
 }
+
+data class Tasks(val tasks: Set<Int>)

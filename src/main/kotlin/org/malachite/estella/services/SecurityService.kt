@@ -67,6 +67,14 @@ class SecurityService(
         }
     }
 
+    fun getTaskStageFromPassword(password: String): TaskStage? {
+        val decrypted = decryptDevPassword(password)
+        if (decrypted.size != 2) throw UnauthenticatedException()
+        return decrypted[1].let {
+            taskStageRepository.findById(UUID.fromString(it)).orElse(null)
+        }
+    }
+
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()
         return Jwts.builder()

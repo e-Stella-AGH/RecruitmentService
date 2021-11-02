@@ -11,6 +11,7 @@ import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.interview.api.NotesFilePayload
+import org.malachite.estella.task.domain.TaskStageNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -22,11 +23,12 @@ class ApplicationStageDataService(
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val interviewService: InterviewService,
     @Autowired private val noteService: NoteService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val mailService: MailService
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
 
-    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage, devs: Set<String>?): ApplicationStageData {
+    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage, devs: MutableList<String>?): ApplicationStageData {
         val applicationStage = ApplicationStageData(
             null,
             recruitmentStage,
@@ -36,7 +38,10 @@ class ApplicationStageDataService(
             setOf()
         ).let { applicationStageRepository.save(it) }
         return getTaskStageAndInterview(recruitmentStage, applicationStage).let {
-            it.first?.let { taskStageService.setDevs(it.id!!, devs?:setOf()) }
+            it.first?.let { taskStage ->
+                taskStageService.setDevs(taskStage.id!!, devs?: mutableListOf())
+                devs?.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, recruitmentProcessService.getProcessFromStage(applicationStage).offer) }
+            }
             applicationStage.copy(
                     tasksStage = it.first,
                     interview = it.second)
@@ -118,21 +123,37 @@ class ApplicationStageDataService(
         }
 
     private fun canDevUpdate(applicationStage: ApplicationStageData, password: String): Boolean =
-        recruitmentProcessService
-            .getProcessFromStage(applicationStage)
-            .offer.creator.organization.let {
-                securityService.compareOrganizationWithPassword(it, password)
-            }
+            recruitmentProcessService
+                    .getProcessFromStage(applicationStage)
+                    .offer.creator.organization.let {
+                        securityService.compareOrganizationWithPassword(it, password)
+                    }
 
     private fun canHrUpdate(applicationStage: ApplicationStageData): Boolean =
-        recruitmentProcessService
-            .getProcessFromStage(applicationStage)
-            .offer.creator.let { hrPartner ->
-                securityService.getUserDetailsFromContext()
-                    ?.let { it.user == hrPartner.user }
-                    ?: false
-            }
+            recruitmentProcessService
+                    .getProcessFromStage(applicationStage)
+                    .offer.creator.let { hrPartner ->
+                        securityService.getUserDetailsFromContext()
+                                ?.let { it.user == hrPartner.user }
+                                ?: false
+                    }
 
+
+    fun getCurrentStageType(applicationStageId: Int): StageType {
+        val applicationStage = applicationStageRepository.findById(applicationStageId)
+        if (applicationStage.isEmpty) throw TaskStageNotFoundException()
+        val application = applicationStage.get().application
+        val recruitmentProcess = recruitmentProcessService.getProcessFromStage(applicationStage.get())
+
+        val recruitmentProcessStages = recruitmentProcess
+                .stages
+                .sortedBy { it.id }
+
+        val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
+
+        val indexOfRecruitmentStage = recruitmentProcessStages.indexOf(applicationRecruitmentStages.last())
+        return recruitmentProcessStages[indexOfRecruitmentStage].type
+    }
 }
 
 typealias TasksNotes = Pair<List<TaskResult>, List<Note>>

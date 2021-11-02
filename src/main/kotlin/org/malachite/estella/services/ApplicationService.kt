@@ -2,10 +2,7 @@ package org.malachite.estella.services
 
 import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaService
-import org.malachite.estella.commons.models.offers.Application
-import org.malachite.estella.commons.models.offers.ApplicationStatus
-import org.malachite.estella.commons.models.offers.RecruitmentProcess
-import org.malachite.estella.commons.models.offers.RecruitmentStage
+import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.process.domain.ProcessNotStartedException
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,7 +43,7 @@ class ApplicationService(
             jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
                     .let { insertApplication(offerId, it, applicationPayload) }
 
-    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: Set<String>?) {
+    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: MutableList<String>?) {
         val application = applicationRepository.findById(applicationId).get()
 
         if (application.status != ApplicationStatus.IN_PROGRESS)
@@ -81,7 +78,7 @@ class ApplicationService(
 
     private fun shouldBeAccepted(currentIndex: Int, lastIndex: Int) = currentIndex == lastIndex - 1
 
-    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: Set<String>?) =
+    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: MutableList<String>?) =
             applicationStageDataService.createApplicationStageData(
                     this,
                     recruitmentStage,
