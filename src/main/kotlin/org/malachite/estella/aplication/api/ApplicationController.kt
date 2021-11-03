@@ -179,6 +179,13 @@ class ApplicationController(
             ResponseEntity.ok(response)
         }
 
+
+    @CrossOrigin
+    @Transactional
+    @GetMapping("/forDev/{devMail}")
+    fun getApplicationsForDev(@PathVariable("devMail") devMail: String, @RequestHeader(EStellaHeaders.devPassword) password: String): ResponseEntity<List<ApplicationForDevDTO>> =
+        applicationService.getApplicationsForDev(devMail, password).let{ ResponseEntity.ok(it) }
+
 }
 
 data class ApplicationStageDevs(val devs: MutableList<String>?)

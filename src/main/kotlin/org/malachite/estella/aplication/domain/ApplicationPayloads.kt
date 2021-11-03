@@ -158,4 +158,11 @@ fun TasksNotes.toTasksNotesDTO(): TasksNotesDTO =
         this.second.map { it.toApplicationNoteDTO() }
     )
 
+data class ApplicationForDevDTO(
+        val application: ApplicationDTO,
+        val taskStageUUID: String,
+        val notes: Set<ApplicationNoteDTO>,
+        val position: String
+)
+
 

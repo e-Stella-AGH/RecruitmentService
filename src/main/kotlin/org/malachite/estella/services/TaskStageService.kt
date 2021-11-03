@@ -4,10 +4,13 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
+import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
+import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.toTask
+import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.task.domain.TaskResultRepository
 import org.malachite.estella.task.domain.TaskStageNotFoundException
@@ -23,7 +26,8 @@ class TaskStageService(
         @Autowired private val taskResultRepository: TaskResultRepository,
         @Autowired private val taskRepository: TaskRepository,
         @Autowired private val interviewService: InterviewService,
-        @Autowired @Lazy private val applicationStageDataService: ApplicationStageDataService,
+        @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+        @Autowired private val organizationService: OrganizationService,
         @Autowired private val securityService: SecurityService
 ) : EStellaService<TaskStage>() {
     override val throwable: Exception = TaskStageNotFoundException()
@@ -37,6 +41,62 @@ class TaskStageService(
     fun getTaskStage(taskStageId: UUID) = withExceptionThrower { taskStageRepository.findById(taskStageId).get() }
 
     fun getTaskStage(taskStageId: String) = withExceptionThrower { getTaskStage(UUID.fromString(taskStageId)) }
+
+
+    fun checkDevPassword(organizationUuid: String, password: String) =
+            organizationService.getOrganization(organizationUuid).let {
+                if (!securityService.compareOrganizationWithPassword(it, password))
+                    throw UnauthenticatedException()
+                this
+            }
+
+    fun checkDevPasswordFromInterviewUuid(interviewUuid: String, password: String) =
+            interviewService.getInterview(UUID.fromString(interviewUuid)).applicationStage.tasksStage
+                    .let { getOrganizationUuidFromTaskStage(it!!) }
+                    .let { organizationService.getOrganization(it) }
+                    .let {
+                        checkDevPassword(it.id.toString(), password)
+                    }
+
+    fun checkDevPasswordFromTaskStage(taskStageUuid: String, password: String) =
+            getOrganizationUuidFromTaskStage(getTaskStage(taskStageUuid))
+                    .let { organizationService.getOrganization(it) }
+                    .let {
+                        checkDevPassword(it.id.toString(), password)
+                    }
+
+
+    fun getTasksByOrganizationUuid(organizationUuid: String) =
+            organizationService.getOrganization(organizationUuid)
+                    .tasks
+                    .map { it.toTaskDto() }
+
+    fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
+        val taskStage = getTaskStage(tasksStageId)
+        val organizationUuid = getOrganizationUuidFromTaskStage(taskStage)
+        checkDevPassword(organizationUuid, password)
+        return taskStage.tasksResult.map { it.task.toTaskDto() }
+    }
+
+    private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
+            recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
+
+    fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
+        val decodedMail = String(Base64.getDecoder().decode(devMail))
+        val tasksStages = getAll().filter { it.devs.contains(decodedMail) }
+        tasksStages.forEach{ checkDevPassword(getOrganizationUuidFromTaskStage(it), password) }
+        return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
+    }
+
+    fun getByOrganization(organization: Organization): List<TaskStage> =
+            getAll().filter {
+                recruitmentProcessService
+                        .getProcessFromStage(it.applicationStage)
+                        .offer
+                        .creator
+                        .organization == organization
+            }
+
 
     fun addResult(result: TaskResult) {
         val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == result.task.id && it.taskStage.id == result.taskStage.id }
@@ -63,7 +123,7 @@ class TaskStageService(
                     !isTaskStageCurrentStage(it)
         } == true)
             throw UnauthenticatedException()
-        tasksIds.map { taskRepository.findById(it).orElse(null) }.let {
+        tasksIds.mapNotNull { taskRepository.findById(it).orElse(null) }.let {
             deleteRemovedTaskResults(taskStageUuid, tasksIds)
             addMissingTaskResults(taskStageUuid, it)
         }
@@ -79,30 +139,25 @@ class TaskStageService(
                 }
 
     private fun isTaskStageCurrentStage(taskStage: TaskStage): Boolean =
-        taskStage.applicationStage.id?.let { applicationStageDataService.getCurrentStageType(it) } ==
-                taskStage.applicationStage.stage.type
+            taskStage.applicationStage.application.getCurrentApplicationStage().id == taskStage.applicationStage.id
 
 
     private fun deleteRemovedTaskResults(taskStageUuid: String, tasksIds: Set<Int>) =
             getTaskStage(taskStageUuid).tasksResult.filterNot { tasksIds.contains(it.id) }
                     .also {
                         val taskStage = getTaskStage(taskStageUuid)
-                        taskStageRepository.save(taskStage.copy(tasksResult = taskStage.tasksResult.minus(it.toSet()))) }
+                        taskStageRepository.save(taskStage.copy(tasksResult = taskStage.tasksResult.minus(it))) }
                     .forEach{ taskResultRepository.delete(it) }
 
+
     private fun addMissingTaskResults(taskStageUuid: String, tasks: List<Task>) {
-        getTaskStage(taskStageUuid).let { taskStage ->
-            {
-                tasks.filterNot { task -> taskStage.tasksResult.map { it.task.id }.contains(task.id) }
-                        .map {
-                            taskResultRepository.save(TaskResult(null, null, null, null, null, it, taskStage))
-                        }.also {
-                            val stage = getTaskStage(taskStageUuid)
-                            taskStageRepository.save(stage.copy(tasksResult = stage.tasksResult.plus(it)))
-                        }
-            }
-        }
+        val taskStage = getTaskStage(taskStageUuid)
+        tasks.filterNot { task -> taskStage.tasksResult.map { it.task.id }.contains(task.id) }
+                .map {
+                    taskResultRepository.save(TaskResult(null, null, null, null, null, it, taskStage))
+                }.also {
+                    val stage = getTaskStage(taskStageUuid)
+                    taskStageRepository.save(stage.copy(tasksResult = stage.tasksResult.plus(it)))
+                }
     }
-
-
 }

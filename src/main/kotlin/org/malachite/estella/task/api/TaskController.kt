@@ -8,6 +8,7 @@ import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
+import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,10 +20,10 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/tasks")
 class TaskController(
         @Autowired private val taskService: TaskService,
+        @Autowired private val taskStageService: TaskStageService,
         @Autowired private val organizationService: OrganizationService,
 ) {
 
-    @Deprecated("Not tested yet - draft implementation, should be tested as part of ES-162")
     @CrossOrigin
     @Transactional
     @GetMapping
@@ -36,13 +37,14 @@ class TaskController(
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
-                    taskService.checkDevPassword(it, password)
-                            .getTasksByOrganizationUuid(it)
+                    devMail?.let { taskStageService.getTasksByDev(it, password) }
+                            ?:let{
+                                taskStageService.checkDevPassword(organizationUuid, password)
+                                        .getTasksByOrganizationUuid(organizationUuid)
+                            }
                 }
                 ?: taskStageUuid
-                        ?.let { taskService.getTasksByTasksStage(it, password) }
-                ?: devMail
-                        ?.let { taskService.getTasksByDev(it, password) }!!
+                        ?.let { taskStageService.getTasksByTasksStage(it, password) }!!
        return ResponseEntity.ok(tasks)
     }
 

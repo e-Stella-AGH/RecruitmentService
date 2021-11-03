@@ -16,6 +16,9 @@ class ApplicationService(
     @Autowired private val jobSeekerService: JobSeekerService,
     @Autowired private val applicationStageDataService: ApplicationStageDataService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val taskStageService: TaskStageService,
+    @Autowired private val organizationService: OrganizationService,
+    @Autowired private val securityService: SecurityService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {
 
@@ -134,6 +137,21 @@ class ApplicationService(
         applicationRepository.findById(applicationId).let {
             applicationRepository.save(it.get().copy(status = ApplicationStatus.REJECTED))
         }
+    }
+
+    fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> {
+        return securityService.getTaskStageFromPassword(password).let { recruitmentProcessService.getProcessFromStage(it!!.applicationStage) }
+                .let { process ->
+                    val offer = process.offer
+                    taskStageService.getByOrganization(offer.creator.organization)
+                            .map { stage ->
+                                ApplicationForDevDTO(
+                                    stage.applicationStage.application.toApplicationDTO(),
+                                    stage.id.toString(),
+                                    stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
+                                    offer.position)
+                            }
+                }
     }
 
 
