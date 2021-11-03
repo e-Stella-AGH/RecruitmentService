@@ -139,6 +139,7 @@ class ApplicationService(
         }
     }
 
+
     fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> {
         return securityService.getTaskStageFromPassword(password).let { recruitmentProcessService.getProcessFromStage(it!!.applicationStage) }
                 .let { process ->
