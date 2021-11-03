@@ -34,12 +34,12 @@ class TaskStageController(
         if (listOfNotNull(taskStageUuid, interviewUuid).size != 1)
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
         taskStageUuid?.let {
-            taskService.checkDevPasswordFromTaskStage(it, password)
-            taskStageService.setTasks(it, tasks.tasks, password)
+            taskStageService.checkDevPasswordFromTaskStage(it, password)
+                    .setTasks(it, tasks.tasks, password)
                     .let { return OwnResponses.SUCCESS }
         } ?: interviewUuid.let {
-            taskService.checkDevPasswordFromInterviewUuid(it!!, password)
-            taskStageService.setTasksByInterviewUuid(it, tasks.tasks, password)
+            taskStageService.checkDevPasswordFromInterviewUuid(it!!, password)
+                    .setTasksByInterviewUuid(it, tasks.tasks, password)
                     .let { return OwnResponses.SUCCESS }
         }
     }

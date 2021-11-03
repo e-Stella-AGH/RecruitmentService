@@ -137,23 +137,6 @@ class ApplicationStageDataService(
                                 ?.let { it.user == hrPartner.user }
                                 ?: false
                     }
-
-
-    fun getCurrentStageType(applicationStageId: Int): StageType {
-        val applicationStage = applicationStageRepository.findById(applicationStageId)
-        if (applicationStage.isEmpty) throw TaskStageNotFoundException()
-        val application = applicationStage.get().application
-        val recruitmentProcess = recruitmentProcessService.getProcessFromStage(applicationStage.get())
-
-        val recruitmentProcessStages = recruitmentProcess
-                .stages
-                .sortedBy { it.id }
-
-        val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
-
-        val indexOfRecruitmentStage = recruitmentProcessStages.indexOf(applicationRecruitmentStages.last())
-        return recruitmentProcessStages[indexOfRecruitmentStage].type
-    }
 }
 
 typealias TasksNotes = Pair<List<TaskResult>, List<Note>>

@@ -18,9 +18,6 @@ data class Organization(
                 joinColumns = [JoinColumn(name = "organization_id")],
                 inverseJoinColumns = [JoinColumn(name = "quizes_id")]
         ) val quizzes: Set<Quiz> = HashSet<Quiz>(),
-        @JsonIgnore @ManyToMany(fetch = FetchType.EAGER) @JoinTable(
-                name = "organization_tasks",
-                joinColumns = [JoinColumn(name = "organization_id")],
-                inverseJoinColumns = [JoinColumn(name = "tasks_id")]
-        ) val tasks: Set<Task> = HashSet<Task>(),
+        @JsonIgnore @OneToMany(fetch = FetchType.EAGER) @JoinColumn(name="organization_id")
+        val tasks: Set<Task> = HashSet<Task>(),
 )

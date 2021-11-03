@@ -42,44 +42,6 @@ class TaskService(
             this
         }
 
-    fun checkDevPasswordFromInterviewUuid(interviewUuid: String, password: String) =
-            interviewService.getInterview(UUID.fromString(interviewUuid)).applicationStage.tasksStage
-                    .let { getOrganizationUuidFromTaskStage(it!!) }
-                    .let { organizationService.getOrganization(it) }
-                    .let {
-                       checkDevPassword(it.id.toString(), password)
-                    }
-
-    fun checkDevPasswordFromTaskStage(taskStageUuid: String, password: String) =
-            getOrganizationUuidFromTaskStage(taskStageService.getTaskStage(taskStageUuid))
-                    .let { organizationService.getOrganization(it) }
-                    .let {
-                        checkDevPassword(it.id.toString(), password)
-                    }
-
-
-    fun getTasksByOrganizationUuid(organizationUuid: String) =
-        organizationService.getOrganization(organizationUuid)
-            .tasks
-            .map { it.toTaskDto() }
-
-    fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
-        val taskStage = taskStageService.getTaskStage(tasksStageId)
-        val organizationUuid = getOrganizationUuidFromTaskStage(taskStage)
-        checkDevPassword(organizationUuid, password)
-        return taskStage.tasksResult.map { it.task.toTaskDto() }
-    }
-
-    private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
-            recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
-
-    fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
-        val tasksStages = taskStageService.getAll().filter { it.devs.contains(devMail) }
-        tasksStages.forEach{ checkDevPassword(getOrganizationUuidFromTaskStage(it), password) }
-        return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
-    }
-
-
     fun getTaskById(taskId: Int) =
         withExceptionThrower { taskRepository.findById(taskId).get() }
             .toTaskDto()
