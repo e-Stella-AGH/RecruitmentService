@@ -39,22 +39,6 @@ class OrganizationService(
             .let { organizationRepository.save(it) }
     }
 
-    fun addTask(uuid: String, task: Task) =
-        getOrganization(uuid)
-            .let {
-                val updatedTasks = it.tasks.plus(task)
-                it.copy(tasks = updatedTasks)
-            }
-            .let { organizationRepository.save(it) }
-
-    fun deleteTask(uuid: String, taskId: Int) =
-        getOrganization(uuid)
-            .let {
-                val updatedTasks = it.tasks.filter { it.id != taskId }.toSet()
-                it.copy(tasks = updatedTasks)
-            }
-            .let { organizationRepository.save(it) }
-
     fun updateTasks(uuid: String, tasks: Set<Task>) =
         getOrganization(uuid)
             .let {

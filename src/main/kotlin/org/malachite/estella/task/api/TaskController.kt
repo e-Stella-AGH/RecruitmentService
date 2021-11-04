@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 
 @RestController
@@ -25,8 +26,8 @@ class TaskController(
     @CrossOrigin
     @GetMapping
     fun getTasks(
-        @RequestParam("owner", required = false) organizationUuid: String?,
-        @RequestParam("taskStage", required = false) taskStageUuid: String?,
+        @RequestParam("owner", required = false) organizationUuid: UUID?,
+        @RequestParam("taskStage", required = false) taskStageUuid: UUID?,
         @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<Any> {
         if (listOfNotNull(organizationUuid, taskStageUuid).size != 1)
@@ -43,7 +44,7 @@ class TaskController(
     @CrossOrigin
     @GetMapping("/{taskId}")
     fun getTaskById(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.devPassword) password: String
     ) = taskService
@@ -55,7 +56,7 @@ class TaskController(
     @CrossOrigin
     @GetMapping("/{taskId}/tests")
     fun getTaskTests(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.devPassword) password: String
     ) = taskService
@@ -66,7 +67,7 @@ class TaskController(
     @CrossOrigin
     @PostMapping
     fun addTask(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = taskService.checkDevPassword(organizationUuid, password)
@@ -76,7 +77,7 @@ class TaskController(
     @CrossOrigin
     @DeleteMapping("/{taskId}")
     fun deleteTask(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @PathVariable taskId: Int
     ) = taskService
@@ -88,7 +89,7 @@ class TaskController(
     @CrossOrigin
     @PutMapping
     fun updateTask(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody taskDto: TaskDto
     ) = taskDto.id?.let { taskId ->
@@ -102,7 +103,7 @@ class TaskController(
     @CrossOrigin
     @PutMapping("/{taskId}/tests/file")
     fun setTestsWithFile(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody testFile: TestFilePayload
@@ -115,7 +116,7 @@ class TaskController(
     @CrossOrigin
     @PutMapping("/{taskId}/tests/object")
     fun setTestsWithObject(
-        @RequestParam("owner") organizationUuid: String,
+        @RequestParam("owner") organizationUuid: UUID,
         @PathVariable taskId: Int,
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody tests: TaskTestObjectPayload

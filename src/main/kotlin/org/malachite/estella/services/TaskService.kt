@@ -9,6 +9,7 @@ import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.toBase64String
+import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.process.domain.*
 import org.malachite.estella.queues.utils.TaskResultRabbitDTO
 import org.malachite.estella.task.domain.InvalidTestFileException
@@ -25,6 +26,7 @@ import javax.sql.rowset.serial.SerialClob
 @Service
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
+    @Autowired private val organizationRepository: OrganizationRepository,
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
@@ -33,30 +35,38 @@ class TaskService(
 
     override val throwable: Exception = TaskNotFoundException()
 
-    fun checkDevPassword(organizationUuid: String, password: String) =
-        organizationService.getOrganization(organizationUuid).let {
-            if (!securityService.compareOrganizationWithPassword(it, password))
-                throw UnauthenticatedException()
-            this
-        }
+    fun checkDevPassword(organizationUuid: UUID?, password: String) =
+        organizationUuid
+            ?.let {
+                organizationService.getOrganization(it)
+            }
+            ?.takeIf {
+                securityService.compareOrganizationWithPassword(it, password)
+            }
+            ?.let { this } ?: throw UnauthenticatedException()
 
 
-    fun getTasksByOrganizationUuid(organizationUuid: String): List<TaskDto> =
+    fun getTasksByOrganizationUuid(organizationUuid: UUID): List<TaskDto> =
         organizationService.getOrganization(organizationUuid)
             .tasks
             .map { it.toTaskDto() }
 
 
-    fun getTaskTestsWithinOrganization(organizationUuid: String, taskId: Int): String =
+    fun getTaskTestsWithinOrganization(organizationUuid: UUID, taskId: Int): String =
         organizationService.getOrganization(organizationUuid)
             .tasks
             .find { it.id == taskId }
             ?.tests
             ?.toBase64String() ?: throw TaskNotFoundException()
 
-    fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
+    fun getTasksByTasksStage(tasksStageId: UUID, password: String): List<TaskDto> {
         val taskStage = taskStageService.getTaskStage(tasksStageId)
-        val organizationUuid = recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
+        val organizationUuid = recruitmentProcessService
+            .getProcessFromStage(taskStage.applicationStage)
+            .offer
+            .creator
+            .organization
+            .id
         checkDevPassword(organizationUuid, password)
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
@@ -74,11 +84,18 @@ class TaskService(
             .toBase64String()
             .let { Json.decodeFromString(it) }
 
-    fun addTask(organizationUuid: String, taskDto: TaskDto) =
+    fun addTask(organizationUuid: UUID, taskDto: TaskDto) =
         withExceptionThrower {
+            // Task saving
             checkTestsFormat(taskDto.testsBase64)
             val task = taskRepository.save(taskDto.toTask())
-            organizationService.addTask(organizationUuid, task)
+
+            // Attaching task to organization
+            val organization = organizationService.getOrganization(organizationUuid)
+
+            val updatedTasks = organization.tasks.plus(task)
+            val updatedOrganization = organization.copy(tasks = updatedTasks)
+            organizationRepository.save(updatedOrganization)
             task
         }
 
@@ -98,8 +115,16 @@ class TaskService(
         taskRepository.save(updated)
     }
 
-    fun deleteTask(organizationUuid: String, taskId: Int) {
-        organizationService.deleteTask(organizationUuid, taskId)
+    fun deleteTask(organizationUuid: UUID, taskId: Int) {
+        // Detaching task from organization
+        val organization = organizationService.getOrganization(organizationUuid)
+        val updatedTasks = organization.tasks.filter {
+            it.id != taskId
+        }.toSet()
+        val updatedOrganization = organization.copy(tasks = updatedTasks)
+        organizationRepository.save(updatedOrganization)
+
+        // Removing task from db
         taskRepository.deleteById(taskId)
     }
 
@@ -150,7 +175,7 @@ class TaskService(
         throw InvalidTestFileException()
     }
 
-    fun checkOrganizationRights(organizationUuid: String, taskId: Int): TaskService =
+    fun checkOrganizationRights(organizationUuid: UUID, taskId: Int): TaskService =
         try {
             organizationService
                 .getOrganization(organizationUuid)
