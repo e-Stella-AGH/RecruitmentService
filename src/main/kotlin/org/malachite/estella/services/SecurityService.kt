@@ -137,10 +137,10 @@ class SecurityService(
             }
         }
 
-    fun refreshToken(token: String, userId: Int): String? {
+    fun refreshToken(token: String, userId: Int): PairOfTokens? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
         val authUser = userRepository.findById(userId).orElse(null)
-        if (refreshUser == authUser) return getAuthenticateToken(refreshUser!!)
+        if (refreshUser == authUser) return getTokens(refreshUser!!)
         return null
     }
 
