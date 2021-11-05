@@ -28,7 +28,7 @@ class ApplicationStageDataService(
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
 
-    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage, devs: MutableList<String>?): ApplicationStageData {
+    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage, devs: MutableList<String>): ApplicationStageData {
         val applicationStage = ApplicationStageData(
             null,
             recruitmentStage,
@@ -39,8 +39,8 @@ class ApplicationStageDataService(
         ).let { applicationStageRepository.save(it) }
         return getTaskStageAndInterview(recruitmentStage, applicationStage).let {
             it.first?.let { taskStage ->
-                taskStageService.setDevs(taskStage.id!!, devs?: mutableListOf())
-                devs?.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, recruitmentProcessService.getProcessFromStage(applicationStage).offer) }
+                taskStageService.setDevs(taskStage.id!!, devs)
+                devs.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, recruitmentProcessService.getProcessFromStage(applicationStage).offer) }
             }
             applicationStage.copy(
                     tasksStage = it.first,

@@ -104,7 +104,7 @@ class ApplicationController(
             recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH
-            applicationService.setNextStageOfApplication(applicationId, it, devs?.devs).let { SUCCESS }
+            applicationService.setNextStageOfApplication(applicationId, it, devs?.devs?: mutableListOf()).let { SUCCESS }
         }
 
 
@@ -183,8 +183,11 @@ class ApplicationController(
     @CrossOrigin
     @Transactional
     @GetMapping("/forDev/{devMail}")
-    fun getApplicationsForDev(@PathVariable("devMail") devMail: String, @RequestHeader(EStellaHeaders.devPassword) password: String): ResponseEntity<List<ApplicationForDevDTO>> =
-        applicationService.getApplicationsForDev(devMail, password).let{ ResponseEntity.ok(it) }
+    fun getApplicationsForDev(
+            @PathVariable("devMail") devMail: String,
+            @RequestHeader(EStellaHeaders.devPassword) password: String
+    ): ResponseEntity<List<ApplicationForDevDTO>> =
+            applicationService.getApplicationsForDev(devMail, password).let { ResponseEntity.ok(it) }
 
 }
 

@@ -38,7 +38,7 @@ class ApplicationService(
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
             mailService.sendApplicationConfirmationMail(offer, application)
-            application.addNewApplicationStageData(it, null)
+            application.addNewApplicationStageData(it, mutableListOf())
         } ?: throw UnsupportedOperationException("First stage not found in application")
     }
 
@@ -46,7 +46,7 @@ class ApplicationService(
             jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
                     .let { insertApplication(offerId, it, applicationPayload) }
 
-    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: MutableList<String>?) {
+    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: MutableList<String>) {
         val application = applicationRepository.findById(applicationId).get()
 
         if (application.status != ApplicationStatus.IN_PROGRESS)
@@ -81,7 +81,7 @@ class ApplicationService(
 
     private fun shouldBeAccepted(currentIndex: Int, lastIndex: Int) = currentIndex == lastIndex - 1
 
-    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: MutableList<String>?) =
+    private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: MutableList<String>) =
             applicationStageDataService.createApplicationStageData(
                     this,
                     recruitmentStage,
@@ -140,10 +140,10 @@ class ApplicationService(
     }
 
     fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> {
-        return securityService.getTaskStageFromPassword(password).let { recruitmentProcessService.getProcessFromStage(it!!.applicationStage) }
-                .let { process ->
+        return securityService.getTaskStageFromPassword(password)?.let { recruitmentProcessService.getProcessFromStage(it.applicationStage) }
+                ?.let { process ->
                     val offer = process.offer
-                    taskStageService.getByOrganization(offer.creator.organization)
+                    taskStageService.getByOrganization(offer.creator.organization.id)
                             .map { stage ->
                                 ApplicationForDevDTO(
                                     stage.applicationStage.application.toApplicationDTO(),
@@ -152,6 +152,7 @@ class ApplicationService(
                                     offer.position)
                             }
                 }
+                ?: mutableListOf()
     }
 
 

@@ -9,14 +9,12 @@ import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.process.domain.TaskDto
-import org.malachite.estella.process.domain.toTask
 import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.task.domain.TaskResultRepository
 import org.malachite.estella.task.domain.TaskStageNotFoundException
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -43,7 +41,7 @@ class TaskStageService(
     fun getTaskStage(taskStageId: String) = withExceptionThrower { getTaskStage(UUID.fromString(taskStageId)) }
 
 
-    fun checkDevPassword(organizationUuid: String, password: String) =
+    fun assertDevPasswordCorrect(organizationUuid: String, password: String) =
             organizationService.getOrganization(organizationUuid).let {
                 if (!securityService.compareOrganizationWithPassword(it, password))
                     throw UnauthenticatedException()
@@ -55,18 +53,18 @@ class TaskStageService(
                     .let { getOrganizationUuidFromTaskStage(it!!) }
                     .let { organizationService.getOrganization(it) }
                     .let {
-                        checkDevPassword(it.id.toString(), password)
+                        assertDevPasswordCorrect(it.id.toString(), password)
                     }
 
     fun checkDevPasswordFromTaskStage(taskStageUuid: String, password: String) =
             getOrganizationUuidFromTaskStage(getTaskStage(taskStageUuid))
                     .let { organizationService.getOrganization(it) }
                     .let {
-                        checkDevPassword(it.id.toString(), password)
+                        assertDevPasswordCorrect(it.id.toString(), password)
                     }
 
 
-    fun getTasksByOrganizationUuid(organizationUuid: String) =
+    fun getTasksByOrganizationUuid(organizationUuid: UUID) =
             organizationService.getOrganization(organizationUuid)
                     .tasks
                     .map { it.toTaskDto() }
@@ -74,7 +72,7 @@ class TaskStageService(
     fun getTasksByTasksStage(tasksStageId: String, password: String): List<TaskDto> {
         val taskStage = getTaskStage(tasksStageId)
         val organizationUuid = getOrganizationUuidFromTaskStage(taskStage)
-        checkDevPassword(organizationUuid, password)
+        assertDevPasswordCorrect(organizationUuid, password)
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
 
@@ -84,17 +82,18 @@ class TaskStageService(
     fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
         val decodedMail = String(Base64.getDecoder().decode(devMail))
         val tasksStages = getAll().filter { it.devs.contains(decodedMail) }
-        tasksStages.forEach{ checkDevPassword(getOrganizationUuidFromTaskStage(it), password) }
+        tasksStages.forEach{ assertDevPasswordCorrect(getOrganizationUuidFromTaskStage(it), password) }
         return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
     }
 
-    fun getByOrganization(organization: Organization): List<TaskStage> =
+    fun getByOrganization(organizationId: UUID?): List<TaskStage> =
             getAll().filter {
                 recruitmentProcessService
                         .getProcessFromStage(it.applicationStage)
                         .offer
                         .creator
-                        .organization == organization
+                        .organization.id == organizationId
+                        && isTaskStageCurrentStage(it)
             }
 
 

@@ -114,8 +114,8 @@ class TaskResultTest : BaseIntegration() {
 
     fun publish(result: TaskResult) {
         val resultBody = mapOf(
-                "results" to result.results?.binaryStream?.let { String(it.readAllBytes()) },
-                "code" to (result.code?.characterStream?.readText() ?: ""),
+                "results" to String(result.results!!.binaryStream.readAllBytes()),
+                "code" to (result.code!!.characterStream!!.readText()),
                 "startTime" to result.startTime.toString(),
                 "endTime" to result.endTime.toString(),
                 "solverId" to result.taskStage.id!!.toString(),
@@ -144,7 +144,7 @@ class TaskResultTest : BaseIntegration() {
         send(resultBody)
     }
 
-    private fun send(msg: Map<String, String?>) = Json.encodeToString(msg).let {
+    private fun send(msg: Map<String, String>) = Json.encodeToString(msg).let {
         rabbitTemplate.send("task_result", Message(Base64.getEncoder().encode(it.toByteArray()), MessageProperties()))
     }
 }

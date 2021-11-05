@@ -14,6 +14,7 @@ import org.malachite.estella.mails.MailTexts.getRegistrationText
 import org.malachite.estella.mails.MailTexts.getUnVerificationText
 import org.malachite.estella.mails.MailTexts.getVerificationText
 import org.springframework.http.HttpEntity
+import java.util.*
 
 data class MailPayload(
     val subject: String,
@@ -115,7 +116,8 @@ fun HrPartner.toRegistrationMailPayload(password: String) =
 
 fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
-    val url = "${MAIN_URL}task_stage/${this.id}/${offer.creator.organization.id}"
+    val encodedMail = String(Base64.getEncoder().encode(mail.toByteArray()))
+    val url = "${MAIN_URL}tasks/assign/${offer.creator.organization.id}/$encodedMail"
     return MailPayload(
             subject = "You have been requested to assign task",
             sender_name = "e-Stella Team",

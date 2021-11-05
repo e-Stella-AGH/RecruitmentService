@@ -37,8 +37,8 @@ class TaskStageController(
             taskStageService.checkDevPasswordFromTaskStage(it, password)
                     .setTasks(it, tasks.tasks, password)
                     .let { return OwnResponses.SUCCESS }
-        } ?: interviewUuid.let {
-            taskStageService.checkDevPasswordFromInterviewUuid(it!!, password)
+        } ?: interviewUuid!!.let {
+            taskStageService.checkDevPasswordFromInterviewUuid(it, password)
                     .setTasksByInterviewUuid(it, tasks.tasks, password)
                     .let { return OwnResponses.SUCCESS }
         }

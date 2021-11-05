@@ -70,7 +70,7 @@ object MailTexts {
     fun getTaskAssignmentRequestText(stage: StageType, url: String, hrPartnerFullName: String, position: String): String =
             """
             Hi,
-            You have been assigned as one of persons requested to assign a task at stage $stage
+            You have been chosen as one of people requested to assign a task at stage $stage
             of recruitment process for position $position. You can do that at: $url.
             All the best,
             $hrPartnerFullName

@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 
 @RestController
@@ -38,22 +39,20 @@ class TaskController(
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
                     devMail?.let { taskStageService.getTasksByDev(it, password) }
-                            ?:let{
-                                taskStageService.checkDevPassword(organizationUuid, password)
-                                        .getTasksByOrganizationUuid(organizationUuid)
-                            }
+                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password)
+                                    .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
                 }
                 ?: taskStageUuid
                         ?.let { taskStageService.getTasksByTasksStage(it, password) }!!
-       return ResponseEntity.ok(tasks)
+        return ResponseEntity.ok(tasks)
     }
 
-    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean {
-        if (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()) return false
-        if (organizationId != null && taskStageUuid != null) return false
-        if (devMail != null && organizationId == null) return false
-        return true
-    }
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean =
+            listOf(
+                    (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()),
+                    (organizationId != null && taskStageUuid != null),
+                    (devMail != null && organizationId == null)
+            ).none{ it }
 
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")

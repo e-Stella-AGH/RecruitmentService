@@ -61,7 +61,7 @@ class TaskStagesIntegration : BaseIntegration() {
     fun `should be able to add tasks to taskStage`() {
         onStart()
         val tasks = getOrganization().tasks
-        var taskStage = getTaskStage()
+        val taskStage = getTaskStage()
         expectThat(taskStage.tasksResult.size).isEqualTo(0)
         val password = securityService.hashOrganization(getOrganization(), taskStage)
         val response = httpRequest(
@@ -84,7 +84,7 @@ class TaskStagesIntegration : BaseIntegration() {
     fun `should be able to update tasks in taskStage by InterviewUuid`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
         val tasks = getOrganization().tasks
-        var taskStage = getTaskStage()
+        val taskStage = getTaskStage()
         val interview = interviewRepository.findAll().first { it.applicationStage.id == taskStage.applicationStage.id }
         val password = securityService.hashOrganization(getOrganization(), taskStage)
         val response = httpRequest(
@@ -108,7 +108,7 @@ class TaskStagesIntegration : BaseIntegration() {
     fun `should return unauth when trying to set task with bad password`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
         val tasks = getOrganization().tasks
-        var taskStage = getTaskStage()
+        val taskStage = getTaskStage()
         val interview = interviewRepository.findAll().first { it.applicationStage.id == taskStage.applicationStage.id }
         val password = "xd"
         val response = httpRequest(
@@ -126,8 +126,7 @@ class TaskStagesIntegration : BaseIntegration() {
     @Order(4)
     fun `should return all tasks by taskstage UUID`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
-        val tasks = getOrganization().tasks
-        var taskStage = getTaskStage()
+        val taskStage = getTaskStage()
         val password = securityService.hashOrganization(getOrganization(), taskStage)
         val response = httpRequest(
                 "/api/tasks?taskStage=${taskStage.id}",
@@ -146,7 +145,7 @@ class TaskStagesIntegration : BaseIntegration() {
     @Order(5)
     fun `should return all tasks by devMail`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
-        var taskStage = getTaskStage()
+        val taskStage = getTaskStage()
         val password = securityService.hashOrganization(getOrganization(), taskStage)
         val devMail = String(Base64.getEncoder().encode("dev1@a.com".toByteArray()))
         val response = httpRequest(
