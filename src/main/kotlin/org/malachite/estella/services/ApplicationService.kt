@@ -139,22 +139,21 @@ class ApplicationService(
         }
     }
 
-    fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> {
-        return securityService.getTaskStageFromPassword(password)?.let { recruitmentProcessService.getProcessFromStage(it.applicationStage) }
-                ?.let { process ->
-                    val offer = process.offer
-                    taskStageService.getByOrganization(offer.creator.organization.id)
-                            .map { stage ->
-                                ApplicationForDevDTO(
-                                    stage.applicationStage.application.toApplicationDTO(),
-                                    stage.id.toString(),
-                                    stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
-                                    offer.position)
-                            }
-                }
-                ?: mutableListOf()
-    }
-
+    fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> =
+            securityService.getTaskStageFromPassword(password)?.let { recruitmentProcessService.getProcessFromStage(it.applicationStage) }
+                    ?.let { process ->
+                        val offer = process.offer
+                        taskStageService.getByOrganization(offer.creator.organization.id)
+                                .filter { it.devs.contains(devMail) }
+                                .map { stage ->
+                                    ApplicationForDevDTO(
+                                            stage.applicationStage.application.toApplicationDTO(),
+                                            stage.id.toString(),
+                                            stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
+                                            offer.position)
+                                }
+                    }
+                    ?: mutableListOf()
 
     data class ApplicationWithStagesAndOfferName(
         val application: Application,

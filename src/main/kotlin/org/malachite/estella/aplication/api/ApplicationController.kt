@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @Transactional
@@ -187,7 +188,10 @@ class ApplicationController(
             @PathVariable("devMail") devMail: String,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<List<ApplicationForDevDTO>> =
-            applicationService.getApplicationsForDev(devMail, password).let { ResponseEntity.ok(it) }
+            applicationService.getApplicationsForDev(
+                    String(Base64.getDecoder().decode(devMail.toByteArray())),
+                    password
+            ).let { ResponseEntity.ok(it) }
 
 }
 
