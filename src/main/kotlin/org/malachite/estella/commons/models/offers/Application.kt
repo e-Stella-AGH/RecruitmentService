@@ -2,6 +2,7 @@ package org.malachite.estella.commons.models.offers
 
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.JobSeekerFile
+import org.malachite.estella.task.domain.TaskStageNotFoundException
 import java.sql.Date
 import javax.persistence.*
 
@@ -17,4 +18,7 @@ data class Application(
         inverseJoinColumns = [JoinColumn(name = "job_seeker_file_id")]
     ) val seekerFiles: MutableSet<JobSeekerFile>,
     @OneToMany(mappedBy = "application", fetch = FetchType.EAGER) val applicationStages: MutableList<ApplicationStageData>
-)
+) {
+    fun getCurrentApplicationStage(): ApplicationStageData
+    = this.applicationStages.sortedBy { it.id }.last()
+}

@@ -8,40 +8,51 @@ import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
+import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 
 @RestController
 @RequestMapping("/api/tasks")
 class TaskController(
         @Autowired private val taskService: TaskService,
+        @Autowired private val taskStageService: TaskStageService,
         @Autowired private val organizationService: OrganizationService,
 ) {
 
-    @Deprecated("Not tested yet - draft implementation, should be tested as part of ES-162")
     @CrossOrigin
     @Transactional
     @GetMapping
     fun getTasks(
-            @RequestParam("owner", required = false) organizationUuid: String?,
-            @RequestParam("taskStage", required = false) taskStageUuid: String?,
+            @RequestParam("owner") organizationUuid: String?,
+            @RequestParam("taskStage") taskStageUuid: String?,
+            @RequestParam("devMail") devMail: String?,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<Any> {
-        if ((organizationUuid == null && taskStageUuid == null) || (organizationUuid != null && taskStageUuid != null))
-            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
+        if (!areParamsValid(organizationUuid, taskStageUuid, devMail))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
-                    taskService.checkDevPassword(it, password)
-                            .getTasksByOrganizationUuid(it)
+                    devMail?.let { taskStageService.getTasksByDev(it, password) }
+                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password)
+                                    .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
                 }
                 ?: taskStageUuid
-                        ?.let { taskService.getTasksByTasksStage(it, password) }!!
-       return ResponseEntity.ok(tasks)
+                        ?.let { taskStageService.getTasksByTasksStage(it, password) }!!
+        return ResponseEntity.ok(tasks)
     }
+
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean =
+            listOf(
+                    (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()),
+                    (organizationId != null && taskStageUuid != null),
+                    (devMail != null && organizationId == null)
+            ).none{ it }
 
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
@@ -105,5 +116,6 @@ class TaskController(
             @RequestBody tests: List<TaskTestCaseDto>
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED) //taskService.setTests(taskId, tests)
 
-
 }
+
+data class Tasks(val tasks: Set<Int>)

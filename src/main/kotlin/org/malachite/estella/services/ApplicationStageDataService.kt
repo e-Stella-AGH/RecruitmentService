@@ -11,6 +11,7 @@ import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.interview.api.NotesFilePayload
+import org.malachite.estella.task.domain.TaskStageNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -22,11 +23,12 @@ class ApplicationStageDataService(
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val interviewService: InterviewService,
     @Autowired private val noteService: NoteService,
-    @Autowired private val securityService: SecurityService
+    @Autowired private val securityService: SecurityService,
+    @Autowired private val mailService: MailService
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
 
-    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage): ApplicationStageData {
+    fun createApplicationStageData(application: Application, recruitmentStage: RecruitmentStage, devs: MutableList<String>): ApplicationStageData {
         val applicationStage = ApplicationStageData(
             null,
             recruitmentStage,
@@ -35,11 +37,16 @@ class ApplicationStageDataService(
             null,
             setOf()
         ).let { applicationStageRepository.save(it) }
-        val taskAndInterview = getTaskStageAndInterview(recruitmentStage, applicationStage)
-        return applicationStage.copy(
-            tasksStage = taskAndInterview.first,
-            interview = taskAndInterview.second
-        ).let { applicationStageRepository.save(it) }
+        return getTaskStageAndInterview(recruitmentStage, applicationStage).let {
+            it.first?.let { taskStage ->
+                taskStageService.setDevs(taskStage.id!!, devs)
+                devs.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, recruitmentProcessService.getProcessFromStage(applicationStage).offer) }
+            }
+            applicationStage.copy(
+                    tasksStage = it.first,
+                    interview = it.second)
+        }
+        .let { applicationStageRepository.save(it) }
     }
 
     private fun getTaskStageAndInterview(recruitmentStage: RecruitmentStage, applicationStage: ApplicationStageData) =
@@ -116,21 +123,20 @@ class ApplicationStageDataService(
         }
 
     private fun canDevUpdate(applicationStage: ApplicationStageData, password: String): Boolean =
-        recruitmentProcessService
-            .getProcessFromStage(applicationStage)
-            .offer.creator.organization.let {
-                securityService.compareOrganizationWithPassword(it, password)
-            }
+            recruitmentProcessService
+                    .getProcessFromStage(applicationStage)
+                    .offer.creator.organization.let {
+                        securityService.compareOrganizationWithPassword(it, password)
+                    }
 
     private fun canHrUpdate(applicationStage: ApplicationStageData): Boolean =
-        recruitmentProcessService
-            .getProcessFromStage(applicationStage)
-            .offer.creator.let { hrPartner ->
-                securityService.getUserDetailsFromContext()
-                    ?.let { it.user == hrPartner.user }
-                    ?: false
-            }
-
+            recruitmentProcessService
+                    .getProcessFromStage(applicationStage)
+                    .offer.creator.let { hrPartner ->
+                        securityService.getUserDetailsFromContext()
+                                ?.let { it.user == hrPartner.user }
+                                ?: false
+                    }
 }
 
 typealias TasksNotes = Pair<List<TaskResult>, List<Note>>

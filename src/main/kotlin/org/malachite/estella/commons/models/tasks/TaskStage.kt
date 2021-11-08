@@ -10,5 +10,7 @@ import javax.persistence.*
 data class TaskStage(
         @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: UUID?,
         @JsonIgnore @OneToMany(mappedBy = "taskStage",fetch = FetchType.EAGER) val tasksResult:List<TaskResult>,
-        @JsonIgnore @OneToOne val applicationStage: ApplicationStageData
+        @JsonIgnore @OneToOne val applicationStage: ApplicationStageData,
+        @ElementCollection(fetch = FetchType.LAZY)
+        val devs: MutableList<String>
 )

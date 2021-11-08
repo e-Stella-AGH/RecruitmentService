@@ -163,6 +163,14 @@ class BaseIntegration {
             this["offerName"] as String
         )
 
+    fun Map<String, Any>.toApplicationForDevDTO() =
+            ApplicationForDevDTO(
+                    (this["application"] as Map<String, Any>).toApplicationDTO(),
+                    this["taskStageUUID"] as String,
+                    (this["notes"] as List<Map<String, Any>>).map { it.toApplicationNoteDTO() }.toSet(),
+                    this["position"] as String
+            )
+
     fun String.toSkillLevel(): SkillLevel? {
         return when (this) {
             "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
@@ -296,6 +304,13 @@ class BaseIntegration {
         path = "/api/applications/${applicationId}/next",
         method = HttpMethod.PUT,
         headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password)),
+    )
+
+    fun updateStage(applicationId: Int, mail: String, password: String, devs: Set<String>) = httpRequest(
+            path = "/api/applications/${applicationId}/next",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(mail, password)),
+            body = mapOf("devs" to devs)
     )
 
     private fun loginUser(userMail: String, userPassword: String): Response = httpRequest(

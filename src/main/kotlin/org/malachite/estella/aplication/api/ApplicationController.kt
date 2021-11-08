@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @Transactional
@@ -97,13 +98,14 @@ class ApplicationController(
     @CrossOrigin
     @PutMapping("/{applicationId}/next")
     fun updateApplicationStage(
-        @PathVariable applicationId: Int
+        @PathVariable applicationId: Int,
+        @RequestBody(required = false) devs: ApplicationStageDevs?
     ): ResponseEntity<Any> =
         applicationService.getApplicationById(applicationId).let {
             recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
             if (!securityService.checkOfferRights(it.offer)) return UNAUTH
-            applicationService.setNextStageOfApplication(applicationId, it).let { SUCCESS }
+            applicationService.setNextStageOfApplication(applicationId, it, devs?.devs?: mutableListOf()).let { SUCCESS }
         }
 
 
@@ -178,4 +180,19 @@ class ApplicationController(
             ResponseEntity.ok(response)
         }
 
+
+    @CrossOrigin
+    @Transactional
+    @GetMapping("/forDev/{devMail}")
+    fun getApplicationsForDev(
+            @PathVariable("devMail") devMail: String,
+            @RequestHeader(EStellaHeaders.devPassword) password: String
+    ): ResponseEntity<List<ApplicationForDevDTO>> =
+            applicationService.getApplicationsForDev(
+                    String(Base64.getDecoder().decode(devMail.toByteArray())),
+                    password
+            ).let { ResponseEntity.ok(it) }
+
 }
+
+data class ApplicationStageDevs(val devs: MutableList<String>?)

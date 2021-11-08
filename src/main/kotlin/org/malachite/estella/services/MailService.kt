@@ -3,9 +3,11 @@ package org.malachite.estella.services
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.mails.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -40,5 +42,10 @@ class MailService(
 
     fun sendApplicationConfirmationMail(offer: Offer, application: Application) =
         sendMail(application.toApplicationConfirmationAsMailPayload(offer))
+
+    fun sendTaskAssignmentRequest(devMail: String, taskStage: TaskStage, offer: Offer) {
+        sendMail(taskStage.toTaskAssignmentRequestPayload(devMail, offer))
+
+    }
 
 }

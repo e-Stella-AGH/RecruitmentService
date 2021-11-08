@@ -17,10 +17,10 @@ import org.malachite.estella.process.domain.RecruitmentStageRepository
 import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.malachite.estella.util.DatabaseReset
-import org.springframework.amqp.core.Message
-import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.sql.Date
@@ -33,7 +33,6 @@ import javax.sql.rowset.serial.SerialClob
 class TaskResultTest : BaseIntegration() {
     @Autowired
     lateinit var rabbitTemplate: RabbitTemplate
-
 
     private lateinit var task: Task
     private lateinit var taskStage: TaskStage
@@ -53,7 +52,7 @@ class TaskResultTest : BaseIntegration() {
         val savedApplication = applicationRepository.save(application)
         val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
         val savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
-        this.taskStage = TaskStage(null, listOf(), savedApplicationStageData)
+        this.taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
         taskStage = taskStageRepository.save(taskStage)
         task = taskRepository.save(task)
     }
@@ -74,7 +73,7 @@ class TaskResultTest : BaseIntegration() {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
             expectThat(taskStage.tasksResult.size).isEqualTo(1)
             expectThat(code.characterStream.readText()).isEqualTo(xd1)
-            val savedResults = taskStage.tasksResult[0].results.binaryStream.readAllBytes()
+            val savedResults = taskStage.tasksResult[0].results!!.binaryStream.readAllBytes()
             expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
         }
         // Test if results is updated and not added as new
@@ -82,8 +81,8 @@ class TaskResultTest : BaseIntegration() {
         eventually {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
             expectThat(taskStage.tasksResult.size).isEqualTo(1)
-            expectThat(taskStage.tasksResult[0].code.characterStream.readText()).isEqualTo(xd2)
-            val savedResults = taskStage.tasksResult[0].results.binaryStream.readAllBytes()
+            expectThat(taskStage.tasksResult[0].code!!.characterStream.readText()).isEqualTo(xd2)
+            val savedResults = taskStage.tasksResult[0].results!!.binaryStream.readAllBytes()
             expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
         }
     }
@@ -115,8 +114,8 @@ class TaskResultTest : BaseIntegration() {
 
     fun publish(result: TaskResult) {
         val resultBody = mapOf(
-                "results" to String(result.results.binaryStream.readAllBytes()),
-                "code" to result.code.characterStream.readText(),
+                "results" to String(result.results!!.binaryStream.readAllBytes()),
+                "code" to (result.code!!.characterStream!!.readText()),
                 "startTime" to result.startTime.toString(),
                 "endTime" to result.endTime.toString(),
                 "solverId" to result.taskStage.id!!.toString(),

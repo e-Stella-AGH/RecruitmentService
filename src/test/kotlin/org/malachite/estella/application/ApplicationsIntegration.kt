@@ -27,6 +27,7 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
+import java.util.*
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -268,6 +269,34 @@ class ApplicationsIntegration : BaseIntegration() {
         }
         getOfferApplications(offer).let {
             expectThat(it.size).isEqualTo(0)
+        }
+    }
+
+    @Test
+    @Order(12)
+    fun `should return all applications that have dev mail at current taskStage`() {
+        val offer = getOffer(1)
+        val jobSeeker = getJobSeeker()
+        applyForOffer(jobSeeker, password, offer)
+        applyForOffer(jobSeekerRepository.findAll().elementAt(1), password, getOffer(1))
+        var application = applicationRepository.findAll().first { it.jobSeeker == jobSeeker && it.getCurrentApplicationStage().stage.type == StageType.APPLIED }
+        updateStage(application.id!!, offer.creator.user.mail, password)
+        updateStage(application.id!!, offer.creator.user.mail, password, setOf("dev@mail.com"))
+        application = applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
+        updateStage(application.id!!, offer.creator.user.mail, password)
+        updateStage(application.id!!, offer.creator.user.mail, password, setOf("anotherdev@mail.com"))
+        application = applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
+        val devPassword = securityService.hashOrganization(offer.creator.organization, application.getCurrentApplicationStage().tasksStage!!)
+        val codedMail = String(Base64.getEncoder().encode("anotherdev@mail.com".toByteArray()))
+        httpRequest(
+            path = "/api/applications/forDev/$codedMail",
+            method = HttpMethod.GET,
+            headers = mapOf(EStellaHeaders.devPassword to devPassword)
+        ).let {
+            expectThat(it.statusCode).isEqualTo(HttpStatus.OK)
+            it.body as List<Map<String, Any>>
+            expectThat(it.body.size).isEqualTo(1)
+            expectThat(it.body[0].toApplicationForDevDTO().application.id).isEqualTo(application.id)
         }
     }
 
