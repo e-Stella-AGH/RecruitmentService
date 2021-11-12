@@ -4,6 +4,7 @@ import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.StageType
+import java.util.*
 
 object MailTexts {
 
@@ -67,11 +68,14 @@ object MailTexts {
             After first login change password and setup your name. We hope that our site will help you with work.
         """.trimIndent()
 
-    fun getTaskAssignmentRequestText(stage: StageType, url: String, hrPartnerFullName: String, position: String): String =
+    fun getTaskAssignmentRequestText(stage: StageType, url: String, hrPartnerFullName: String, position: String, password: UUID): String =
             """
             Hi,
             You have been chosen as one of people requested to assign a task at stage $stage
             of recruitment process for position $position. You can do that at: $url.
+            Password for this assignment is:
+            $password
+            but remember that you can use any of passwords we've sent you that are still valid.
             All the best,
             $hrPartnerFullName
             """.trimIndent()

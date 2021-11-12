@@ -122,7 +122,7 @@ fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPa
             subject = "You have been requested to assign task",
             sender_name = "e-Stella Team",
             receiver = mail,
-            content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position),
+            content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position, this.id!!),
             sender_email = MAIN_MAIL
     )
 }
