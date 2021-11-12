@@ -39,16 +39,16 @@ class TaskController(
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required"))
         if (!isPasswordProvided(organizationUuid, taskStageUuid, devMail, password) && interviewUuid == null)
             return OwnResponses.UNAUTH
-        val tasks: List<TaskDto> = organizationUuid
-                ?.let {
-                    devMail?.let { taskStageService.getTasksByDev(it, password!!) }
-                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password!!)
-                                    .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
+        val tasks: List<TaskDto> =
+                when {
+                    organizationUuid != null -> devMail?.let { taskStageService.getTasksByDev(it, password!!) }
+                                        ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password!!)
+                                                .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
+
+                    taskStageUuid != null -> taskStageService.getTasksByTasksStage(taskStageUuid, password!!)
+                    interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid)
+                    else -> throw IllegalStateException() // Should never happen - protected by areParamsValid()
                 }
-                ?: taskStageUuid
-                        ?.let { taskStageService.getTasksByTasksStage(it, password!!) }
-                ?: interviewUuid!!
-                        .let { taskStageService.getTasksByInterview(it) }
         return ResponseEntity.ok(tasks)
     }
 
