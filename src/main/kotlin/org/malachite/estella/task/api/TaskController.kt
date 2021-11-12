@@ -33,20 +33,22 @@ class TaskController(
             @RequestParam("taskStage") taskStageUuid: String?,
             @RequestParam("devMail") devMail: String?,
             @RequestParam("interview") interviewUuid: String?,
-            @RequestHeader(EStellaHeaders.devPassword) password: String
+            @RequestHeader(EStellaHeaders.devPassword) password: String?
     ): ResponseEntity<Any> {
         if (!areParamsValid(organizationUuid, taskStageUuid, devMail, interviewUuid))
-            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required"))
+        if (!isPasswordProvided(organizationUuid, taskStageUuid, devMail, password) && interviewUuid == null)
+            return OwnResponses.UNAUTH
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
-                    devMail?.let { taskStageService.getTasksByDev(it, password) }
-                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password)
+                    devMail?.let { taskStageService.getTasksByDev(it, password!!) }
+                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password!!)
                                     .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
                 }
                 ?: taskStageUuid
-                        ?.let { taskStageService.getTasksByTasksStage(it, password) }
-                ?: interviewUuid
-                        ?.let { taskStageService.getTasksByInterview(it, password) }!!
+                        ?.let { taskStageService.getTasksByTasksStage(it, password!!) }
+                ?: interviewUuid!!
+                        .let { taskStageService.getTasksByInterview(it) }
         return ResponseEntity.ok(tasks)
     }
 
@@ -56,6 +58,9 @@ class TaskController(
                     (listOfNotNull(organizationId, taskStageUuid, interviewUuid).size > 1),
                     (devMail != null && organizationId == null)
             ).none{ it }
+
+    private fun isPasswordProvided(organizationId: String?, taskStageUuid: String?, devMail: String?, password: String?): Boolean =
+            listOfNotNull(organizationId, taskStageUuid, devMail).isNotEmpty() && password != null
 
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")

@@ -76,8 +76,10 @@ class TaskStageService(
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
 
-    fun getTasksByInterview(interviewId: String, password: String): List<TaskDto> =
-        getTasksByTasksStage(interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage!!.id.toString(), password )
+    fun getTasksByInterview(interviewId: String): List<TaskDto> {
+        val taskStage = interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage!!
+        return taskStage.tasksResult.map { it.task.toTaskDto() }
+    }
 
 
     private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =

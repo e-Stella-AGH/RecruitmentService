@@ -147,11 +147,9 @@ class TaskStagesIntegration : BaseIntegration() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
         val taskStage = getTaskStage()
         val interview = taskStage.applicationStage.interview!!
-        val password = securityService.hashOrganization(getOrganization(), taskStage)
         val response = httpRequest(
                 "/api/tasks?interview=${interview.id}",
-                method = HttpMethod.GET,
-                headers = mapOf(EStellaHeaders.devPassword to password)
+                method = HttpMethod.GET
         )
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
