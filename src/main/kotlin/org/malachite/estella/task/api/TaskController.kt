@@ -32,27 +32,35 @@ class TaskController(
             @RequestParam("owner") organizationUuid: String?,
             @RequestParam("taskStage") taskStageUuid: String?,
             @RequestParam("devMail") devMail: String?,
-            @RequestHeader(EStellaHeaders.devPassword) password: String
+            @RequestParam("interview") interviewUuid: String?,
+            @RequestHeader(EStellaHeaders.devPassword) password: String?
     ): ResponseEntity<Any> {
-        if (!areParamsValid(organizationUuid, taskStageUuid, devMail))
-            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
-        val tasks: List<TaskDto> = organizationUuid
-                ?.let {
-                    devMail?.let { taskStageService.getTasksByDev(it, password) }
-                            ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password)
-                                    .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
+        if (!areParamsValid(organizationUuid, taskStageUuid, devMail, interviewUuid))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required"))
+        if (!isPasswordProvided(organizationUuid, taskStageUuid, devMail, password) && interviewUuid == null)
+            return OwnResponses.UNAUTH
+        val tasks: List<TaskDto> =
+                when {
+                    organizationUuid != null -> devMail?.let { taskStageService.getTasksByDev(it, password!!) }
+                                        ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password!!)
+                                                .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
+
+                    taskStageUuid != null -> taskStageService.getTasksByTasksStage(taskStageUuid, password!!)
+                    interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid)
+                    else -> throw IllegalStateException() // Should never happen - protected by areParamsValid()
                 }
-                ?: taskStageUuid
-                        ?.let { taskStageService.getTasksByTasksStage(it, password) }!!
         return ResponseEntity.ok(tasks)
     }
 
-    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean =
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?, interviewUuid: String?): Boolean =
             listOf(
-                    (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()),
-                    (organizationId != null && taskStageUuid != null),
+                    (listOfNotNull(organizationId, taskStageUuid, devMail, interviewUuid).isEmpty()),
+                    (listOfNotNull(organizationId, taskStageUuid, interviewUuid).size > 1),
                     (devMail != null && organizationId == null)
             ).none{ it }
+
+    private fun isPasswordProvided(organizationId: String?, taskStageUuid: String?, devMail: String?, password: String?): Boolean =
+            listOfNotNull(organizationId, taskStageUuid, devMail).isNotEmpty() && password != null
 
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")

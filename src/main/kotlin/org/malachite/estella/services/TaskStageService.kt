@@ -76,6 +76,13 @@ class TaskStageService(
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
 
+    fun getTasksByInterview(interviewId: String): List<TaskDto> =
+            interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage
+                    ?.let {
+                        it.tasksResult.map { it.task.toTaskDto() }
+                    }
+                    ?: listOf()
+
     private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
             recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
 

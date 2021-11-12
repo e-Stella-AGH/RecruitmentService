@@ -143,6 +143,24 @@ class TaskStagesIntegration : BaseIntegration() {
 
     @Test
     @Order(5)
+    fun `should return all tasks by interview UUID`() {
+        applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
+        val taskStage = getTaskStage()
+        val interview = taskStage.applicationStage.interview!!
+        val response = httpRequest(
+                "/api/tasks?interview=${interview.id}",
+                method = HttpMethod.GET
+        )
+
+        expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        response.body as List<Map<String, Any>>
+        expect {
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+        }
+    }
+
+    @Test
+    @Order(6)
     fun `should return all tasks by devMail`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
         val taskStage = getTaskStage()
@@ -162,7 +180,7 @@ class TaskStagesIntegration : BaseIntegration() {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     fun `should return bad request when trying to set tasks to old task stage`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
         updateStage(applicationId, hrPartner.user.mail, password)
