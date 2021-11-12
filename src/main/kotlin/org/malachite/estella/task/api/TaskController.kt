@@ -32,9 +32,10 @@ class TaskController(
             @RequestParam("owner") organizationUuid: String?,
             @RequestParam("taskStage") taskStageUuid: String?,
             @RequestParam("devMail") devMail: String?,
+            @RequestParam("interview") interviewUuid: String?,
             @RequestHeader(EStellaHeaders.devPassword) password: String
     ): ResponseEntity<Any> {
-        if (!areParamsValid(organizationUuid, taskStageUuid, devMail))
+        if (!areParamsValid(organizationUuid, taskStageUuid, devMail, interviewUuid))
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid and devMail is required"))
         val tasks: List<TaskDto> = organizationUuid
                 ?.let {
@@ -43,14 +44,16 @@ class TaskController(
                                     .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
                 }
                 ?: taskStageUuid
-                        ?.let { taskStageService.getTasksByTasksStage(it, password) }!!
+                        ?.let { taskStageService.getTasksByTasksStage(it, password) }
+                ?: interviewUuid
+                        ?.let { taskStageService.getTasksByInterview(it, password) }!!
         return ResponseEntity.ok(tasks)
     }
 
-    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?): Boolean =
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?, interviewUuid: String?): Boolean =
             listOf(
-                    (listOfNotNull(organizationId, taskStageUuid, devMail).isEmpty()),
-                    (organizationId != null && taskStageUuid != null),
+                    (listOfNotNull(organizationId, taskStageUuid, devMail, interviewUuid).isEmpty()),
+                    (listOfNotNull(organizationId, taskStageUuid, interviewUuid).size > 1),
                     (devMail != null && organizationId == null)
             ).none{ it }
 
