@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
+import javax.transaction.Transactional
 
 @RestController
 @RequestMapping("/api/interview")
@@ -33,6 +34,7 @@ class InterviewController(
         interviewService.getLastInterviewIdFromApplicationId(applicationId).let { ResponseEntity.ok(it) }
 
     @CrossOrigin
+    @Transactional
     @GetMapping("/newest/{applicationId}/interview")
     fun getNewestInterview(@PathVariable applicationId: Int): ResponseEntity<InterviewDTO> =
         interviewService.getLastInterviewFromApplicationId(applicationId).let { ResponseEntity.ok(it.toInterviewDTO()) }

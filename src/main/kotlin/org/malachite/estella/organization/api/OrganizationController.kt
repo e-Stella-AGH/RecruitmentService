@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import javax.transaction.Transactional
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -45,6 +46,7 @@ class OrganizationController(
             ?: UNAUTH
 
     @CrossOrigin
+    @Transactional
     @GetMapping("/offers")
     fun getOrganizationsOffers(): ResponseEntity<Any> =
         securityService.getOrganizationFromContext()
