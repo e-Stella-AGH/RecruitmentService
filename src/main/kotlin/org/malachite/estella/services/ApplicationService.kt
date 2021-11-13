@@ -104,8 +104,8 @@ class ApplicationService(
     fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationWithStagesAndOfferName> =
         offerService.getOffer(offerId)
             .let {
-                val stages = it.recruitmentProcess?.stages
-                if (stages?.isNotEmpty() == true)
+                val stages = it.recruitmentProcess?.stages?.toSet()?.toList()?: listOf()
+                if (stages.isNotEmpty())
                     applicationRepository.findAll().toList().filter {
                         it.applicationStages
                             .map { it.stage }
