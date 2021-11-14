@@ -106,6 +106,17 @@ data class ApplicationDTOWithStagesListAndOfferName(
     val stages: List<RecruitmentStage>,
     val offerName: String
 )
+data class ApplicationInfoDTO(
+    val id: Int?,
+    val applicationDate: Date,
+    val status: ApplicationStatus,
+    val stage: RecruitmentStage,
+    val jobSeeker: JobSeekerDTO,
+    val seekerFiles: Set<JobSeekerFileDTO>,
+    val stages: List<RecruitmentStage>,
+    val offerName: String,
+    val tags: Set<String>
+)
 
 data class ApplicationStageDTO(
     val id: Int,

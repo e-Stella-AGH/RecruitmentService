@@ -171,6 +171,19 @@ class BaseIntegration {
                     this["position"] as String
             )
 
+    fun Map<String, Any>.toApplicationInfoDTO() =
+        ApplicationInfoDTO(
+            this["id"] as Int,
+            Date.valueOf(this["applicationDate"] as String),
+            ApplicationStatus.valueOf(this["status"] as String),
+            (this["stage"] as Map<String, Any>).toRecruitmentStage(),
+            (this["jobSeeker"] as Map<String, Any>).toJobSeekerDTO(),
+            setOf(),
+            (this["stages"] as List<Map<String, Any>>).map { it.toRecruitmentStage() },
+            this["offerName"] as String,
+            (this["tags"] as List<String>).toSet()
+        )
+
     fun String.toSkillLevel(): SkillLevel? {
         return when (this) {
             "NICE_TO_HAVE" -> SkillLevel.NICE_TO_HAVE
