@@ -5,7 +5,9 @@ import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
+import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
+import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
@@ -17,29 +19,46 @@ import java.util.*
 @Transactional
 @RequestMapping("/api/tasks")
 class TaskController(
-    @Autowired private val taskService: TaskService,
+        @Autowired private val taskService: TaskService,
+        @Autowired private val taskStageService: TaskStageService,
+        @Autowired private val organizationService: OrganizationService,
 ) {
 
-    private val bothUUIDErrorMessage = Message("Exactly one of parameters: organizationUuid and taskStageUuid is required")
-
-    @Deprecated("Not tested yet - draft implementation, should be tested as part of ES-162")
     @CrossOrigin
     @GetMapping
     fun getTasks(
-        @RequestParam("owner", required = false) organizationUuid: UUID?,
-        @RequestParam("taskStage", required = false) taskStageUuid: UUID?,
-        @RequestHeader(EStellaHeaders.devPassword) password: String
+            @RequestParam("owner") organizationUuid: String?,
+            @RequestParam("taskStage") taskStageUuid: String?,
+            @RequestParam("devMail") devMail: String?,
+            @RequestParam("interview") interviewUuid: String?,
+            @RequestHeader(EStellaHeaders.devPassword) password: String?
     ): ResponseEntity<Any> {
-        if (listOfNotNull(organizationUuid, taskStageUuid).size != 1)
-            return ResponseEntity.badRequest().body(bothUUIDErrorMessage)
-        val tasks: List<TaskDto> = organizationUuid
-            ?.let {
-                taskService.checkDevPassword(it, password)
-                    .getTasksByOrganizationUuid(it)
-            }
-            ?: taskStageUuid?.let { taskService.getTasksByTasksStage(it, password) }!!
-       return ResponseEntity.ok(tasks)
+        if (!areParamsValid(organizationUuid, taskStageUuid, devMail, interviewUuid))
+            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required"))
+        if (!isPasswordProvided(organizationUuid, taskStageUuid, devMail, password) && interviewUuid == null)
+            return OwnResponses.UNAUTH
+        val tasks: List<TaskDto> =
+                when {
+                    organizationUuid != null -> devMail?.let { taskStageService.getTasksByDev(it, password!!) }
+                                        ?: taskStageService.assertDevPasswordCorrect(organizationUuid, password!!)
+                                                .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
+
+                    taskStageUuid != null -> taskStageService.getTasksByTasksStage(taskStageUuid, password!!)
+                    interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid)
+                    else -> throw IllegalStateException() // Should never happen - protected by areParamsValid()
+                }
+        return ResponseEntity.ok(tasks)
     }
+
+    private fun areParamsValid(organizationId: String?, taskStageUuid: String?, devMail: String?, interviewUuid: String?): Boolean =
+            listOf(
+                    (listOfNotNull(organizationId, taskStageUuid, devMail, interviewUuid).isEmpty()),
+                    (listOfNotNull(organizationId, taskStageUuid, interviewUuid).size > 1),
+                    (devMail != null && organizationId == null)
+            ).none{ it }
+
+    private fun isPasswordProvided(organizationId: String?, taskStageUuid: String?, devMail: String?, password: String?): Boolean =
+            listOfNotNull(organizationId, taskStageUuid, devMail).isNotEmpty() && password != null
 
     @CrossOrigin
     @GetMapping("/{taskId}")
@@ -130,3 +149,5 @@ class TaskController(
 
     data class TestFilePayload(val testsBase64: String)
 }
+
+data class Tasks(val tasks: Set<Int>)

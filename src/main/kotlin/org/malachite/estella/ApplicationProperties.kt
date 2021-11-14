@@ -5,6 +5,7 @@ import java.io.File
 
 const val applicationPath = "src/main/resources/application.properties"
 const val configPath = "config2.json"
+const val dropDB = false
 
 fun getConfigurationData(): MutableMap<String, String> {
     val file = File(configPath)
@@ -14,10 +15,11 @@ fun getConfigurationData(): MutableMap<String, String> {
 }
 
 fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
+    val ddlAuto = if(dropDB) "create" else "validate"
     return """
 			spring.datasource.url=${env["DATABASE_URL"]}
             spring.jpa.generate-ddl=true
-            spring.jpa.hibernate.ddl-auto=create
+            spring.jpa.hibernate.ddl-auto=${ddlAuto}
 			spring.jpa.show-sql=true
 			spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 			spring.datasource.driver-class-name=org.postgresql.Driver

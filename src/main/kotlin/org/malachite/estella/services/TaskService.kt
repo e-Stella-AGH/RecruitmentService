@@ -8,6 +8,7 @@ import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.process.domain.*
@@ -26,10 +27,10 @@ import javax.sql.rowset.serial.SerialClob
 @Service
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
-    @Autowired private val organizationRepository: OrganizationRepository,
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val interviewService: InterviewService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Task>() {
 

@@ -36,7 +36,7 @@ class SecurityService(
     private val authSecret = "secret"
     private val refreshSecret = "refreshSecret"
     private val refreshTime = 3600 * 1000 * 24 // 1 day
-    private val authTime = 15 * 60 * 1000 // 15 minutes
+    private val authTime = 6 * 60 * 60 * 1000 // 6 hour
 
     private val mailKey = "mail"
     private val firstNameKey = "firstName"
@@ -75,6 +75,14 @@ class SecurityService(
                 val taskStageUUID = devPasswordComponents.second
                 organizationUUID == organization.id!! && taskStageRepository.findById(taskStageUUID).isPresent
         } ?: false
+
+    fun getTaskStageFromPassword(password: String): TaskStage? {
+        val decrypted = decryptDevPassword(password)
+        if (decrypted.size != 2) throw UnauthenticatedException()
+        return decrypted[1].let {
+            taskStageRepository.findById(UUID.fromString(it)).orElse(null)
+        }
+    }
 
     private fun getAuthenticateToken(user: User): String? {
         val issuer = user.id.toString()

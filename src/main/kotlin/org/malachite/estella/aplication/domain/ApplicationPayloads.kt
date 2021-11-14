@@ -147,7 +147,7 @@ data class TaskResultWithTestDTO(
 fun TaskResult.toTaskResultWithTestDTO(): TaskResultWithTestDTO =
     TaskResultWithTestDTO(
         code.toBase64String(),
-        this.results.toBase64String(),
+        this.results!!.toBase64String(),
         task.tests.toBase64String(),
         task.description
     )
@@ -157,5 +157,12 @@ fun TasksNotes.toTasksNotesDTO(): TasksNotesDTO =
         this.first.map { it.toTaskResultWithTestDTO() },
         this.second.map { it.toApplicationNoteDTO() }
     )
+
+data class ApplicationForDevDTO(
+        val application: ApplicationDTO,
+        val taskStageUUID: String,
+        val notes: Set<ApplicationNoteDTO>,
+        val position: String
+)
 
 

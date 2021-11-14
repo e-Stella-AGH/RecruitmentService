@@ -3,15 +3,18 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.mails.MailTexts.getApplicationConfirmation
 import org.malachite.estella.mails.MailTexts.getHrPartnerRegistrationText
 import org.malachite.estella.mails.MailTexts.getRegistrationText
 import org.malachite.estella.mails.MailTexts.getUnVerificationText
 import org.malachite.estella.mails.MailTexts.getVerificationText
 import org.springframework.http.HttpEntity
+import java.util.*
 
 data class MailPayload(
     val subject: String,
@@ -110,3 +113,17 @@ fun HrPartner.toRegistrationMailPayload(password: String) =
             this.user.mail, password, MAIN_URL),
         sender_email = MAIN_MAIL
     )
+
+fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val encodedMail = String(Base64.getEncoder().encode(mail.toByteArray()))
+    val url = "${MAIN_URL}tasks/assign/${offer.creator.organization.id}/$encodedMail"
+    return MailPayload(
+            subject = "You have been requested to assign task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position, this.id!!),
+            sender_email = MAIN_MAIL
+    )
+}
+
