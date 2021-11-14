@@ -5,23 +5,19 @@ import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
 
 @RestController
-@Transactional
 @RequestMapping("/api/tasks")
 class TaskController(
         @Autowired private val taskService: TaskService,
         @Autowired private val taskStageService: TaskStageService,
-        @Autowired private val organizationService: OrganizationService,
 ) {
 
     @CrossOrigin

@@ -33,6 +33,10 @@ class OrganizationService(
         return organization.copy(user = user).let { organizationRepository.save(it) }
     }
 
+    fun saveUpdatedOrganization(updatedOrganization: Organization) {
+        organizationRepository.save(updatedOrganization)
+    }
+
     fun updateOrganization(id: UUID, organization: Organization) {
         if (!checkRights(id).contains(Permission.UPDATE)) throw UnauthenticatedException()
         getOrganization(id).copy(name = organization.name, verified = organization.verified)

@@ -8,9 +8,7 @@ import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
-import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.commons.toBase64String
-import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.process.domain.*
 import org.malachite.estella.queues.utils.TaskResultRabbitDTO
 import org.malachite.estella.task.domain.InvalidTestFileException
@@ -18,6 +16,7 @@ import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
@@ -25,12 +24,12 @@ import javax.sql.rowset.serial.SerialClob
 
 
 @Service
+@Transactional
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
     @Autowired private val organizationService: OrganizationService,
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
-    @Autowired private val interviewService: InterviewService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Task>() {
 
@@ -85,20 +84,23 @@ class TaskService(
             .toBase64String()
             .let { Json.decodeFromString(it) }
 
-    fun addTask(organizationUuid: UUID, taskDto: TaskDto) =
-        withExceptionThrower {
-            // Task saving
-            checkTestsFormat(taskDto.testsBase64)
-            val task = taskRepository.save(taskDto.toTask())
+    private fun saveTask(taskDto: TaskDto): Task {
+        checkTestsFormat(taskDto.testsBase64)
+        return taskRepository.save(taskDto.toTask())
+    }
 
-            // Attaching task to organization
-            val organization = organizationService.getOrganization(organizationUuid)
+    private fun attachTaskToOrganization(organizationUuid: UUID, task: Task) {
+        val organization = organizationService.getOrganization(organizationUuid)
 
-            val updatedTasks = organization.tasks.plus(task)
-            val updatedOrganization = organization.copy(tasks = updatedTasks)
-            organizationRepository.save(updatedOrganization)
-            task
-        }
+        val updatedTasks = organization.tasks.plus(task)
+        val updatedOrganization = organization.copy(tasks = updatedTasks)
+        organizationService.saveUpdatedOrganization(updatedOrganization)
+    }
+
+    fun addTask(organizationUuid: UUID, taskDto: TaskDto) {
+        val task = saveTask(taskDto)
+        attachTaskToOrganization(organizationUuid, task)
+    }
 
     fun updateTask(taskDto: TaskDto) = taskDto.id?.let {
         updateTask(it, taskDto.toTask())
@@ -116,17 +118,22 @@ class TaskService(
         taskRepository.save(updated)
     }
 
-    fun deleteTask(organizationUuid: UUID, taskId: Int) {
-        // Detaching task from organization
+    private fun detachTaskFromOrganization(organizationUuid: UUID, taskId: Int) {
         val organization = organizationService.getOrganization(organizationUuid)
         val updatedTasks = organization.tasks.filter {
             it.id != taskId
         }.toSet()
         val updatedOrganization = organization.copy(tasks = updatedTasks)
-        organizationRepository.save(updatedOrganization)
+        organizationService.saveUpdatedOrganization(updatedOrganization)
+    }
 
-        // Removing task from db
+    private fun removeTask(taskId: Int) {
         taskRepository.deleteById(taskId)
+    }
+
+    fun deleteTask(organizationUuid: UUID, taskId: Int) {
+        detachTaskFromOrganization(organizationUuid, taskId)
+        removeTask(taskId)
     }
 
 
