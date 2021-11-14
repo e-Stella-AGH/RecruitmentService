@@ -54,12 +54,14 @@ class ApplicationService(
 
         val recruitmentProcessStages = recruitmentProcess
                 .stages
+                .toSet()
+                .toList()
                 .sortedBy { it.id }
 
         val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
 
         if (applicationRecruitmentStages.isEmpty()) {
-            application.addNewApplicationStageData(recruitmentProcess.stages.first(), devs)
+            application.addNewApplicationStageData(recruitmentProcessStages.first(), devs)
             return
         }
 
