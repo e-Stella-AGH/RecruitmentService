@@ -12,7 +12,7 @@ data class RecruitmentProcess(
     val startDate: Date? = null,
     val endDate: Date? = null,
     @OneToOne(cascade = [CascadeType.ALL]) @MapsId @JoinColumn(name = "offers_id") val offer: Offer,
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER) @JoinColumn(name = "recruitment_processes_id") val stages: List<RecruitmentStage>
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER) @JoinColumn(name = "recruitment_processes_id") val stages: Set<RecruitmentStage>
 ) {
     fun isStarted(): Boolean = startDate != null && startDate < Date.from(Instant.now())
 }

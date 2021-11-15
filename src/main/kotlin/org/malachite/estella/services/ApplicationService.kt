@@ -8,6 +8,7 @@ import org.malachite.estella.commons.models.people.JobSeekerFile
 import org.malachite.estella.people.domain.JobSeekerDTO
 import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.process.domain.ProcessNotStartedException
+import org.malachite.estella.process.domain.getAsList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.sql.Date
@@ -36,7 +37,7 @@ class ApplicationService(
     fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
         if (offer.recruitmentProcess == null || !offer.recruitmentProcess.isStarted()) throw ProcessNotStartedException()
-        val stage = offer.recruitmentProcess.stages.getOrNull(0)
+        val stage = offer.recruitmentProcess.stages.getAsList().getOrNull(0)
         return stage?.let {
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
@@ -131,7 +132,7 @@ class ApplicationService(
                 if (process != null && process.stages.isNotEmpty())
                     applicationRepository.findAll().toList()
                         .filter {it.isInThisProcess(process)}
-                        .map { application -> application.toApplicationInfo(process.stages, it.name) }
+                        .map { application -> application.toApplicationInfo(process.stages.getAsList(), it.name) }
                 else
                     listOf()
             }
@@ -144,7 +145,7 @@ class ApplicationService(
             }.map { pairs ->
                 ApplicationWithStagesAndOfferName(
                     pairs.first,
-                    pairs.second.stages,
+                    pairs.second.stages.getAsList(),
                     pairs.second.offer.name
                 )
             }

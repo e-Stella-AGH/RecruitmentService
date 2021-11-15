@@ -22,7 +22,7 @@ object FakeRecruitmentProcess {
     ) {
         fun toRecruitmentProcess(offer: Offer): RecruitmentProcess {
             return RecruitmentProcess(
-                offer.id, startDate, endDate, offer, recruitmentStages
+                offer.id, startDate, endDate, offer, recruitmentStages.toSet()
             )
         }
     }
@@ -39,7 +39,7 @@ object FakeRecruitmentProcess {
     fun getProcesses(offers: List<Offer>): List<RecruitmentProcess> {
         return offers.map {
             ProcessPayload(
-                recruitmentStages = recruitmentStages().subList(0, 3) + recruitmentStages().last()
+                recruitmentStages = recruitmentStages().subList(0, 4) + recruitmentStages().last()
             ).toRecruitmentProcess(it)
         }
     }
