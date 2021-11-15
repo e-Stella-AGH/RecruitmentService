@@ -31,16 +31,6 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getInterviewInvitation(interview: Interview, organizationName: String, url: String, hrPartnerFullName: String) =
-        """
-            Hi ${interview.applicationStage.application.jobSeeker.user.firstName}
-            Thanks so much for your interest in joining the ${organizationName}! 
-            We are excited to move you forward in our engineering recruiting process.
-            Next step will be interview with our recruiters. It will take place at $url
-            All the best,
-            $hrPartnerFullName
-            """.trimIndent()
-
     fun getInterviewDevInvitation(jobSeekerName: String, url: String, hrPartnerFullName: String, position: String) =
         """
             Hi,

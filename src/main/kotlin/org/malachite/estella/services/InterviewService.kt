@@ -81,10 +81,6 @@ class InterviewService(
         else getInterview(id)
             .let { interviewRepository.save(it.copy(minutesLength = length)) }
             .also { setDate(id, dateTime) }
-            .also {
-                val offer = recruitmentProcessService.getProcessFromStage(it.applicationStage).offer
-                mailService.sendInterviewInvitationMail(offer, it)
-            }
     }
 
     fun setDate(id: UUID, dateTime: Timestamp) {
