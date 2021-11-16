@@ -17,13 +17,18 @@ import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.sql.Blob
+import java.sql.Clob
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
 
 
 @Service
+@Transactional
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
     @Autowired private val organizationService: OrganizationService,
@@ -93,22 +98,24 @@ class TaskService(
     fun addResult(result: TaskResultRabbitDTO) {
         val taskStage = taskStageService.getTaskStage(result.solverId)
         val task = getTaskById(result.taskId).toTask()
-        val startTime = result.startTime
-                ?.takeIf { it != "null" }
-                ?.let { Timestamp.valueOf(it) }
-        val endTime = result.endTime
-                ?.takeIf { it != "null" }
-                ?.let { Timestamp.valueOf(it) }
+        val time = Timestamp.from(Instant.now())
 
-        taskStageService.addResult(TaskResult(null,
+        taskStageService.addResult(ResultToAdd(
                 SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
                 SerialClob(result.code.toCharArray()),
-                startTime,
-                endTime,
+                time,
                 task,
                 taskStage
         ))
     }
+
+    data class ResultToAdd(
+        val results: Blob,
+        val code: Clob,
+        val time: Timestamp,
+        val task: Task,
+        val taskStage: TaskStage
+    )
 
 
     private fun checkTestsFormat(tests: String) = try {

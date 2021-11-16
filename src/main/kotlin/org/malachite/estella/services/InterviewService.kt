@@ -131,5 +131,8 @@ class InterviewService(
         .findAll()
         .filter { it.applicationStage.application.id == applicationId }
 
+    fun getTaskStageUUID(interviewId: UUID) =
+        this.getInterview(interviewId).applicationStage.tasksStage?.id
+
 
 }
