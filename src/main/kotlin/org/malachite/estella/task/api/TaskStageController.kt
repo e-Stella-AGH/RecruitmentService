@@ -3,8 +3,10 @@ package org.malachite.estella.task.api
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.toTask
+import org.malachite.estella.services.InterviewService
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/api/taskStages")
@@ -20,6 +23,7 @@ class TaskStageController(
     @Autowired private val taskStageService: TaskStageService,
     @Autowired private val taskService: TaskService,
     @Autowired private val organizationService: OrganizationService,
+    @Autowired private val interviewService: InterviewService
 ) {
 
     @CrossOrigin
@@ -82,4 +86,12 @@ class TaskStageController(
         @RequestHeader(EStellaHeaders.devPassword) password: String,
         @RequestBody task: TaskDto
     ) = ResponseEntity(Message("Not Implemented"), HttpStatus.NOT_IMPLEMENTED)
+
+    @CrossOrigin
+    @GetMapping("/byInterview/{interviewId}")
+    fun getTaskStageByInterviewId(@PathVariable interviewId: PayloadUUID) =
+        interviewService.getTaskStageUUID(interviewId.toUUID())
+            .let { ResponseEntity.ok(TaskStageUUIDResponse(it)) }
+
+    data class TaskStageUUIDResponse(val taskStageUUID: UUID?)
 }
