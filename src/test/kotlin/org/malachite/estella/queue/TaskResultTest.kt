@@ -120,7 +120,6 @@ class TaskResultTest : BaseIntegration() {
         val resultBody = mapOf(
                 "results" to String(result.results!!.binaryStream.readAllBytes()),
                 "code" to (result.code!!.characterStream!!.readText()),
-                "time" to result.startTime.toString(),
                 "solverId" to result.taskStage.id!!.toString(),
                 "taskId" to result.task.id!!.toString()
         )

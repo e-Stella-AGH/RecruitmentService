@@ -46,7 +46,6 @@ class MsgDeserializer {
 data class TaskResultRabbitDTO(
     val results: String,
     val code: String,
-    val time: String,
     val taskId: Int,
     val solverId: String
 )

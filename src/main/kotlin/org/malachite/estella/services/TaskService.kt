@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
@@ -97,7 +98,7 @@ class TaskService(
     fun addResult(result: TaskResultRabbitDTO) {
         val taskStage = taskStageService.getTaskStage(result.solverId)
         val task = getTaskById(result.taskId).toTask()
-        val time = result.time.let { Timestamp.valueOf(it) }
+        val time = Timestamp.from(Instant.now())
 
         taskStageService.addResult(ResultToAdd(
                 SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
