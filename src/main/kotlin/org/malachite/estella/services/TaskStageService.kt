@@ -15,9 +15,11 @@ import org.malachite.estella.task.domain.TaskStageNotFoundException
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
+@Transactional
 class TaskStageService(
         @Autowired private val taskStageRepository: TaskStageRepository,
         @Autowired private val taskResultRepository: TaskResultRepository,

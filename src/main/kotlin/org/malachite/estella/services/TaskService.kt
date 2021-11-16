@@ -17,6 +17,7 @@ import org.malachite.estella.task.domain.TaskNotFoundException
 import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Timestamp
@@ -26,6 +27,7 @@ import javax.sql.rowset.serial.SerialClob
 
 
 @Service
+@Transactional
 class TaskService(
     @Autowired private val taskRepository: TaskRepository,
     @Autowired private val organizationService: OrganizationService,
