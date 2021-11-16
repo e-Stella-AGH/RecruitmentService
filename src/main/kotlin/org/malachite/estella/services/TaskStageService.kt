@@ -4,7 +4,6 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
-import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
@@ -104,21 +103,20 @@ class TaskStageService(
             }
 
 
-    fun addResult(result: TaskResult) {
-        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == result.task.id && it.taskStage.id == result.taskStage.id }
-                ?.copy(results = result.results,
-                        code = result.code,
-                        startTime = result.startTime,
-                        endTime = result.endTime,
-                        task = result.task,
-                        taskStage = result.taskStage
-                )
-                ?: result
+    fun addResult(resultToAdd: TaskService.ResultToAdd) {
+        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id }.let {
+            copyTaskResult(it, resultToAdd)
+                ?: createNewTaskResult(resultToAdd)
+        }
         val savedResult = taskResultRepository.save(resultToSave)
         val taskStage = savedResult.taskStage
         val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
         taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
     }
+    private fun copyTaskResult(foundResult: TaskResult?, resultToAdd: TaskService.ResultToAdd) =
+        foundResult?.copy(results = resultToAdd.results, code = resultToAdd.code, startTime = foundResult.startTime, endTime = resultToAdd.time, task = resultToAdd.task, taskStage = resultToAdd.taskStage)
+    private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd) =
+        TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
 
     fun setDevs(id: UUID, devs: MutableList<String>) =
         getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }

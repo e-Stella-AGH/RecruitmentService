@@ -24,6 +24,8 @@ import org.springframework.amqp.core.MessageProperties
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.sql.Date
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
@@ -57,6 +59,8 @@ class TaskResultTest : BaseIntegration() {
         task = taskRepository.save(task)
     }
 
+    val now = Timestamp.from(Instant.now())
+
     @Test
     @Order(1)
     fun `task result consuming`() {
@@ -66,7 +70,7 @@ class TaskResultTest : BaseIntegration() {
         val code = SerialClob(xd1.toCharArray())
         val results =  SerialBlob(xd1.toByteArray())
 
-        val taskResult = TaskResult(null, results, code, null, null, task, taskStage)
+        val taskResult = TaskResult(null, results, code, now, null, task, taskStage)
         publish(taskResult)
 
         eventually {
@@ -116,8 +120,7 @@ class TaskResultTest : BaseIntegration() {
         val resultBody = mapOf(
                 "results" to String(result.results!!.binaryStream.readAllBytes()),
                 "code" to (result.code!!.characterStream!!.readText()),
-                "startTime" to result.startTime.toString(),
-                "endTime" to result.endTime.toString(),
+                "time" to result.startTime.toString(),
                 "solverId" to result.taskStage.id!!.toString(),
                 "taskId" to result.task.id!!.toString()
         )
