@@ -42,8 +42,13 @@ class InterviewService(
 
     fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
         withExceptionThrower {
-            getAllByApplicationId(applicationId).sortedWith { a, b ->
-                a.dateTime?.compareTo(b.dateTime) ?: -1
+            getAllByApplicationId(applicationId).sortedBy { it.dateTime }.sortedWith { a, b ->
+                when {
+                    a.dateTime == null -> -1
+                    b.dateTime == null -> 1
+                    else -> a.dateTime.compareTo(b.dateTime)
+                }
+
             }.first()
         }.getId()
 
