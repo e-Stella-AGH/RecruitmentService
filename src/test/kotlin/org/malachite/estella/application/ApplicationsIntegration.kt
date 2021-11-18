@@ -304,10 +304,9 @@ class ApplicationsIntegration : BaseIntegration() {
         application =
             applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
 
-        println(application.applicationStages.map { it.stage.type })
         val devPassword = securityService.hashOrganization(
             offer.creator.organization,
-            application.getCurrentApplicationStage().also { println(Triple(it.tasksStage?.id,it.interview?.id,it.stage.type)) }.tasksStage!!
+            application.getCurrentApplicationStage().tasksStage!!
         )
         val codedMail = String(Base64.getEncoder().encode("anotherdev@mail.com".toByteArray()))
         httpRequest(

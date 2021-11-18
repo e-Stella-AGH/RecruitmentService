@@ -32,17 +32,14 @@ data class TaskResult(
         this.taskStage = taskStage
     }
 
-    fun copy(id: Int? = this.id,
-             results: Blob? = this.results,
-             code: Clob? = this.code,
-             startTime: Timestamp? = this.startTime,
-             endTime: Timestamp? = this.endTime,
-             task: Task = this.task,
-             taskStage: TaskStage? = this.taskStage
-    ):TaskResult {
-        println("This: ${this.taskStage}")
-        println("Func: ${taskStage}")
-        return TaskResult(id,results,code, startTime, endTime, task, taskStage!!)
-    }
+    fun copy(
+        id: Int? = this.id,
+        results: Blob? = this.results,
+        code: Clob? = this.code,
+        startTime: Timestamp? = this.startTime,
+        endTime: Timestamp? = this.endTime,
+        task: Task = this.task,
+        taskStage: TaskStage? = this.taskStage
+    ): TaskResult = TaskResult(id, results, code, startTime, endTime, task, taskStage!!)
 
 }

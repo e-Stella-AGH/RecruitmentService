@@ -86,8 +86,6 @@ class TaskResultTest : BaseIntegration() {
         // Test if results is updated and not added as new
 
         val newTaskResult = taskResult.copy(code = SerialClob(xd2.toCharArray()), taskStage = taskResult.taskStage)
-        println("Old: ${taskResult.taskStage}")
-        println("New: ${newTaskResult.taskStage}")
         publish(newTaskResult)
         eventually {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
