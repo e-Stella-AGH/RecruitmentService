@@ -14,6 +14,7 @@ import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.services.TasksNotes
+import org.malachite.estella.task.domain.TaskResultNotExistException
 import java.sql.Blob
 import java.sql.Clob
 import java.sql.Date
@@ -158,7 +159,7 @@ data class TaskResultWithTestDTO(
 fun TaskResult.toTaskResultWithTestDTO(): TaskResultWithTestDTO =
     TaskResultWithTestDTO(
         code.toBase64String(),
-        this.results!!.toBase64String(),
+        this.results?.toBase64String()?: throw TaskResultNotExistException(),
         task.tests.toBase64String(),
         task.description.toBase64String()
     )
