@@ -32,7 +32,7 @@ class TaskStageService(
     override val throwable: Exception = TaskStageNotFoundException()
 
     fun createTaskStage(applicationStage: ApplicationStageData, interview: Interview?): TaskStage =
-            TaskStage(null, listOf(), applicationStage, mutableListOf())
+            TaskStage(null, setOf(), applicationStage)
                     .let { taskStageRepository.save(it) }
 
     fun getAll() = taskStageRepository.findAll()
@@ -89,7 +89,7 @@ class TaskStageService(
 
     fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
         val decodedMail = String(Base64.getDecoder().decode(devMail))
-        val tasksStages = getAll().filter { it.devs.contains(decodedMail) }
+        val tasksStages = getAll().filter { it.applicationStage.hosts.contains(decodedMail) }
         tasksStages.forEach{ assertDevPasswordCorrect(getOrganizationUuidFromTaskStage(it), password) }
         return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
     }
@@ -106,22 +106,19 @@ class TaskStageService(
 
 
     fun addResult(resultToAdd: TaskService.ResultToAdd) {
-        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id }.let {
+        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage!!.id == resultToAdd.taskStage.id }.let {
             copyTaskResult(it, resultToAdd)
                 ?: createNewTaskResult(resultToAdd)
         }
         val savedResult = taskResultRepository.save(resultToSave)
         val taskStage = savedResult.taskStage
-        val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
-        taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
+        val newTaskResults = taskStage!!.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
+        taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults.toSet()))
     }
     private fun copyTaskResult(foundResult: TaskResult?, resultToAdd: TaskService.ResultToAdd) =
         foundResult?.copy(results = resultToAdd.results, code = resultToAdd.code, startTime = foundResult.startTime, endTime = resultToAdd.time, task = resultToAdd.task, taskStage = resultToAdd.taskStage)
     private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd) =
         TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
-
-    fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
-        getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
     fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
         if (securityService.getTaskStageFromPassword(password)?.let {
@@ -145,7 +142,7 @@ class TaskStageService(
                 }
 
     private fun isTaskStageCurrentStage(taskStage: TaskStage): Boolean =
-            taskStage.applicationStage.application.getCurrentApplicationStage().id == taskStage.applicationStage.id
+            taskStage.applicationStage.application!!.getCurrentApplicationStage().id == taskStage.applicationStage.id
 
 
     private fun deleteRemovedTaskResults(taskStageUuid: String, tasksIds: Set<Int>) =

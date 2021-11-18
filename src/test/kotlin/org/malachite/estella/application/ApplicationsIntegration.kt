@@ -36,9 +36,12 @@ import java.util.*
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ApplicationsIntegration : BaseIntegration() {
 
+
+
     @Test
     @Order(1)
     fun `should be able to apply for offer as logged in user`() {
+        EmailServiceStub.stubForSendEmail()
 
         //@BeforeAll has to be static and I cannot get offerRepository (which I need to get offer id from to companion object)
         startProcess(getOffer(0).id!!).let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
@@ -287,19 +290,24 @@ class ApplicationsIntegration : BaseIntegration() {
         val jobSeeker = getJobSeeker()
         applyForOffer(jobSeeker, password, offer)
         applyForOffer(jobSeekerRepository.findAll().elementAt(1), password, getOffer(1))
-        var application = applicationRepository.findAll()
-            .first { it.jobSeeker == jobSeeker && it.getCurrentApplicationStage().stage.type == StageType.APPLIED }
+        var application = applicationRepository.findAll().first { it.jobSeeker == jobSeeker && it.getCurrentApplicationStage().stage.type == StageType.APPLIED }
         updateStage(application.id!!, offer.creator.user.mail, password)
+            .let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
         updateStage(application.id!!, offer.creator.user.mail, password, setOf("dev@mail.com"))
+            .let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
         application =
             applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
         updateStage(application.id!!, offer.creator.user.mail, password)
+            .let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
         updateStage(application.id!!, offer.creator.user.mail, password, setOf("anotherdev@mail.com"))
+            .let { expectThat(it.statusCode).isEqualTo(HttpStatus.OK) }
         application =
             applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
+
+        println(application.applicationStages.map { it.stage.type })
         val devPassword = securityService.hashOrganization(
             offer.creator.organization,
-            application.getCurrentApplicationStage().tasksStage!!
+            application.getCurrentApplicationStage().also { println(Triple(it.tasksStage?.id,it.interview?.id,it.stage.type)) }.tasksStage!!
         )
         val codedMail = String(Base64.getEncoder().encode("anotherdev@mail.com".toByteArray()))
         httpRequest(

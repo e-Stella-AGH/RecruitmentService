@@ -61,9 +61,9 @@ class InterviewIntegration : BaseIntegration() {
             mutableListOf()
         )
         val savedApplication = applicationRepository.save(application)
-        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
+        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf(),mutableSetOf())
         var savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
-        var taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
+        var taskStage = TaskStage(null, setOf(), savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)
         savedApplicationStageData =
             applicationStageDataRepository.save(savedApplicationStageData.copy(tasksStage = taskStage))
@@ -75,13 +75,14 @@ class InterviewIntegration : BaseIntegration() {
 
     @AfterEach
     fun clearApplication() {
+        applicationStageDataRepository.save(applicationStageData.copy(interview = null))
         interviewRepository.findAll().forEach { interviewRepository.deleteById(it.id!!) }
     }
 
     @Test
     @Order(1)
     fun `should return jobseeker name`() {
-        val interview = Interview(null, null, null, applicationStageData, setOf())
+        val interview = Interview(null, null, null, applicationStageData)
         interviewRepository.save(interview)
         val interviewId = interviewRepository.findAll().first().id
         val response = httpRequest(
@@ -119,9 +120,9 @@ class InterviewIntegration : BaseIntegration() {
     @Test
     @Order(4)
     fun `should return interview with later date when new date is set`() {
-        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interviewRepository.save(interview)
-        interview = Interview(null, Timestamp.valueOf(LocalDateTime.now()), null, applicationStageData, setOf())
+        interview = Interview(null, Timestamp.valueOf(LocalDateTime.now()), null, applicationStageData)
         interview = interviewRepository.save(interview)
         val response = httpRequest(
             "/api/interview/newest/${application.id}",
@@ -136,9 +137,9 @@ class InterviewIntegration : BaseIntegration() {
     @Test
     @Order(5)
     fun `should return interview with later date when new date is null`() {
-        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interviewRepository.save(interview)
-        interview = Interview(null, null, null, applicationStageData, setOf())
+        interview = Interview(null, null, null, applicationStageData)
         interview = interviewRepository.save(interview)
         val response = httpRequest(
             "/api/interview/newest/${application.id}",
@@ -155,9 +156,10 @@ class InterviewIntegration : BaseIntegration() {
     fun `should set hosts emails`() {
         EmailServiceStub.stubForSendEmail()
 
-        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+        var interview = Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
-        expectThat(interview.hosts.size).isEqualTo(0)
+        val newApplicationStageData = applicationStageDataRepository.save(applicationStageData.copy(interview = interview))
+        expectThat(interview.applicationStage.hosts.size).isEqualTo(0)
         val hosts = setOf("a@host.com", "b@host.com")
 
         var response = httpRequest(
@@ -173,16 +175,16 @@ class InterviewIntegration : BaseIntegration() {
 
         interview = interviewRepository.findAll().first()
 
-        expectThat(interview.hosts.toList()).containsExactlyInAnyOrder(hosts)
+        expectThat(interview.applicationStage.hosts.toList()).containsExactlyInAnyOrder(hosts)
     }
 
     @Test
     @Order(7)
     fun `should return unauthorized when trying to set hosts emails`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
-        expectThat(interview.hosts.size).isEqualTo(0)
+        expectThat(interview.applicationStage.hosts.size).isEqualTo(0)
 
         val response = httpRequest(
             "/api/interview/${interview.id}/set_hosts",
@@ -197,7 +199,7 @@ class InterviewIntegration : BaseIntegration() {
 
         interview = interviewRepository.findAll().first()
 
-        expectThat(interview.hosts.size).isEqualTo(0)
+        expectThat(interview.applicationStage.hosts.size).isEqualTo(0)
     }
 
 
@@ -205,7 +207,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(8)
     fun `should set meeting length`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.minutesLength).isNull()
         val length = 30
@@ -228,7 +230,7 @@ class InterviewIntegration : BaseIntegration() {
     @Order(9)
     fun `should return unauthorized when trying to set meeting length`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.minutesLength).isNull()
         val length = 30
@@ -244,7 +246,7 @@ class InterviewIntegration : BaseIntegration() {
 
         interview = interviewRepository.findAll().first()
 
-        expectThat(interview.hosts.size).isEqualTo(0)
+        expectThat(interview.applicationStage.hosts.size).isEqualTo(0)
     }
 
     @Test
@@ -252,7 +254,7 @@ class InterviewIntegration : BaseIntegration() {
     fun `should be able to pick date`() {
         EmailServiceStub.stubForSendEmail()
 
-        var interview = Interview(null, null, null, applicationStageData, setOf())
+        var interview = Interview(null, null, null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.dateTime).isNull()
         val dateTime = Timestamp.from(Instant.MIN)

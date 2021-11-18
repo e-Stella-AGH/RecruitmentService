@@ -75,7 +75,12 @@ class TaskStagesIntegration : BaseIntegration() {
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         expect {
+            val tasksResult = taskResultRepository.findAll().filter { it.taskStage!!.id == taskStage.id }
+            val tasksResultFromTaskStage = taskStageRepository.findById(taskStage.id!!).get().tasksResult.map { it.id }
             val stagesTasks = taskStageRepository.findById(taskStage.id!!).get().tasksResult.map { it.task }
+            println("TaskResults with taskStageId: ${tasksResult.map { it.id }}")
+            println("TaskStage set of taskResult: $tasksResultFromTaskStage")
+            println(stagesTasks.map { it.id })
             that(stagesTasks.size).isEqualTo(1)
             that(stagesTasks.map { it.id }).containsExactlyInAnyOrder(listOf(tasks.first().id))
         }
@@ -139,7 +144,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 
@@ -157,7 +162,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 
@@ -177,7 +182,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 

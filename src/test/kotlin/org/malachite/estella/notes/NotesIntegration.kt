@@ -67,11 +67,11 @@ class NotesIntegration : BaseIntegration() {
             mutableListOf()
         )
         val savedApplication = applicationRepository.save(application)
-        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
+        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf(), mutableSetOf())
         var savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
 
 
-        var taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
+        var taskStage = TaskStage(null, setOf(), savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)
 
         zonedDateTime = ZonedDateTime.of(LocalDateTime.MIN, ZoneId.systemDefault())
@@ -82,9 +82,9 @@ class NotesIntegration : BaseIntegration() {
         )
             .let { taskResultRepository.save(it) }
 
-        taskStage = taskStageRepository.save(taskStage.copy(tasksResult = listOf(taskResult)))
+        taskStage = taskStageRepository.save(taskStage.copy(tasksResult = setOf(taskResult)))
 
-        savedApplicationStageData =
+        this.applicationStageData =
             applicationStageDataRepository.save(savedApplicationStageData.copy(tasksStage = taskStage))
         this.application = savedApplication
         this.applicationStageData = applicationStageDataRepository.findById(savedApplicationStageData.id!!).get()
@@ -94,6 +94,7 @@ class NotesIntegration : BaseIntegration() {
 
     @AfterEach
     fun clearApplication() {
+        applicationStageDataRepository.save(applicationStageData.copy(tasksStage = null))
         interviewRepository.findAll().forEach { interviewRepository.deleteById(it.id!!) }
     }
 
@@ -101,7 +102,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(1)
     fun `should be able to set notes and then add new note and then get all notes - to interview`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -161,7 +162,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(2)
     fun `should return unauthorized when trying to set notes - interview`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -198,7 +199,7 @@ class NotesIntegration : BaseIntegration() {
         val notes = setOf(NotesFilePayload(null, noteA, tags, author), NotesFilePayload(null, noteB, tags, author))
 
         val firstResponse = httpRequest(
-            "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
+            "/api/applications/add_notes?cv_note=${applicationStageData.application!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
@@ -220,7 +221,7 @@ class NotesIntegration : BaseIntegration() {
         val newNotes = setOf(NotesFilePayload(null, noteA, newTags, newAuthor))
 
         val secondResponse = httpRequest(
-            "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
+            "/api/applications/add_notes?cv_note=${applicationStageData.application!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword)),
             body = mapOf(
@@ -233,7 +234,7 @@ class NotesIntegration : BaseIntegration() {
         //      Third part get notes from endpoint
 
         val thirdResponse = httpRequest(
-            "/api/applications/get_notes?cv_note=${applicationStageData.application.id}",
+            "/api/applications/get_notes?cv_note=${applicationStageData.application!!.id}",
             method = HttpMethod.GET,
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword))
         )
@@ -246,7 +247,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(4)
     fun `should return unauthorized when trying to set notes - to cv`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -258,7 +259,7 @@ class NotesIntegration : BaseIntegration() {
         val badPassword = "xd"
 
         val response = httpRequest(
-            "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
+            "/api/applications/add_notes?cv_note=${applicationStageData.application!!.id}",
             method = HttpMethod.PUT,
             headers = mapOf(EStellaHeaders.jwtToken to badPassword),
             body = mapOf(
@@ -342,7 +343,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(6)
     fun `should return unauthorized when trying to set notes - to task`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -373,7 +374,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(7)
     fun `should be able to set notes and then add new note - to interview - hr`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))
@@ -430,7 +431,7 @@ class NotesIntegration : BaseIntegration() {
     @Order(8)
     fun `should return unauthorized when trying to set notes - hr interview`() {
         var interview =
-            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData, setOf())
+            Interview(null, Timestamp.valueOf(LocalDateTime.MIN), null, applicationStageData)
         interview = interviewRepository.save(interview)
         expectThat(interview.applicationStage.notes.size).isEqualTo(0)
         val noteA = String(Base64.getEncoder().encode(noteA.encodeToByteArray()))

@@ -10,6 +10,5 @@ import javax.persistence.*
 data class Interview(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: UUID?,
     val dateTime: Timestamp?, val minutesLength: Int?,
-    @OneToOne val applicationStage: ApplicationStageData,
-    @ElementCollection(fetch = FetchType.EAGER) val hosts: Set<String>
+    @OneToOne val applicationStage: ApplicationStageData
 )
