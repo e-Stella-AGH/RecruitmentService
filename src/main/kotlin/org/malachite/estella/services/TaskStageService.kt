@@ -120,7 +120,7 @@ class TaskStageService(
     private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd) =
         TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
 
-    fun setDevs(id: UUID, devs: MutableList<String>) =
+    fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
         getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
     fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
