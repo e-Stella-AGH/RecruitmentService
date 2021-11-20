@@ -70,6 +70,7 @@ class TaskResultTest : BaseIntegration() {
         val results =  SerialBlob(xd1.toByteArray())
         var taskResult = taskResultRepository.findById(this.taskResult.id!!).get()
         taskResult = taskResult.copy(results = results, code = code, startTime = now, taskStage = taskResult.taskStage)
+
         publish(taskResult)
 
         eventually {
