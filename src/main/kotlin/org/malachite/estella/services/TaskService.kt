@@ -7,7 +7,6 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
-import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.process.domain.*
 import org.malachite.estella.queues.utils.TaskResultRabbitDTO
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
@@ -157,22 +157,24 @@ class TaskService(
     fun addResult(result: TaskResultRabbitDTO) {
         val taskStage = taskStageService.getTaskStage(result.solverId)
         val task = getTaskById(result.taskId).toTask()
-        val startTime = result.startTime
-            ?.takeIf { it != "null" }
-            ?.let { Timestamp.valueOf(it) }
-        val endTime = result.endTime
-            ?.takeIf { it != "null" }
-            ?.let { Timestamp.valueOf(it) }
+        val time = Timestamp.from(Instant.now())
 
-        taskStageService.addResult(TaskResult(null,
-            SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
-            SerialClob(result.code.toCharArray()),
-            startTime,
-            endTime,
-            task,
-            taskStage
+        taskStageService.addResult(ResultToAdd(
+                SerialBlob(Base64.getEncoder().encode(result.results.toByteArray())),
+                SerialClob(result.code.toCharArray()),
+                time,
+                task,
+                taskStage
         ))
     }
+
+    data class ResultToAdd(
+        val results: Blob,
+        val code: Clob,
+        val time: Timestamp,
+        val task: Task,
+        val taskStage: TaskStage
+    )
 
 
     private fun checkTestsFormat(tests: String) = try {

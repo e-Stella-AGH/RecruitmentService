@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.BaseIntegration.Companion.httpRequest
 import org.malachite.estella.aplication.domain.ApplicationRepository
+import org.malachite.estella.aplication.domain.toApplicationStageDTO
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.loader.FakeOrganizations
 import org.malachite.estella.commons.loader.FakeUsers
@@ -14,6 +15,7 @@ import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.organization.domain.OrganizationRepository
 import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
+import org.malachite.estella.process.domain.getAsList
 import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.services.SecurityService
 import org.malachite.estella.task.domain.TaskRepository
@@ -183,8 +185,8 @@ class TaskStagesIntegration : BaseIntegration() {
     @Order(7)
     fun `should return bad request when trying to set tasks to old task stage`() {
         applicationId = applicationRepository.getAllByJobSeekerId(getJobSeeker().id!!).first().id!!
-        updateStage(applicationId, hrPartner.user.mail, password)
         val tasks = getOrganization().tasks
+        updateStage(applicationId, hrPartner.user.mail, password)
         val taskStage = getPreviousTaskStage()
         expectThat(taskStage.tasksResult.size).isEqualTo(2)
         val password = securityService.hashOrganization(getOrganization(), taskStage)
@@ -192,7 +194,7 @@ class TaskStagesIntegration : BaseIntegration() {
                 "/api/taskStages?taskStage=${taskStage.id}",
                 method = HttpMethod.PUT,
                 headers = mapOf(EStellaHeaders.devPassword to password),
-                body = mapOf("tasks" to listOf(tasks.first().id))
+                body = mapOf("tasks" to listOf(tasks.first(), tasks.last()).map { it.id })
         )
 
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)

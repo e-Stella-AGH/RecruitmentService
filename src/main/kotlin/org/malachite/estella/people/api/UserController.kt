@@ -42,8 +42,8 @@ class UserController(
         val tokens = securityService.getTokens(user)
         return tokens?.let {
             ResponseEntity.ok()
-                .header(EStellaHeaders.authToken, it.first)
-                .header(EStellaHeaders.refreshToken, it.second)
+                .header(EStellaHeaders.authToken, it.authToken)
+                .header(EStellaHeaders.refreshToken, it.refreshToken)
                 .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
                 .body(Message("Success"))
         } ?: ResponseEntity(Message("Error while creating token"), HttpStatus.INTERNAL_SERVER_ERROR)
@@ -67,7 +67,8 @@ class UserController(
         return securityService.refreshToken(jwt, userId)
             ?.let {
                 ResponseEntity.ok()
-                    .header(EStellaHeaders.authToken, it)
+                    .header(EStellaHeaders.authToken, it.authToken)
+                    .header(EStellaHeaders.refreshToken, it.refreshToken)
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, loginExposedHeaders)
                     .body(SuccessMessage)
             }

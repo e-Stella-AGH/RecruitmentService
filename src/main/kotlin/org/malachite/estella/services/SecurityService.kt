@@ -146,17 +146,17 @@ class SecurityService(
         getUserFromContext()?.id
             ?.let { organizationRepository.findByUserId(it).orElse(null) }
 
-    fun getTokens(user: User): Pair<String, String>? {
-        val refreshJWT = getRefreshToken(user)
-        val authJWT = getAuthenticateToken(user)
-        if (refreshJWT == null || authJWT == null) return null
-        return Pair(authJWT, refreshJWT)
-    }
+    fun getTokens(user: User): PairOfTokens? =
+        getAuthenticateToken(user)?.let { authJWT ->
+            getRefreshToken(user)?.let { refreshJWT ->
+                PairOfTokens(authJWT, refreshJWT)
+            }
+        }
 
-    fun refreshToken(token: String, userId: Int): String? {
+    fun refreshToken(token: String, userId: Int): PairOfTokens? {
         val refreshUser = getUserFromJWT(token, refreshSecret)
         val authUser = userRepository.findById(userId).orElse(null)
-        if (refreshUser == authUser) return getAuthenticateToken(refreshUser!!)
+        if (refreshUser == authUser) return getTokens(refreshUser!!)
         return null
     }
 
@@ -196,4 +196,9 @@ class SecurityService(
             ?: throw InvalidUserException()
 
     fun isCorrectApiKey(apiKey: String?): Boolean = apiKey != null && apiKey == API_KEY
+
+    data class PairOfTokens(
+        val authToken: String,
+        val refreshToken: String
+    )
 }

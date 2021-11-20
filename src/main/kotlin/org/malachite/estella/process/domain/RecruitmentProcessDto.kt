@@ -15,6 +15,9 @@ import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
 
+
+fun Set<RecruitmentStage>.getAsList(): List<RecruitmentStage> = this.toList().sortedBy { it.id }
+
 data class RecruitmentProcessDto(
     val id: Int?,
     val startDate: Date?,
@@ -28,7 +31,7 @@ fun RecruitmentProcess.toRecruitmentProcessDto() = RecruitmentProcessDto(
     startDate,
     endDate,
     offer.toOfferResponse(),
-    stages
+    stages.getAsList()
 )
 
 data class TaskDto(

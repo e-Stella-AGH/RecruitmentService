@@ -67,10 +67,10 @@ class ApplicationController(
 
     @CrossOrigin
     @GetMapping("/offer/{offerId}")
-    fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationDTOWithStagesListAndOfferName>> =
+    fun getAllApplicationsByOffer(@PathVariable offerId: Int): ResponseEntity<List<ApplicationInfoDTO>> =
         applicationService
             .getApplicationsWithStagesAndOfferName(offerId)
-            .map { it.toApplicationDtoWithStagesListAndOfferName() }
+            .map { it.toApplicationInfoDTO() }
             .let { ResponseEntity.ok(it) }
 
     @CrossOrigin
@@ -92,6 +92,18 @@ class ApplicationController(
         this.application.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
         this.stages,
         this.offerName
+    )
+
+    private fun ApplicationService.ApplicationInfo.toApplicationInfoDTO() = ApplicationInfoDTO(
+        id,
+        applicationDate,
+        status,
+        stage,
+        jobSeeker.toJobSeekerDTO(),
+        seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
+        stages,
+        offerName,
+        tags
     )
 
 

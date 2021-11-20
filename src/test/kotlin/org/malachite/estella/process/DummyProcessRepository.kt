@@ -20,7 +20,7 @@ class DummyProcessRepository(
 
     override fun findById(id: Int): Optional<RecruitmentProcess> =
         processes.firstOrNull { it.id == id }.let {
-            Optional.ofNullable(it?.copy(stages = stagesRepository.getAll()))
+            Optional.ofNullable(it?.copy(stages = stagesRepository.getAll().toSet()))
         }
 
     override fun deleteById(id: Int) {

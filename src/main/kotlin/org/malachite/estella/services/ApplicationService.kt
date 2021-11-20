@@ -4,10 +4,14 @@ import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.models.offers.*
 import org.malachite.estella.commons.models.people.JobSeeker
+import org.malachite.estella.commons.models.people.JobSeekerFile
+import org.malachite.estella.people.domain.JobSeekerDTO
+import org.malachite.estella.people.domain.JobSeekerFileDTO
 import org.malachite.estella.process.domain.ProcessNotStartedException
+import org.malachite.estella.process.domain.getAsList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
+import java.sql.Date
 
 @Service
 class ApplicationService(
@@ -33,7 +37,7 @@ class ApplicationService(
     fun insertApplication(offerId: Int, jobSeeker: JobSeeker, applicationPayload: ApplicationPayload): Application {
         val offer = offerService.getOffer(offerId)
         if (offer.recruitmentProcess == null || !offer.recruitmentProcess.isStarted()) throw ProcessNotStartedException()
-        val stage = offer.recruitmentProcess.stages.getOrNull(0)
+        val stage = offer.recruitmentProcess.stages.getAsList().getOrNull(0)
         return stage?.let {
             val files = jobSeekerService.addNewFiles(jobSeeker, applicationPayload.getJobSeekerFiles())
             val application = applicationRepository.save(applicationPayload.toApplication(it, jobSeeker, files))
@@ -101,21 +105,37 @@ class ApplicationService(
                     .findAll()
 
 
-    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationWithStagesAndOfferName> =
+    fun Application.isInThisProcess(recruitmentProcess: RecruitmentProcess): Boolean =
+        this.applicationStages.first().let { recruitmentProcess.stages.contains(it.stage)}
+
+    private fun Application.toApplicationInfo(stages: List<RecruitmentStage>, offerName: String) =
+        ApplicationInfo(
+            id,
+            applicationDate,
+            status,
+            stage = applicationStages.last().stage,
+            jobSeeker,
+            seekerFiles,
+            stages,
+            offerName,
+            applicationStages
+                .flatMap { it.notes }
+                .flatMap { it.tags }
+                .map { it.text }
+                .toSet()
+        )
+
+    fun getApplicationsWithStagesAndOfferName(offerId: Int): List<ApplicationInfo> =
         offerService.getOffer(offerId)
             .let {
-                val stages = it.recruitmentProcess?.stages?.toSet()?.toList()?: listOf()
-                if (stages.isNotEmpty())
-                    applicationRepository.findAll().toList().filter {
-                        it.applicationStages
-                            .map { it.stage }
-                            .let { stages.intersect(it).isNotEmpty() }
-                    }.map { application ->
-                        ApplicationWithStagesAndOfferName(application, stages, it.name)
-                    }
+                val process = it.recruitmentProcess
+                if (process != null && process.stages.isNotEmpty())
+                    applicationRepository.findAll().toList()
+                        .filter {it.isInThisProcess(process)}
+                        .map { application -> application.toApplicationInfo(process.stages.getAsList(), it.name) }
                 else
-                    Collections.emptyList()
-            } ?: Collections.emptyList()
+                    listOf()
+            }
 
     fun getApplicationsByJobSeeker(jobSeekerId: Int): List<ApplicationWithStagesAndOfferName> =
         applicationRepository
@@ -125,7 +145,7 @@ class ApplicationService(
             }.map { pairs ->
                 ApplicationWithStagesAndOfferName(
                     pairs.first,
-                    pairs.second.stages,
+                    pairs.second.stages.getAsList(),
                     pairs.second.offer.name
                 )
             }
@@ -159,6 +179,18 @@ class ApplicationService(
         val application: Application,
         val stages: List<RecruitmentStage>,
         val offerName: String
+    )
+
+    data class ApplicationInfo(
+        val id: Int?,
+        val applicationDate: Date,
+        val status: ApplicationStatus,
+        val stage: RecruitmentStage,
+        val jobSeeker: JobSeeker,
+        val seekerFiles: Set<JobSeekerFile>,
+        val stages: List<RecruitmentStage>,
+        val offerName: String,
+        val tags: Set<String>
     )
 
 }

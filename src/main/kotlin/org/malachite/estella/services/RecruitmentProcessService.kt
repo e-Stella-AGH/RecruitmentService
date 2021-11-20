@@ -45,7 +45,7 @@ class RecruitmentProcessService(
     fun addBasicProcess(offer: Offer) {
         val recruitmentProcess = RecruitmentProcess(
             offer = offer,
-            stages = listOf(RecruitmentStage(null, StageType.APPLIED), RecruitmentStage(null, StageType.ENDED))
+            stages = setOf(RecruitmentStage(null, StageType.APPLIED), RecruitmentStage(null, StageType.ENDED))
         )
         recruitmentProcessRepository.save(recruitmentProcess)
     }
@@ -56,7 +56,8 @@ class RecruitmentProcessService(
 
     fun getProcessFromStage(applicationStage: ApplicationStageData): RecruitmentProcess =
         recruitmentProcessRepository.findAll()
-            .find { it.stages.map { it.id }.contains(applicationStage.stage.id) }!!
+            .find { it.stages.map { it.id }
+                .contains(applicationStage.stage.id) }!!
 
 
     fun updateStagesList(processId: Int, stagesList: List<String>) {
@@ -64,8 +65,8 @@ class RecruitmentProcessService(
         val process = getProcess(processId)
         if (process.offer.creator.id != user?.id) throw UnauthenticatedException()
         if (process.isStarted()) throw ProcessAlreadyStartedException(processId)
-        val stages = compareAndGetStagesList(process.stages, stagesList.toListOfRecruitmentStage())
-        recruitmentProcessRepository.save(process.copy(stages = stages))
+        val stages = compareAndGetStagesList(process.stages.getAsList(), stagesList.toListOfRecruitmentStage())
+        recruitmentProcessRepository.save(process.copy(stages = stages.toSet()))
     }
 
     private fun compareAndGetStagesList(

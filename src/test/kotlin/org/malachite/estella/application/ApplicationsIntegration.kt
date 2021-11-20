@@ -7,11 +7,13 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.malachite.estella.BaseIntegration
 import org.malachite.estella.aplication.domain.ApplicationDTO
 import org.malachite.estella.aplication.domain.ApplicationDTOWithStagesListAndOfferName
+import org.malachite.estella.aplication.domain.ApplicationInfoDTO
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.UnauthenticatedMessage
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.StageType
+import org.malachite.estella.interview.api.NotesFilePayload
 import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
 import org.malachite.estella.people.domain.JobSeekerFilePayload
 import org.malachite.estella.people.domain.toJobSeekerDTO
@@ -24,6 +26,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import strikt.api.expect
 import strikt.api.expectThat
+import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isNotNull
@@ -211,8 +214,13 @@ class ApplicationsIntegration : BaseIntegration() {
         val secondResponse = updateStage(application.id!!, hrPartner.user.mail, password)
         expectThat(secondResponse.statusCode).isEqualTo(HttpStatus.OK)
         val secondApplication = getApplication(application.id)
-        expectThat(secondApplication.stage.type).isEqualTo(StageType.ENDED)
-        expectThat(secondApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
+        expectThat(secondApplication.stage.type).isEqualTo(StageType.TASK)
+        expectThat(secondApplication.status).isEqualTo(ApplicationStatus.IN_PROGRESS)
+        val thirdResponse = updateStage(application.id!!, hrPartner.user.mail, password)
+        expectThat(thirdResponse.statusCode).isEqualTo(HttpStatus.OK)
+        val thirdApplication = getApplication(application.id)
+        expectThat(thirdApplication.stage.type).isEqualTo(StageType.ENDED)
+        expectThat(thirdApplication.status).isEqualTo(ApplicationStatus.ACCEPTED)
     }
 
     @Test
@@ -279,14 +287,20 @@ class ApplicationsIntegration : BaseIntegration() {
         val jobSeeker = getJobSeeker()
         applyForOffer(jobSeeker, password, offer)
         applyForOffer(jobSeekerRepository.findAll().elementAt(1), password, getOffer(1))
-        var application = applicationRepository.findAll().first { it.jobSeeker == jobSeeker && it.getCurrentApplicationStage().stage.type == StageType.APPLIED }
+        var application = applicationRepository.findAll()
+            .first { it.jobSeeker == jobSeeker && it.getCurrentApplicationStage().stage.type == StageType.APPLIED }
         updateStage(application.id!!, offer.creator.user.mail, password)
         updateStage(application.id!!, offer.creator.user.mail, password, setOf("dev@mail.com"))
-        application = applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
+        application =
+            applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
         updateStage(application.id!!, offer.creator.user.mail, password)
         updateStage(application.id!!, offer.creator.user.mail, password, setOf("anotherdev@mail.com"))
-        application = applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
-        val devPassword = securityService.hashOrganization(offer.creator.organization, application.getCurrentApplicationStage().tasksStage!!)
+        application =
+            applicationRepository.findAll().first { it.jobSeeker == jobSeekerRepository.findAll().elementAt(1) }
+        val devPassword = securityService.hashOrganization(
+            offer.creator.organization,
+            application.getCurrentApplicationStage().tasksStage!!
+        )
         val codedMail = String(Base64.getEncoder().encode("anotherdev@mail.com".toByteArray()))
         httpRequest(
             path = "/api/applications/forDev/$codedMail",
@@ -300,6 +314,37 @@ class ApplicationsIntegration : BaseIntegration() {
         }
     }
 
+    @Test
+    @Order(13)
+    fun `should get also tags from notes in applicationInfo`() {
+        val offer = getOffer()
+        val jobSeeker = getJobSeeker()
+        val application = applicationRepository.findAll().filter { it.jobSeeker.id == jobSeeker.id }.first()
+
+
+        val noteA = String(Base64.getEncoder().encode("xd".encodeToByteArray()))
+        val author = offer.creator.user.mail
+        val tags = setOf<String>("Git")
+        val notes = setOf(
+            NotesFilePayload(null, noteA, setOf("Bad indentation"), author),
+            NotesFilePayload(null, noteA, tags, author)
+        )
+
+        val addNoteResponse = httpRequest(
+            "/api/applications/add_notes?cv_note=${application.id}",
+            method = HttpMethod.PUT,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a")),
+            body = mapOf(
+                "notes" to notes
+            )
+        )
+
+        expectThat(addNoteResponse.statusCode).isEqualTo(HttpStatus.OK)
+
+        val applicationInfo = getOfferApplications(offer).first()
+        expectThat(applicationInfo.tags).containsExactlyInAnyOrder(setOf("Git", "Bad indentation"))
+    }
+
     private fun getApplications() =
         httpRequest(
             path = "/api/applications/",
@@ -311,7 +356,7 @@ class ApplicationsIntegration : BaseIntegration() {
             it.map { it.toApplicationDTO() }
         }
 
-    private fun getOfferApplications(offer: Offer): List<ApplicationDTOWithStagesListAndOfferName> {
+    private fun getOfferApplications(offer: Offer): List<ApplicationInfoDTO> {
         val response = httpRequest(
             path = "/api/applications/offer/${offer.id}",
             method = HttpMethod.GET
@@ -319,7 +364,7 @@ class ApplicationsIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         return response.body.let {
             it as List<Map<String, Any>>
-        }.map { it.toApplicationDTOWithStagesAndOfferName() }
+        }.map { it.toApplicationInfoDTO() }
     }
 
     private fun getApplication(id: Int?): ApplicationDTO {

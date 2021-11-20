@@ -41,16 +41,17 @@ class InterviewService(
         hrPartnerService.getHrPartner(hrPartnerId).organization
 
     fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
-        withExceptionThrower {
-            getAllByApplicationId(applicationId).sortedWith { a, b ->
-                a.dateTime?.compareTo(b.dateTime) ?: -1
-            }.first()
-        }.getId()
+        getLastInterviewFromApplicationId(applicationId).getId()
 
     fun getLastInterviewFromApplicationId(applicationId: Int): Interview =
         withExceptionThrower {
-            getAllByApplicationId(applicationId).sortedWith { a, b ->
-                a.dateTime?.compareTo(b.dateTime) ?: -1
+            getAllByApplicationId(applicationId).sortedBy { it.dateTime }.sortedWith { a, b ->
+                when {
+                    a.dateTime == null -> -1
+                    b.dateTime == null -> 1
+                    else -> a.dateTime.compareTo(b.dateTime)
+                }
+
             }.first()
         }
 
@@ -81,10 +82,6 @@ class InterviewService(
         else getInterview(id)
             .let { interviewRepository.save(it.copy(minutesLength = length)) }
             .also { setDate(id, dateTime) }
-            .also {
-                val offer = recruitmentProcessService.getProcessFromStage(it.applicationStage).offer
-                mailService.sendInterviewInvitationMail(offer, it)
-            }
     }
 
     fun setDate(id: UUID, dateTime: Timestamp) {
@@ -130,6 +127,9 @@ class InterviewService(
     private fun getAllByApplicationId(applicationId: Int): List<Interview> = interviewRepository
         .findAll()
         .filter { it.applicationStage.application.id == applicationId }
+
+    fun getTaskStageUUID(interviewId: UUID) =
+        this.getInterview(interviewId).applicationStage.tasksStage?.id
 
 
 }

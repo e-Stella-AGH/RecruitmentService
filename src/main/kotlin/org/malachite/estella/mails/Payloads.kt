@@ -43,21 +43,6 @@ fun Application.toApplicationConfirmationAsMailPayload(offer: Offer): MailPayloa
     )
 }
 
-fun Interview.toInterviewInvitationAsMailPayload(offer: Offer): MailPayload {
-    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
-    val url = "${MAIN_URL}interview/${this.id}"
-    return offer.creator.organization.name.let {
-        MailPayload(
-            subject = "Your are invited for interview with ${it}!",
-            receiver = this.applicationStage.application.jobSeeker.user.mail,
-            content = MailTexts.getInterviewInvitation(this,it,url,hrPartnerFullName),
-            sender_name = hrPartnerFullName,
-            sender_email = offer.creator.user.mail
-        )
-
-    }
-}
-
 fun Interview.toInterviewDevInvitationAsMailPayload(offer: Offer, application: Application, hostMail: String): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
@@ -75,7 +60,7 @@ fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
     val position = offer.position
-    val url = "${MAIN_URL}interview/${this.id}/${offer.creator.organization.id}"
+    val url = "${MAIN_URL}interview/${this.id}"
     val date = this.dateTime.toString()
     return MailPayload(
             subject = "Your interview's date for $position has been set!",

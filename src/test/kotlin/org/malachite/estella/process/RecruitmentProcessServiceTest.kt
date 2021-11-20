@@ -46,7 +46,7 @@ class RecruitmentProcessServiceTest {
             process.id!!,
             listOf("APPLIED", "HR_INTERVIEW", "ENDED"))
         val updatedProcess = service.getProcess(process.id!!)
-        expectThat(updatedProcess.stages).isEqualTo(listOf(
+        expectThat(updatedProcess.stages).isEqualTo(setOf(
             RecruitmentStage(0, StageType.APPLIED),
             RecruitmentStage(1, StageType.HR_INTERVIEW),
             RecruitmentStage(2, StageType.ENDED)
@@ -61,7 +61,7 @@ class RecruitmentProcessServiceTest {
             listOf("APPLIED", "HR_INTERVIEW", "TECHNICAL_INTERVIEW", "TECHNICAL_INTERVIEW", "ENDED")
         )
         val updatedProcess = service.getProcess(process.id!!)
-        expectThat(updatedProcess.stages).isEqualTo(listOf(
+        expectThat(updatedProcess.stages).isEqualTo(setOf(
             RecruitmentStage(0, StageType.APPLIED),
             RecruitmentStage(1, StageType.HR_INTERVIEW),
             RecruitmentStage(2, StageType.TECHNICAL_INTERVIEW),
@@ -78,7 +78,7 @@ class RecruitmentProcessServiceTest {
             listOf("APPLIED", "ENDED")
         )
         val updatedProcess = service.getProcess(process.id!!)
-        expectThat(updatedProcess.stages).isEqualTo(listOf(
+        expectThat(updatedProcess.stages).isEqualTo(setOf(
             RecruitmentStage(0, StageType.APPLIED),
             RecruitmentStage(1, StageType.ENDED)
         ))
@@ -116,6 +116,6 @@ class RecruitmentProcessServiceTest {
     }
 
     private val process = getProcesses(offersWithNullProcess)[0].let {
-        it.copy(stages = it.stages.mapIndexed { index, recruitmentStage -> recruitmentStage.copy(id = index) })
+        it.copy(stages = it.stages.mapIndexed { index, recruitmentStage -> recruitmentStage.copy(id = index) }.toSet())
     }
 }

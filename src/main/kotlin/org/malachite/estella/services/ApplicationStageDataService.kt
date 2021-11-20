@@ -37,14 +37,19 @@ class ApplicationStageDataService(
             null,
             setOf()
         ).let { applicationStageRepository.save(it) }
-        return getTaskStageAndInterview(recruitmentStage, applicationStage).let {
-            it.first?.let { taskStage ->
+        return getTaskStageAndInterview(recruitmentStage, applicationStage).let { pair ->
+            pair.first?.let { taskStage ->
                 taskStageService.setDevs(taskStage.id!!, devs)
-                devs.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, recruitmentProcessService.getProcessFromStage(applicationStage).offer) }
+                    .also{
+                        val offer =  recruitmentProcessService.getProcessFromStage(applicationStage).offer
+                        devs.forEach { mailService.sendTaskAssignmentRequest(it, taskStage, offer) }
+                    }
+            }.let {
+                applicationStage.copy(
+                    tasksStage = it,
+                    interview = pair.second
+                )
             }
-            applicationStage.copy(
-                    tasksStage = it.first,
-                    interview = it.second)
         }
         .let { applicationStageRepository.save(it) }
     }
