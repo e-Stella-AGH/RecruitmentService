@@ -108,7 +108,7 @@ class TaskStageService(
 
 
     fun addResult(resultToAdd: TaskService.ResultToAdd) {
-        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id && it.startTime != null }.let {
+        val resultToSave = taskResultRepository.findAll().find { isResultNew(it, resultToAdd) }.let {
             copyTaskResult(it, resultToAdd)
                 ?: createNewTaskResult(resultToAdd)
         }
@@ -117,6 +117,10 @@ class TaskStageService(
         val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
         taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
     }
+
+    private fun isResultNew(it: TaskResult, resultToAdd: TaskService.ResultToAdd) =
+            it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id && it.startTime != null
+
     private fun copyTaskResult(foundResult: TaskResult?, resultToAdd: TaskService.ResultToAdd) =
         foundResult?.copy(
                 results = resultToAdd.results,
@@ -128,7 +132,7 @@ class TaskStageService(
         )
 
     private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd): TaskResult {
-        if (isFirstSolvedTask(resultToAdd))
+        if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
             sendDevNotification(resultToAdd)
 
         return TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
@@ -142,6 +146,10 @@ class TaskStageService(
         }
     }
 
+    private fun shouldNotifyDev(resultToAdd: TaskService.ResultToAdd) =
+        resultToAdd.taskStage.applicationStage.stage.type == StageType.TASK
+
+
     private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) = resultToAdd.taskStage.tasksResult.none { it.startTime != null }
     private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
 
@@ -149,11 +157,7 @@ class TaskStageService(
         getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
     fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
-        if (securityService.getTaskStageFromPassword(password)?.let {
-                    it.id.toString() != taskStageUuid ||
-                            !isTaskStageCurrentStage(it)
-                } == true)
-            throw UnauthenticatedException()
+        assertTaskStageIsCurrentAndMatchesPassword(password, taskStageUuid)
         tasksIds.mapNotNull { taskRepository.findById(it).orElse(null) }.let {
             deleteRemovedTaskResults(taskStageUuid, tasksIds)
             addMissingTaskResults(taskStageUuid, it)
@@ -166,6 +170,14 @@ class TaskStageService(
                 mailService.sendTaskAssignedNotification(mail, it, offer)
             }
         }
+    }
+
+    private fun assertTaskStageIsCurrentAndMatchesPassword(password: String, taskStageUuid: String) {
+        if (securityService.getTaskStageFromPassword(password)?.let {
+                    it.id.toString() != taskStageUuid ||
+                            !isTaskStageCurrentStage(it)
+                } == true)
+            throw UnauthenticatedException()
     }
 
 

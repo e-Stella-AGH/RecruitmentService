@@ -112,7 +112,7 @@ fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPa
 }
 fun TaskStage.toTaskAssignedNotificationPayload(mail: String, offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
-    val url = "${MAIN_URL}tasks/${this.id}"
+    val url = "${MAIN_URL}task/${this.id}"
     return MailPayload(
             subject = "You have been requested to solve a task",
             sender_name = "e-Stella Team",

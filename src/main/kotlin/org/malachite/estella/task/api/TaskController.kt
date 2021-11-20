@@ -6,6 +6,7 @@ import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
+import org.malachite.estella.process.domain.toTaskDto
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
@@ -14,6 +15,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 
 
@@ -62,6 +65,19 @@ class TaskController(
     private fun isPasswordProvided(organizationId: String?, taskStageUuid: String?, devMail: String?, password: String?): Boolean =
             listOfNotNull(organizationId, taskStageUuid, devMail).isNotEmpty() && password != null
 
+    @CrossOrigin
+    @Transactional
+    @GetMapping("/forJobSeeker")
+    fun getTasksForJobSeeker(
+            @RequestParam("taskStage") taskStageUuid: String?
+    ): ResponseEntity<Any> {
+        if (taskStageUuid == null)
+            return ResponseEntity.badRequest().body(Message("taskStageUuid is required"))
+
+        val tasks: List<TaskDto> =
+                taskStageService.getTaskStage(taskStageUuid).tasksResult.map { it.task.toTaskDto() }
+        return ResponseEntity.ok(tasks)
+    }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin
