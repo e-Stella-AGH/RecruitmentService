@@ -2,6 +2,7 @@ package org.malachite.estella.task.api
 
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
+import org.malachite.estella.task.domain.InvalidDevPasswordException
 import org.malachite.estella.task.domain.InvalidTestFileException
 import org.malachite.estella.task.domain.TaskNotFoundException
 import org.springframework.http.HttpStatus
@@ -18,4 +19,8 @@ class TaskExceptionHandler {
     @ExceptionHandler(InvalidTestFileException::class)
     fun handleInvalidTestFile(ex: InvalidTestFileException): ResponseEntity<Message> =
         ResponseEntity(Message("You've provided malformed test file"), HttpStatus.BAD_REQUEST)
+
+    @ExceptionHandler(InvalidDevPasswordException::class)
+    fun handleInvalidDevPasswordFile(ex: InvalidDevPasswordException): ResponseEntity<Message> =
+        ResponseEntity(Message("You've provided malformed dev password"), HttpStatus.BAD_REQUEST)
 }

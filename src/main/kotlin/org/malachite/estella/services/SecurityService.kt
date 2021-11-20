@@ -16,6 +16,7 @@ import org.malachite.estella.people.domain.InvalidUserException
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.people.domain.UserRepository
 import org.malachite.estella.security.UserContextDetails
+import org.malachite.estella.task.domain.InvalidDevPasswordException
 import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -50,7 +51,7 @@ class SecurityService(
             .let { Base64.getEncoder().encode(it) }
             .let { String(it) }
 
-    private fun decryptDevPassword(password: String): Pair<UUID, UUID>? {
+    private fun decryptDevPassword(password: String): Pair<UUID, UUID> {
         val passwordParts: List<UUID> = try {
             Base64.getDecoder()
                     .decode(password.toByteArray())
@@ -63,24 +64,21 @@ class SecurityService(
 
         return when (passwordParts.size) {
             2    -> Pair(passwordParts[0], passwordParts[1])
-            else -> null
+            else -> throw InvalidDevPasswordException()
         }
     }
 
 
-    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean =
-        decryptDevPassword(password)?.let {
-            devPasswordComponents ->
-                val organizationUUID = devPasswordComponents.first
-                val taskStageUUID = devPasswordComponents.second
-                organizationUUID == organization.id!! && taskStageRepository.findById(taskStageUUID).isPresent
-        } ?: false
+    fun compareOrganizationWithPassword(organization: Organization, password: String): Boolean {
+        val devPasswordComponents = decryptDevPassword(password)
+        val organizationUUID = devPasswordComponents.first
+        val taskStageUUID = devPasswordComponents.second
+        return organizationUUID == organization.id!! && taskStageRepository.findById(taskStageUUID).isPresent
+    }
 
     fun getTaskStageFromPassword(password: String): TaskStage? {
         val decrypted = decryptDevPassword(password)
-        return decrypted?.let {
-            taskStageRepository.findById(it.second).orElse(null)
-        } ?: throw UnauthenticatedException()
+        return taskStageRepository.findById(decrypted.second).orElse(null)
     }
 
     private fun getAuthenticateToken(user: User): String? {
