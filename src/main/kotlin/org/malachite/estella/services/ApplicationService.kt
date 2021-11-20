@@ -164,10 +164,10 @@ class ApplicationService(
                     ?.let { process ->
                         val offer = process.offer
                         taskStageService.getByOrganization(offer.creator.organization.id)
-                                .filter { it.devs.contains(devMail) }
+                                .filter { it.applicationStage.hosts.contains(devMail) }
                                 .map { stage ->
                                     ApplicationForDevDTO(
-                                            stage.applicationStage.application.toApplicationDTO(),
+                                            stage.applicationStage.application!!.toApplicationDTO(),
                                             stage.id.toString(),
                                             stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
                                             offer.position)

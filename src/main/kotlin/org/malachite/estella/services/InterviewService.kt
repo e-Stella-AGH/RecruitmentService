@@ -29,13 +29,13 @@ class InterviewService(
         applicationStage: ApplicationStageData,
         payload: InterviewPayload = InterviewPayload()
     ): Interview =
-        Interview(null, payload.dateTime, payload.minutesLength, applicationStage, setOf())
+        Interview(null, payload.dateTime, payload.minutesLength, applicationStage)
             .let { interviewRepository.save(it) }
 
     fun getInterview(id: UUID): Interview = withExceptionThrower { interviewRepository.findById(id).get() }
 
     fun getUserFromInterviewUuid(interviewId: UUID): User? =
-        getInterview(interviewId).applicationStage.application.jobSeeker.user
+        getInterview(interviewId).applicationStage.application!!.jobSeeker.user
 
     fun getOrganizationFromPartner(hrPartnerId: Int): Organization =
         hrPartnerService.getHrPartner(hrPartnerId).organization
@@ -54,22 +54,6 @@ class InterviewService(
 
             }.first()
         }
-
-    fun setHosts(id: UUID, hostsMails: Set<String>) {
-        if (!canHrUpdate(id)) throw UnauthenticatedException()
-        val interview = getInterview(id)
-        val savedInterview = interviewRepository.save(interview.copy(hosts = hostsMails))
-        val application = savedInterview.applicationStage
-        val offer = recruitmentProcessService.getProcessFromStage(application).offer
-        hostsMails.forEach { mail ->
-            mailService.sendInterviewDevInvitationMail(
-                offer,
-                savedInterview,
-                application.application,
-                mail
-            )
-        }
-    }
 
     fun setDuration(id: UUID, length: Int) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
@@ -93,10 +77,10 @@ class InterviewService(
         mailService.sendInterviewDateConfirmationMail(
             offer,
             savedInterview,
-            application,
+            application!!,
             application.jobSeeker.user.mail
         )
-        savedInterview.hosts.forEach { mail ->
+        savedInterview.applicationStage.hosts.forEach { mail ->
             mailService.sendInterviewDateConfirmationMail(
                 offer,
                 savedInterview,
@@ -105,6 +89,10 @@ class InterviewService(
             )
         }
     }
+
+    fun getInterviewWithCheckRights(id: UUID): Interview =
+        if (!canHrUpdate(id)) throw UnauthenticatedException()
+        else getInterview(id)
 
 
     private fun canHrUpdate(id: UUID?): Boolean {
@@ -126,7 +114,7 @@ class InterviewService(
 
     private fun getAllByApplicationId(applicationId: Int): List<Interview> = interviewRepository
         .findAll()
-        .filter { it.applicationStage.application.id == applicationId }
+        .filter { it.applicationStage.application!!.id == applicationId }
 
     fun getTaskStageUUID(interviewId: UUID) =
         this.getInterview(interviewId).applicationStage.tasksStage?.id

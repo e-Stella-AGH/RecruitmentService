@@ -131,7 +131,7 @@ fun ApplicationStageData.toApplicationStageDTO(): ApplicationStageDTO =
     ApplicationStageDTO(
         id!!,
         stage,
-        application.id!!,
+        application!!.id!!,
         tasksStage,
         interview
     )

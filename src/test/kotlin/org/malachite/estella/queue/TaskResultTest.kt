@@ -45,16 +45,19 @@ class TaskResultTest : BaseIntegration() {
         val jobseeker = jobSeekerRepository.findAll().first()
 
         val stage = recruitmentStageRepository.findAll().first()
-        val application = Application(null,
-                Date(Calendar.getInstance().time.time),
-                ApplicationStatus.IN_PROGRESS,
-                jobseeker,
-                mutableSetOf(),
-                mutableListOf())
+        val application = Application(
+            null,
+            Date(Calendar.getInstance().time.time),
+            ApplicationStatus.IN_PROGRESS,
+            jobseeker,
+            mutableSetOf(),
+            mutableListOf()
+        )
         val savedApplication = applicationRepository.save(application)
-        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
+        val applicationStageData =
+            ApplicationStageData(null, stage, savedApplication, null, null, setOf(), mutableSetOf())
         val savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
-        this.taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
+        this.taskStage = TaskStage(null, setOf(), savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)
         task = taskRepository.save(task)
     }
@@ -68,7 +71,7 @@ class TaskResultTest : BaseIntegration() {
         val xd1 = "xd"
         val xd2 = "xdd"
         val code = SerialClob(xd1.toCharArray())
-        val results =  SerialBlob(xd1.toByteArray())
+        val results = SerialBlob(xd1.toByteArray())
 
         val taskResult = TaskResult(null, results, code, now, null, task, taskStage)
         publish(taskResult)
@@ -77,16 +80,18 @@ class TaskResultTest : BaseIntegration() {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
             expectThat(taskStage.tasksResult.size).isEqualTo(1)
             expectThat(code.characterStream.readText()).isEqualTo(xd1)
-            val savedResults = taskStage.tasksResult[0].results!!.binaryStream.readAllBytes()
+            val savedResults = taskStage.tasksResult.first().results!!.binaryStream.readAllBytes()
             expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
         }
         // Test if results is updated and not added as new
-        publish(taskResult.copy(code = SerialClob(xd2.toCharArray())))
+
+        val newTaskResult = taskResult.copy(code = SerialClob(xd2.toCharArray()), taskStage = taskResult.taskStage)
+        publish(newTaskResult)
         eventually {
             taskStage = taskStageRepository.findById(taskStage.id!!).get()
             expectThat(taskStage.tasksResult.size).isEqualTo(1)
-            expectThat(taskStage.tasksResult[0].code!!.characterStream.readText()).isEqualTo(xd2)
-            val savedResults = taskStage.tasksResult[0].results!!.binaryStream.readAllBytes()
+            expectThat(taskStage.tasksResult.first().code!!.characterStream.readText()).isEqualTo(xd2)
+            val savedResults = taskStage.tasksResult.first().results!!.binaryStream.readAllBytes()
             expectThat(Base64.getDecoder().decode(savedResults)).isEqualTo(xd1.toByteArray())
         }
     }
@@ -118,10 +123,10 @@ class TaskResultTest : BaseIntegration() {
 
     fun publish(result: TaskResult) {
         val resultBody = mapOf(
-                "results" to String(result.results!!.binaryStream.readAllBytes()),
-                "code" to (result.code!!.characterStream!!.readText()),
-                "solverId" to result.taskStage.id!!.toString(),
-                "taskId" to result.task.id!!.toString()
+            "results" to String(result.results!!.binaryStream.readAllBytes()),
+            "code" to (result.code!!.characterStream!!.readText()),
+            "solverId" to result.taskStage!!.id!!.toString(),
+            "taskId" to result.task.id!!.toString()
         )
         send(resultBody)
 
@@ -129,9 +134,9 @@ class TaskResultTest : BaseIntegration() {
 
     fun badPublish() {
         val resultBody = mapOf(
-                "results" to "4",
-                "potatoes" to "yes",
-                "solverId" to "1"
+            "results" to "4",
+            "potatoes" to "yes",
+            "solverId" to "1"
         )
         send(resultBody)
     }
@@ -139,9 +144,9 @@ class TaskResultTest : BaseIntegration() {
     fun publishWithMistake() {
         // missing solverId
         val resultBody = mapOf(
-                "results" to "xd",
-                "code" to "xd",
-                "taskId" to "4"
+            "results" to "xd",
+            "code" to "xd",
+            "taskId" to "4"
         )
         send(resultBody)
     }

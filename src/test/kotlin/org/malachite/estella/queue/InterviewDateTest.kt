@@ -59,14 +59,14 @@ class InterviewDateTest : BaseIntegration() {
             mutableListOf()
         )
         val savedApplication = applicationRepository.save(application)
-        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf())
+        val applicationStageData = ApplicationStageData(null, stage, savedApplication, null, null, setOf(), mutableSetOf())
         this.applicationStageData = applicationStageDataRepository.save(applicationStageData)
     }
 
     @Test
     @Order(1)
     fun `interview date result consuming`() {
-        var interview = Interview(null, null, null, applicationStageData, setOf())
+        var interview = Interview(null, null, null, applicationStageData)
             .let { interviewRepository.save(it) }
 
         expectThat(interview.minutesLength).isEqualTo(null)
@@ -84,7 +84,7 @@ class InterviewDateTest : BaseIntegration() {
     @Test
     @Order(2)
     fun `interview bad message arguments consuming`() {
-        var interview = Interview(null, null, null, applicationStageData, setOf())
+        var interview = Interview(null, null, null, applicationStageData)
             .let { interviewRepository.save(it) }
 
         expectThat(interview.minutesLength).isEqualTo(null)
@@ -103,7 +103,7 @@ class InterviewDateTest : BaseIntegration() {
     @Test
     @Order(3)
     fun `interview message with bad parameters consuming`() {
-        var interview = Interview(null, null, null, applicationStageData, setOf())
+        var interview = Interview(null, null, null, applicationStageData)
             .let { interviewRepository.save(it) }
 
         expectThat(interview.minutesLength).isEqualTo(null)
@@ -121,7 +121,7 @@ class InterviewDateTest : BaseIntegration() {
     @Test
     @Order(4)
     fun `interview message with bad interview length consuming`() {
-        var interview = Interview(null, null, null, applicationStageData, setOf())
+        var interview = Interview(null, null, null, applicationStageData)
             .let { interviewRepository.save(it) }
 
         expectThat(interview.minutesLength).isEqualTo(null)
