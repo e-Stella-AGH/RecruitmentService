@@ -4,6 +4,7 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.ApplicationStageData
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
@@ -147,18 +148,19 @@ class TaskStageService(
     fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
         getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
-    fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String, notifyJobSeeker: Boolean = true) {
+    fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
         if (securityService.getTaskStageFromPassword(password)?.let {
                     it.id.toString() != taskStageUuid ||
-                    !isTaskStageCurrentStage(it)
-        } == true)
+                            !isTaskStageCurrentStage(it)
+                } == true)
             throw UnauthenticatedException()
         tasksIds.mapNotNull { taskRepository.findById(it).orElse(null) }.let {
             deleteRemovedTaskResults(taskStageUuid, tasksIds)
             addMissingTaskResults(taskStageUuid, it)
         }
-        if (notifyJobSeeker) {
-            getTaskStage(taskStageUuid).let {
+
+        getTaskStage(taskStageUuid).let {
+            if (it.applicationStage.stage.type == StageType.TASK) {
                 val offer = recruitmentProcessService.getProcessFromStage(it.applicationStage).offer
                 val mail = it.applicationStage.application.jobSeeker.user.mail
                 mailService.sendTaskAssignedNotification(mail, it, offer)
@@ -166,13 +168,14 @@ class TaskStageService(
         }
     }
 
+
     fun setTasksByInterviewUuid(interviewUuid: String, tasksIds: Set<Int>, password: String) =
         interviewService
                 .getInterview(UUID.fromString(interviewUuid))
                 .applicationStage
                 .tasksStage
                 .let { taskStage ->
-                    setTasks(taskStage!!.id.toString(), tasksIds, password, false)
+                    setTasks(taskStage!!.id.toString(), tasksIds, password)
                 }
 
     private fun isTaskStageCurrentStage(taskStage: TaskStage): Boolean =
