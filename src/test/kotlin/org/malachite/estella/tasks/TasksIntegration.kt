@@ -122,7 +122,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val oldTask = organization.tasks.first()
+        val oldTask = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
             method = HttpMethod.PUT,
@@ -143,7 +143,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val oldTask = organization.tasks.first()
+        val oldTask = organization.tasks.maxByOrNull { it.id!! }!!
         val response1 = httpRequest(
             "/api/tasks/${oldTask.id!!}/tests/object",
             method = HttpMethod.PUT,
@@ -181,7 +181,7 @@ class TasksIntegration : BaseIntegration() {
     @Order(6)
     fun `should bad request on update tests with object`() {
         val organization = organizationRepository.findAll().first()
-        val oldTask = organization.tasks.first()
+        val oldTask = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${oldTask.id!!}/tests/object?owner=${organization.id!!}",
             method = HttpMethod.PUT,
@@ -200,7 +200,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val oldTask = organization.tasks.first()
+        val oldTask = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${oldTask.id!!}/tests/file?owner=${organization.id!!}",
             method = HttpMethod.PUT,
@@ -220,7 +220,7 @@ class TasksIntegration : BaseIntegration() {
     @Order(8)
     fun `should unath on update tests with file`() {
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${task.id!!}/tests/file?owner=${organization.id!!}",
             method = HttpMethod.PUT,
@@ -241,7 +241,7 @@ class TasksIntegration : BaseIntegration() {
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
 
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response1 = httpRequest(
             "/api/tasks/${task.id!!}/tests/file?owner=${organization.id!!}",
             method = HttpMethod.PUT,
@@ -294,7 +294,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.last()
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
 
         val response = httpRequest(
             path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
@@ -309,7 +309,7 @@ class TasksIntegration : BaseIntegration() {
     @Order(12)
     fun `should unauth on get task tests`() {
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
 
         val response = httpRequest(
             path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
@@ -324,7 +324,7 @@ class TasksIntegration : BaseIntegration() {
     @Order(13)
     fun `should bad request on get task tests`() {
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
 
         val response1 = httpRequest(
             path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
@@ -370,7 +370,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.PUT,
@@ -398,7 +398,7 @@ class TasksIntegration : BaseIntegration() {
     fun `should unauth on update task`() {
         onStart()
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.PUT,
@@ -422,7 +422,7 @@ class TasksIntegration : BaseIntegration() {
     fun `should bad request on update task`() {
         onStart()
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response1 = httpRequest(
             "/api/tasks",
             method = HttpMethod.PUT,
@@ -461,7 +461,7 @@ class TasksIntegration : BaseIntegration() {
     @Order(19)
     fun `should unauth on delete task`() {
         val organization = organizationRepository.findAll().first()
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${task.id}?owner=${organization.id}",
             method = HttpMethod.DELETE,
@@ -479,7 +479,7 @@ class TasksIntegration : BaseIntegration() {
         val organization = organizationRepository.findAll().first()
         val applicationStage = getApplication().applicationStages.maxByOrNull { it.id!! }!!
         val password = securityService.hashOrganization(organization, applicationStage.tasksStage!!)
-        val task = organization.tasks.first()
+        val task = organization.tasks.maxByOrNull { it.id!! }!!
         val response = httpRequest(
             "/api/tasks/${task.id}?owner=${organization.id}",
             method = HttpMethod.DELETE,

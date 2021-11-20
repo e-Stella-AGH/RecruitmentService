@@ -12,8 +12,6 @@ import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
 import java.sql.Date
 import java.util.*
-import javax.sql.rowset.serial.SerialBlob
-import javax.sql.rowset.serial.SerialClob
 
 
 fun Set<RecruitmentStage>.getAsList(): List<RecruitmentStage> = this.toList().sortedBy { it.id }

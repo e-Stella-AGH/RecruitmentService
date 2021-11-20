@@ -7,6 +7,7 @@ import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.decodeBase64
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.process.domain.*
 import org.malachite.estella.queues.utils.TaskResultRabbitDTO
@@ -16,6 +17,8 @@ import org.malachite.estella.task.domain.TaskRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Blob
+import java.sql.Clob
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
