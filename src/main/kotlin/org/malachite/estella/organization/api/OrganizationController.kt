@@ -56,7 +56,7 @@ class OrganizationController(
 
 
     @CrossOrigin
-    @PostMapping()
+    @PostMapping
     fun addOrganization(@RequestBody organizationRequest: OrganizationRequest): ResponseEntity<Organization> =
         organizationService.addOrganization(organizationRequest.toOrganization())
             .let { OwnResponses.CREATED(it) }

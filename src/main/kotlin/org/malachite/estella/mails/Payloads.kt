@@ -3,7 +3,6 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
-import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -108,6 +107,29 @@ fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPa
             sender_name = "e-Stella Team",
             receiver = mail,
             content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position, this.id!!),
+            sender_email = MAIN_MAIL
+    )
+}
+fun TaskStage.toTaskAssignedNotificationPayload(mail: String, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val url = "${MAIN_URL}tasks/${this.id}"
+    return MailPayload(
+            subject = "You have been requested to solve a task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskAssignedNotificationText(url, hrPartnerFullName, offer.position),
+            sender_email = MAIN_MAIL
+    )
+}
+
+fun TaskStage.toTaskSubmittedNotificationPayload(mail: String, timeToWait: Int, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val url = "${MAIN_URL}tasks/review/${this.id}"
+    return MailPayload(
+            subject = "You have been requested to review a task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskSubmittedNotificationText(url, timeToWait, hrPartnerFullName),
             sender_email = MAIN_MAIL
     )
 }

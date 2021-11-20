@@ -1,6 +1,5 @@
 package org.malachite.estella.mails
 
-import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.StageType
@@ -70,4 +69,23 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
+
+    fun getTaskAssignedNotificationText(url: String, hrPartnerFullName: String, position: String): String =
+            """
+            Hi,
+            You have been asked to solve some tasks as a stage of recruitment process for position $position.
+            You can do that at: $url.
+            All the best,
+            $hrPartnerFullName
+            """.trimIndent()
+
+    fun getTaskSubmittedNotificationText(url: String, timeToWait: Int, hrPartnerFullName: String) =
+            """
+            Hi,
+            The candidate has started solving tasks from a stage you were assigned to.
+            In $timeToWait minutes you should be able to review the tasks.
+            You can do that at: $url.
+            All the best,
+            $hrPartnerFullName
+            """.trimIndent()
 }

@@ -27,6 +27,7 @@ class TaskStageService(
         @Autowired private val interviewService: InterviewService,
         @Autowired private val recruitmentProcessService: RecruitmentProcessService,
         @Autowired private val organizationService: OrganizationService,
+        @Autowired private val mailService: MailService,
         @Autowired private val securityService: SecurityService
 ) : EStellaService<TaskStage>() {
     override val throwable: Exception = TaskStageNotFoundException()
@@ -106,7 +107,7 @@ class TaskStageService(
 
 
     fun addResult(resultToAdd: TaskService.ResultToAdd) {
-        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id }.let {
+        val resultToSave = taskResultRepository.findAll().firstOrNull { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id && it.startTime != null }.let {
             copyTaskResult(it, resultToAdd)
                 ?: createNewTaskResult(resultToAdd)
         }
@@ -116,14 +117,37 @@ class TaskStageService(
         taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
     }
     private fun copyTaskResult(foundResult: TaskResult?, resultToAdd: TaskService.ResultToAdd) =
-        foundResult?.copy(results = resultToAdd.results, code = resultToAdd.code, startTime = foundResult.startTime, endTime = resultToAdd.time, task = resultToAdd.task, taskStage = resultToAdd.taskStage)
-    private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd) =
-        TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
+        foundResult?.copy(
+                results = resultToAdd.results,
+                code = resultToAdd.code,
+                startTime = foundResult.startTime,
+                endTime = resultToAdd.time,
+                task = resultToAdd.task,
+                taskStage = resultToAdd.taskStage
+        )
+
+    private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd): TaskResult {
+        if (isFirstSolvedTask(resultToAdd))
+            sendDevNotification(resultToAdd)
+
+        return TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
+    }
+
+    private fun sendDevNotification(resultToAdd: TaskService.ResultToAdd) {
+        val timeToWait = getTimeLimitsSum(resultToAdd.taskStage)
+        resultToAdd.taskStage.devs.forEach {
+            val offer = recruitmentProcessService.getProcessFromStage(resultToAdd.taskStage.applicationStage).offer
+            mailService.sendTaskSubmittedNotification(it, resultToAdd.taskStage, timeToWait, offer)
+        }
+    }
+
+    private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) = resultToAdd.taskStage.tasksResult.none { it.startTime != null }
+    private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
 
     fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
         getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
-    fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
+    fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String, notifyJobSeeker: Boolean = true) {
         if (securityService.getTaskStageFromPassword(password)?.let {
                     it.id.toString() != taskStageUuid ||
                     !isTaskStageCurrentStage(it)
@@ -133,6 +157,13 @@ class TaskStageService(
             deleteRemovedTaskResults(taskStageUuid, tasksIds)
             addMissingTaskResults(taskStageUuid, it)
         }
+        if (notifyJobSeeker) {
+            getTaskStage(taskStageUuid).let {
+                val offer = recruitmentProcessService.getProcessFromStage(it.applicationStage).offer
+                val mail = it.applicationStage.application.jobSeeker.user.mail
+                mailService.sendTaskAssignedNotification(mail, it, offer)
+            }
+        }
     }
 
     fun setTasksByInterviewUuid(interviewUuid: String, tasksIds: Set<Int>, password: String) =
@@ -141,7 +172,7 @@ class TaskStageService(
                 .applicationStage
                 .tasksStage
                 .let { taskStage ->
-                    setTasks(taskStage!!.id.toString(), tasksIds, password)
+                    setTasks(taskStage!!.id.toString(), tasksIds, password, false)
                 }
 
     private fun isTaskStageCurrentStage(taskStage: TaskStage): Boolean =
