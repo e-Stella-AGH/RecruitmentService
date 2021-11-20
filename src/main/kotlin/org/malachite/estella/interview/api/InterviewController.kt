@@ -42,7 +42,8 @@ class InterviewController(
     @CrossOrigin
     @PutMapping("/{meetingId}/set_hosts")
     fun setHosts(@PathVariable meetingId: PayloadUUID, @RequestBody hosts: MeetingHosts): ResponseEntity<Any> =
-        interviewService.setHosts(meetingId.toUUID(), hosts.hostsMails)
+        interviewService.getInterviewWithCheckRights(meetingId.toUUID())
+            .let { applicationStageDataService.setHostsForInterview(it,hosts.hostsMails) }
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin

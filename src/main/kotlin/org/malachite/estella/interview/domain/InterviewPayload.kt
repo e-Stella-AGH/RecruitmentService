@@ -20,8 +20,8 @@ fun Interview.toInterviewDTO() = InterviewDTO(
     this.id.toString(),
     this.dateTime,
     this.minutesLength,
-    this.applicationStage.application.toApplicationDTO(),
-    this.hosts
+    this.applicationStage.application!!.toApplicationDTO(),
+    this.applicationStage.hosts
 )
 
 fun Note.toInterviewNoteDTO() = InterviewNoteDTO(this.id, this.text.toBase64String())

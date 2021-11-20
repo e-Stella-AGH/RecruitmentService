@@ -37,7 +37,7 @@ class TaskStageService(
     override val throwable: Exception = TaskStageNotFoundException()
 
     fun createTaskStage(applicationStage: ApplicationStageData, interview: Interview?): TaskStage =
-            TaskStage(null, listOf(), applicationStage, mutableListOf())
+            TaskStage(null, setOf(), applicationStage)
                     .let { taskStageRepository.save(it) }
 
     fun getAll() = taskStageRepository.findAll()
@@ -82,16 +82,16 @@ class TaskStageService(
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
 
-    fun getTasksByInterview(interviewId: String): List<TaskResult> =
+    fun getTasksByInterview(interviewId: String): Set<TaskResult> =
             interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage?.tasksResult
-                    ?: listOf()
+                    ?: setOf()
 
     private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
             recruitmentProcessService.getProcessFromStage(taskStage.applicationStage).offer.creator.organization.id.toString()
 
     fun getTasksByDev(devMail: String, password: String): List<TaskDto> {
         val decodedMail = String(Base64.getDecoder().decode(devMail))
-        val tasksStages = getAll().filter { it.devs.contains(decodedMail) }
+        val tasksStages = getAll().filter { it.applicationStage.hosts.contains(decodedMail) }
         tasksStages.forEach{ assertDevPasswordCorrect(getOrganizationUuidFromTaskStage(it), password) }
         return tasksStages.map { it.tasksResult }.flatMap { it.map { it.task.toTaskDto() } }
     }
@@ -108,13 +108,13 @@ class TaskStageService(
 
 
     fun addResult(resultToAdd: TaskService.ResultToAdd) {
-        taskResultRepository.findAll().find { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id }
+        taskResultRepository.findAll().find { it.task.id == resultToAdd.task.id && it.taskStage!!.id == resultToAdd.taskStage.id }
                 .let {
                     copyTaskResult(it, resultToAdd)
                 }?.let { result ->
                     taskResultRepository.save(result)
-                    val taskStage = result.taskStage
-                    val newTaskResults = taskStage.tasksResult.filter { it.task.id != result.task.id }.plus(result)
+                    val taskStage = result.taskStage!!
+                    val newTaskResults = taskStage.tasksResult.filter { it.task.id != result.task.id }.plus(result).toSet()
                     taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
                     if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
                         sendDevNotification(resultToAdd)
@@ -133,7 +133,7 @@ class TaskStageService(
 
     private fun sendDevNotification(resultToAdd: TaskService.ResultToAdd) {
         val timeToWait = getTimeLimitsSum(resultToAdd.taskStage)
-        resultToAdd.taskStage.devs.forEach {
+        resultToAdd.taskStage.applicationStage.hosts.forEach {
             val offer = recruitmentProcessService.getProcessFromStage(resultToAdd.taskStage.applicationStage).offer
             mailService.sendTaskSubmittedNotification(it, resultToAdd.taskStage, timeToWait, offer)
         }
@@ -146,9 +146,6 @@ class TaskStageService(
     private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) =
             getTaskStage(resultToAdd.taskStage.id!!).tasksResult.filter { it.endTime != null }.size == 1
     private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
-
-    fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
-        getTaskStage(id).let { taskStageRepository.save(it.copy(devs = devs)) }
 
     fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
         assertTaskStageIsCurrentAndMatchesPassword(password, taskStageUuid)
@@ -185,7 +182,7 @@ class TaskStageService(
                 }
 
     private fun isTaskStageCurrentStage(taskStage: TaskStage): Boolean =
-            taskStage.applicationStage.application.getCurrentApplicationStage().id == taskStage.applicationStage.id
+            taskStage.applicationStage.application!!.getCurrentApplicationStage().id == taskStage.applicationStage.id
 
 
     private fun deleteRemovedTaskResults(taskStageUuid: String, tasksIds: Set<Int>) =

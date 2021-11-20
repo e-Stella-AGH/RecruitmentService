@@ -123,7 +123,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 
@@ -141,7 +141,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 
@@ -161,7 +161,7 @@ class TaskStagesIntegration : BaseIntegration() {
         expectThat(response.statusCode).isEqualTo(HttpStatus.OK)
         response.body as List<Map<String, Any>>
         expect {
-            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult[0].task.toTaskDto(), taskStage.tasksResult[1].task.toTaskDto())
+            that(response.body.map { it.toTaskDto() }).containsExactlyInAnyOrder(taskStage.tasksResult.map { it.task.toTaskDto() })
         }
     }
 
