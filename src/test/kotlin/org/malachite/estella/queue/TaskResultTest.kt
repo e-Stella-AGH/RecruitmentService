@@ -38,6 +38,7 @@ class TaskResultTest : BaseIntegration() {
 
     private lateinit var task: Task
     private lateinit var taskStage: TaskStage
+    private lateinit var taskResult: TaskResult
 
     @BeforeEach
     fun prepareTask() {
@@ -57,6 +58,7 @@ class TaskResultTest : BaseIntegration() {
         this.taskStage = TaskStage(null, listOf(), savedApplicationStageData, mutableListOf())
         taskStage = taskStageRepository.save(taskStage)
         task = taskRepository.save(task)
+        taskResult = taskResultRepository.save(TaskResult(null, null, null, null, null, task, taskStage))
     }
 
     val now = Timestamp.from(Instant.now())
@@ -69,8 +71,8 @@ class TaskResultTest : BaseIntegration() {
         val xd2 = "xdd"
         val code = SerialClob(xd1.toCharArray())
         val results =  SerialBlob(xd1.toByteArray())
-
-        val taskResult = TaskResult(null, results, code, now, null, task, taskStage)
+        var taskResult = taskResultRepository.findById(this.taskResult.id!!).get()
+        taskResult = taskResult.copy(results = results, code = code, startTime = now)
         publish(taskResult)
 
         eventually {

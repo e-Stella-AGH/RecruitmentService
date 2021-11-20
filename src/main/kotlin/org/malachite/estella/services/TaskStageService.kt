@@ -1,5 +1,6 @@
 package org.malachite.estella.services
 
+import org.malachite.estella.commons.DataViolationException
 import org.malachite.estella.commons.EStellaService
 import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.interviews.Interview
@@ -17,6 +18,8 @@ import org.malachite.estella.task.domain.TaskStageRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 
 @Service
@@ -79,11 +82,8 @@ class TaskStageService(
         return taskStage.tasksResult.map { it.task.toTaskDto() }
     }
 
-    fun getTasksByInterview(interviewId: String): List<TaskDto> =
-            interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage
-                    ?.let {
-                        it.tasksResult.map { it.task.toTaskDto() }
-                    }
+    fun getTasksByInterview(interviewId: String): List<TaskResult> =
+            interviewService.getInterview(UUID.fromString(interviewId)).applicationStage.tasksStage?.tasksResult
                     ?: listOf()
 
     private fun getOrganizationUuidFromTaskStage(taskStage: TaskStage) =
@@ -108,18 +108,18 @@ class TaskStageService(
 
 
     fun addResult(resultToAdd: TaskService.ResultToAdd) {
-        val resultToSave = taskResultRepository.findAll().find { isResultNew(it, resultToAdd) }.let {
-            copyTaskResult(it, resultToAdd)
-                ?: createNewTaskResult(resultToAdd)
-        }
-        val savedResult = taskResultRepository.save(resultToSave)
-        val taskStage = savedResult.taskStage
-        val newTaskResults = taskStage.tasksResult.filter { it.task.id != resultToSave.task.id }.plus(savedResult)
-        taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
+        taskResultRepository.findAll().find { it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id }
+                .let {
+                    copyTaskResult(it, resultToAdd)
+                }?.let { result ->
+                    taskResultRepository.save(result)
+                    val taskStage = result.taskStage
+                    val newTaskResults = taskStage.tasksResult.filter { it.task.id != result.task.id }.plus(result)
+                    taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
+                    if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
+                        sendDevNotification(resultToAdd)
+                }?: throw DataViolationException("Cannot add task result: task doesn't appear to be assigned to given task stage")
     }
-
-    private fun isResultNew(it: TaskResult, resultToAdd: TaskService.ResultToAdd) =
-            it.task.id == resultToAdd.task.id && it.taskStage.id == resultToAdd.taskStage.id && it.startTime != null
 
     private fun copyTaskResult(foundResult: TaskResult?, resultToAdd: TaskService.ResultToAdd) =
         foundResult?.copy(
@@ -130,13 +130,6 @@ class TaskStageService(
                 task = resultToAdd.task,
                 taskStage = resultToAdd.taskStage
         )
-
-    private fun createNewTaskResult(resultToAdd: TaskService.ResultToAdd): TaskResult {
-        if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
-            sendDevNotification(resultToAdd)
-
-        return TaskResult(null, resultToAdd.results, resultToAdd.code, resultToAdd.time, null, resultToAdd.task, resultToAdd.taskStage)
-    }
 
     private fun sendDevNotification(resultToAdd: TaskService.ResultToAdd) {
         val timeToWait = getTimeLimitsSum(resultToAdd.taskStage)
@@ -150,7 +143,8 @@ class TaskStageService(
         resultToAdd.taskStage.applicationStage.stage.type == StageType.TASK
 
 
-    private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) = resultToAdd.taskStage.tasksResult.none { it.startTime != null }
+    private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) =
+            getTaskStage(resultToAdd.taskStage.id!!).tasksResult.filter { it.endTime != null }.size == 1
     private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
 
     fun setDevs(id: UUID, devs: MutableList<String>): TaskStage =
@@ -172,13 +166,13 @@ class TaskStageService(
         }
     }
 
-    private fun assertTaskStageIsCurrentAndMatchesPassword(password: String, taskStageUuid: String) {
-        if (securityService.getTaskStageFromPassword(password)?.let {
-                    it.id.toString() != taskStageUuid ||
-                            !isTaskStageCurrentStage(it)
-                } == true)
-            throw UnauthenticatedException()
-    }
+    private fun assertTaskStageIsCurrentAndMatchesPassword(password: String, taskStageUuid: String) =
+            if (securityService.getTaskStageFromPassword(password)?.let {
+                        it.id.toString() != taskStageUuid ||
+                                !isTaskStageCurrentStage(it)
+                    } == true)
+                throw UnauthenticatedException()
+            else this
 
 
     fun setTasksByInterviewUuid(interviewUuid: String, tasksIds: Set<Int>, password: String) =
@@ -211,5 +205,13 @@ class TaskStageService(
                     val stage = getTaskStage(taskStageUuid)
                     taskStageRepository.save(stage.copy(tasksResult = stage.tasksResult.plus(it)))
                 }
+    }
+
+    fun startTask(taskStageUuid: String, taskId: Int) {
+        getTaskStage(taskStageUuid).let {
+            it.tasksResult.first { it.task.id == taskId }
+        }.let {
+            taskResultRepository.save(it.copy(startTime = Timestamp.from(Instant.now())))
+        }
     }
 }

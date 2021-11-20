@@ -15,4 +15,8 @@ class ExceptionsHandler {
     fun returnDataViolationException(ex: DataViolationException) =
         ResponseEntity.badRequest().body(Message(ex.msg))
 
+    @ExceptionHandler(BadParamsException::class)
+    fun returnBadParamsException(ex: BadParamsException) =
+        ResponseEntity.badRequest().body(Message(ex.msg))
+
 }

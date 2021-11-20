@@ -1,12 +1,7 @@
 package org.malachite.estella.task.api
 
-import org.malachite.estella.commons.EStellaHeaders
-import org.malachite.estella.commons.Message
-import org.malachite.estella.commons.OwnResponses
-import org.malachite.estella.commons.PayloadUUID
-import org.malachite.estella.process.domain.TaskDto
-import org.malachite.estella.process.domain.TaskTestCaseDto
-import org.malachite.estella.process.domain.toTaskDto
+import org.malachite.estella.commons.*
+import org.malachite.estella.process.domain.*
 import org.malachite.estella.services.OrganizationService
 import org.malachite.estella.services.TaskService
 import org.malachite.estella.services.TaskStageService
@@ -15,8 +10,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import java.sql.Timestamp
-import java.time.Instant
 import java.util.*
 
 
@@ -49,7 +42,7 @@ class TaskController(
                                                 .getTasksByOrganizationUuid(UUID.fromString(organizationUuid))
 
                     taskStageUuid != null -> taskStageService.getTasksByTasksStage(taskStageUuid, password!!)
-                    interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid)
+                    interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid).map { it.task.toTaskDto() }
                     else -> throw IllegalStateException() // Should never happen - protected by areParamsValid()
                 }
         return ResponseEntity.ok(tasks)
@@ -67,16 +60,29 @@ class TaskController(
 
     @CrossOrigin
     @Transactional
-    @GetMapping("/forJobSeeker")
+    @GetMapping("/inProgress")
     fun getTasksForJobSeeker(
-            @RequestParam("taskStage") taskStageUuid: String?
-    ): ResponseEntity<Any> {
-        if (taskStageUuid == null)
-            return ResponseEntity.badRequest().body(Message("taskStageUuid is required"))
+            @RequestParam("taskStage") taskStageUuid: String?,
+            @RequestParam("interview") interviewUuid: String?
+    ): ResponseEntity<List<TaskInProgressDto>> =
+        if (listOfNotNull(taskStageUuid, interviewUuid).size != 1)
+            throw BadParamsException("Exactly one of parameters: taskStage, interview is required")
+        else
+            when {
+                taskStageUuid != null -> taskStageService.getTaskStage(taskStageUuid).tasksResult.map { it.toTaskInProgressDto() }
+                interviewUuid != null -> taskStageService.getTasksByInterview(interviewUuid).map { it.toTaskInProgressDto() }
+                else -> throw IllegalStateException() // Should never happen - protected by areParamsValid()
+            }.let { ResponseEntity.ok(it) }
 
-        val tasks: List<TaskDto> =
-                taskStageService.getTaskStage(taskStageUuid).tasksResult.map { it.task.toTaskDto() }
-        return ResponseEntity.ok(tasks)
+
+    @CrossOrigin
+    @Transactional
+    @PutMapping("/taskStarted")
+    fun startTask(
+            @RequestParam("taskStage") taskStageUuid: String,
+            @RequestParam("task") taskId: Int
+    ) {
+        taskStageService.startTask(taskStageUuid, taskId)
     }
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")

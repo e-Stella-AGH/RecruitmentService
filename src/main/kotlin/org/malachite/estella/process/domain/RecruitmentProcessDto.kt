@@ -4,10 +4,12 @@ import kotlinx.serialization.Serializable
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.tasks.Task
+import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.toOfferResponse
 import java.sql.Date
+import java.sql.Timestamp
 import java.util.*
 import javax.sql.rowset.serial.SerialBlob
 import javax.sql.rowset.serial.SerialClob
@@ -54,6 +56,26 @@ fun Task.toTaskDto() = TaskDto(
     this.descriptionFileName,
     this.description.toBase64String(),
     timeLimit
+)
+
+data class TaskInProgressDto(
+        val id: Int?,
+        val testsBase64: String,
+        val descriptionFileName: String,
+        val descriptionBase64: String,
+        val timeLimit: Int,
+        val startTime: Timestamp?,
+        val code: String?
+)
+
+fun TaskResult.toTaskInProgressDto() = TaskInProgressDto(
+        this.task.id,
+        this.task.tests.toBase64String(),
+        this.task.descriptionFileName,
+        this.task.description.toBase64String(),
+        this.task.timeLimit,
+        startTime,
+        this.code.toBase64String()
 )
 
 @Serializable
