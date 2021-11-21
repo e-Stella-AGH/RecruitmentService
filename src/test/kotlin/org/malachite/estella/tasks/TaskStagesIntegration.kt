@@ -112,7 +112,7 @@ class TaskStagesIntegration : BaseIntegration() {
         val tasks = getOrganization().tasks
         val taskStage = getTaskStage()
         val interview = interviewRepository.findAll().first { it.applicationStage.id == taskStage.applicationStage.id }
-        val password = "xd"
+        val password = wrongDevPassword
         val response = httpRequest(
                 "/api/taskStages?interview=${interview.id}",
                 method = HttpMethod.PUT,
@@ -246,6 +246,8 @@ class TaskStagesIntegration : BaseIntegration() {
     private val hrPartner = hrPartners[1]
 
     private val password = "a"
+
+    private val wrongDevPassword = Base64.getEncoder().encode("${UUID.randomUUID()}:${UUID.randomUUID()}".toByteArray()).decodeToString()
 
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))
     private val encodedFile = Base64.getEncoder().encodeToString(testsFile)

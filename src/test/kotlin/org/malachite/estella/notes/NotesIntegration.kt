@@ -170,7 +170,7 @@ class NotesIntegration : BaseIntegration() {
             NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
             NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
         )
-        val badPassword = "xd"
+        val badPassword = Base64.getEncoder().encode("${UUID.randomUUID()}:${UUID.randomUUID()}".toByteArray()).decodeToString()
 
         val response = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
