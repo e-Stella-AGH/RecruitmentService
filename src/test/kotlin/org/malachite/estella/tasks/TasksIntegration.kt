@@ -2,24 +2,16 @@ package org.malachite.estella.tasks
 
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
-import org.malachite.estella.aplication.domain.ApplicationRepository
 import org.malachite.estella.commons.EStellaHeaders
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.toBase64String
-import org.malachite.estella.offer.infrastructure.HibernateOfferRepository
-import org.malachite.estella.organization.domain.OrganizationRepository
-import org.malachite.estella.people.infrastrucutre.HibernateJobSeekerRepository
 import org.malachite.estella.process.domain.TaskDto
 import org.malachite.estella.process.domain.TaskTestCaseDto
 import org.malachite.estella.process.domain.encodeToJson
 import org.malachite.estella.process.domain.toTaskDto
-import org.malachite.estella.services.SecurityService
-import org.malachite.estella.task.api.TaskController
-import org.malachite.estella.task.domain.TaskRepository
 import org.malachite.estella.util.DatabaseReset
 import org.malachite.estella.util.EmailServiceStub
 import org.malachite.estella.util.hrPartners
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Transactional
@@ -86,7 +78,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.POST,
-            mapOf(EStellaHeaders.devPassword to "abcdfeg", "Content-Type" to "application/json"),
+            mapOf(EStellaHeaders.devPassword to wrongDevPassword, "Content-Type" to "application/json"),
             body = mapOf(
                 "testsBase64" to encodedFile,
                 "descriptionFileName" to descriptionFileName,
@@ -187,7 +179,7 @@ class TasksIntegration : BaseIntegration() {
             method = HttpMethod.PUT,
             body = mapOf("tests" to testObjects),
             headers = mapOf(
-                EStellaHeaders.devPassword to "haha",
+                EStellaHeaders.devPassword to wrongDevPassword,
                 "Content-Type" to "application/json"
             )
         )
@@ -226,7 +218,7 @@ class TasksIntegration : BaseIntegration() {
             method = HttpMethod.PUT,
             body = mapOf("testsBase64" to encodedFile),
             headers = mapOf(
-                EStellaHeaders.devPassword to "wrong_pass",
+                EStellaHeaders.devPassword to wrongDevPassword,
                 "Content-Type" to "application/json"
             )
         )
@@ -314,7 +306,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/tasks/${task.id}/tests?owner=${organization.id}",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.devPassword to "xdd")
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
     }
@@ -335,7 +327,7 @@ class TasksIntegration : BaseIntegration() {
         val response2 = httpRequest(
             path = "/api/tasks/${task.id}/tests",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.devPassword to "xdd")
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword)
         )
         expectThat(response2.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
@@ -347,7 +339,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/tasks?owner=${organization.id}",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
     }
@@ -358,7 +350,7 @@ class TasksIntegration : BaseIntegration() {
         val response = httpRequest(
             path = "/api/tasks",
             method = HttpMethod.GET,
-            headers = mapOf(EStellaHeaders.devPassword to "abcdefdf")
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword)
         )
         expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
@@ -403,7 +395,7 @@ class TasksIntegration : BaseIntegration() {
             "/api/tasks?owner=${organization.id}",
             method = HttpMethod.PUT,
             mapOf(
-                EStellaHeaders.devPassword to "dd",
+                EStellaHeaders.devPassword to wrongDevPassword,
                 "Content-Type" to "application/json"
             ),
             body = mapOf(
@@ -427,7 +419,7 @@ class TasksIntegration : BaseIntegration() {
             "/api/tasks",
             method = HttpMethod.PUT,
             mapOf(
-                EStellaHeaders.devPassword to "dd",
+                EStellaHeaders.devPassword to wrongDevPassword,
                 "Content-Type" to "application/json"
             ),
             body = mapOf(
@@ -466,7 +458,7 @@ class TasksIntegration : BaseIntegration() {
             "/api/tasks/${task.id}?owner=${organization.id}",
             method = HttpMethod.DELETE,
             headers = mapOf(
-                EStellaHeaders.devPassword to "abc",
+                EStellaHeaders.devPassword to wrongDevPassword,
                 "Content-Type" to "application/json"
             )
         )
@@ -493,6 +485,21 @@ class TasksIntegration : BaseIntegration() {
         expectThat(updatedOrg.get().tasks.find { it.id == task.id }).isNull()
     }
 
+    @Test
+    @Order(21)
+    fun `should bad request on malformed dev password`() {
+        val organization = organizationRepository.findAll().first()
+        val response = httpRequest(
+            "/api/tasks?owner=${organization.id}",
+            method = HttpMethod.POST,
+            headers = mapOf(
+                EStellaHeaders.devPassword to "haha",
+                "Content-Type" to "application/json"
+            )
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
     private fun startOffer(offer: Offer) {
         httpRequest(
             path = "/api/process/${offer.id}/start",
@@ -500,6 +507,8 @@ class TasksIntegration : BaseIntegration() {
             headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, "a"))
         )
     }
+
+    private val wrongDevPassword = Base64.getEncoder().encode("${UUID.randomUUID()}:${UUID.randomUUID()}".toByteArray()).decodeToString()
 
     private val testsFile = Files.readAllBytes(Paths.get("src/test/kotlin/org/malachite/estella/tasks/tests.json"))
     private val encodedFile = Base64.getEncoder().encodeToString(testsFile)
