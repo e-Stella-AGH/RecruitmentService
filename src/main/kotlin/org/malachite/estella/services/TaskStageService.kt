@@ -143,7 +143,6 @@ class TaskStageService(
     private fun shouldNotifyDev(resultToAdd: TaskService.ResultToAdd) =
         resultToAdd.taskStage.applicationStage.stage.type == StageType.TASK
 
-
     private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) =
             resultToAdd.taskStage.tasksResult.none { it.endTime != null }
     private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
