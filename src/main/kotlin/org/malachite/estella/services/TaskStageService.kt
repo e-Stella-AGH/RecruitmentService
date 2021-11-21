@@ -112,12 +112,13 @@ class TaskStageService(
                 .let {
                     copyTaskResult(it, resultToAdd)
                 }?.let { result ->
+                    if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
+                        sendDevNotification(resultToAdd)
+
                     taskResultRepository.save(result)
                     val taskStage = result.taskStage!!
                     val newTaskResults = taskStage.tasksResult.filter { it.task.id != result.task.id }.plus(result).toSet()
                     taskStageRepository.save(taskStage.copy(tasksResult = newTaskResults))
-                    if (isFirstSolvedTask(resultToAdd) && shouldNotifyDev(resultToAdd))
-                        sendDevNotification(resultToAdd)
                 }?: throw DataViolationException("Cannot add task result: task doesn't appear to be assigned to given task stage")
     }
 
@@ -144,7 +145,7 @@ class TaskStageService(
 
 
     private fun isFirstSolvedTask(resultToAdd: TaskService.ResultToAdd) =
-            getTaskStage(resultToAdd.taskStage.id!!).tasksResult.filter { it.endTime != null }.size == 1
+            resultToAdd.taskStage.tasksResult.none { it.endTime != null }
     private fun getTimeLimitsSum(taskStage: TaskStage) = taskStage.tasksResult.sumOf { it.task.timeLimit }
 
     fun setTasks(taskStageUuid: String, tasksIds: Set<Int>, password: String) {
