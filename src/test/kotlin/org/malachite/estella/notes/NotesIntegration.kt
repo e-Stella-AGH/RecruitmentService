@@ -170,12 +170,11 @@ class NotesIntegration : BaseIntegration() {
             NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
             NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
         )
-        val badPassword = Base64.getEncoder().encode("${UUID.randomUUID()}:${UUID.randomUUID()}".toByteArray()).decodeToString()
 
         val response = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.devPassword to badPassword),
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword),
             body = mapOf(
                 "notes" to notes
             )
@@ -255,12 +254,11 @@ class NotesIntegration : BaseIntegration() {
             NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
             NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
         )
-        val badPassword = "xd"
 
         val response = httpRequest(
             "/api/applications/add_notes?cv_note=${applicationStageData.application.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to badPassword),
+            headers = mapOf(EStellaHeaders.jwtToken to wrongDevPassword),
             body = mapOf(
                 "notes" to notes
             )
@@ -351,12 +349,11 @@ class NotesIntegration : BaseIntegration() {
             NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
             NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
         )
-        val badPassword = "xd"
 
         val response = httpRequest(
             "/api/applications/add_notes?task_note=${applicationStageData.tasksStage!!.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.devPassword to badPassword),
+            headers = mapOf(EStellaHeaders.devPassword to wrongDevPassword),
             body = mapOf(
                 "notes" to notes
             )
@@ -439,12 +436,11 @@ class NotesIntegration : BaseIntegration() {
             NotesFilePayload(null, noteA, setOf("Git"), "test@test.com"),
             NotesFilePayload(null, noteB, setOf("Git"), "test@test.com")
         )
-        val badPassword = "xd"
 
         val response = httpRequest(
             "/api/applications/add_notes?interview_note=${interview.id}",
             method = HttpMethod.PUT,
-            headers = mapOf(EStellaHeaders.jwtToken to badPassword),
+            headers = mapOf(EStellaHeaders.jwtToken to wrongDevPassword),
             body = mapOf(
                 "notes" to notes
             )
@@ -510,6 +506,8 @@ class NotesIntegration : BaseIntegration() {
             "iaculis id iaculis et, porta in neque. Aenean sit amet blandit augue. " +
             "Integer nec nibh nec est viverra varius. Nam in pellentesque ante. "
 
+
+    private val wrongDevPassword = Base64.getEncoder().encode("${UUID.randomUUID()}:${UUID.randomUUID()}".toByteArray()).decodeToString()
 
     private val hrPassword = "a"
 }
