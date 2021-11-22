@@ -31,7 +31,6 @@ object FakeRecruitmentProcess {
         RecruitmentStage(null, StageType.HR_INTERVIEW),
         RecruitmentStage(null, StageType.TECHNICAL_INTERVIEW),
         RecruitmentStage(null, StageType.TASK),
-        RecruitmentStage(null, StageType.QUIZ),
         RecruitmentStage(null, StageType.ENDED)
     )
 
