@@ -4,7 +4,6 @@ import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.commons.models.offers.RecruitmentProcess
 import org.malachite.estella.commons.models.offers.RecruitmentStage
 import org.malachite.estella.commons.models.offers.StageType
-import org.malachite.estella.commons.models.quizes.Quiz
 import org.malachite.estella.commons.models.tasks.Task
 import java.sql.Date
 
@@ -18,7 +17,7 @@ object FakeRecruitmentProcess {
         val startDate: Date? = null,
         val endDate: Date? = null,
         val recruitmentStages: List<RecruitmentStage>,
-        val tasks: List<Task> = listOf(), val quizzes: List<Quiz> = listOf()
+        val tasks: List<Task> = listOf()
     ) {
         fun toRecruitmentProcess(offer: Offer): RecruitmentProcess {
             return RecruitmentProcess(
