@@ -81,9 +81,9 @@ class TaskController(
     fun startTask(
             @RequestParam("taskStage") taskStageUuid: String,
             @RequestParam("task") taskId: Int
-    ) {
-        taskStageService.startTask(taskStageUuid, taskId)
-    }
+    ) = taskStageService.startTask(taskStageUuid, taskId)
+                .let { OwnResponses.SUCCESS }
+
 
     @Deprecated(message = "Wasn't tested yet - unnecessary now - to be implemented and tested in ES-17 epic")
     @CrossOrigin

@@ -204,11 +204,11 @@ class TaskStageService(
                 }
     }
 
-    fun startTask(taskStageUuid: String, taskId: Int) {
+    fun startTask(taskStageUuid: String, taskId: Int) =
         getTaskStage(taskStageUuid).let {
             it.tasksResult.first { it.task.id == taskId }
         }.let {
             taskResultRepository.save(it.copy(startTime = Timestamp.from(Instant.now())))
         }
-    }
+
 }
