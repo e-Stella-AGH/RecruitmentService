@@ -1,5 +1,6 @@
 package org.malachite.estella.queue
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.*
@@ -13,6 +14,7 @@ import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
+import org.malachite.estella.interview.api.MeetingLength
 import org.malachite.estella.people.domain.JobSeekerRepository
 import org.malachite.estella.process.domain.RecruitmentStageRepository
 import org.malachite.estella.queues.utils.InterviewResultRabbitDTO
@@ -36,7 +38,7 @@ import javax.sql.rowset.serial.SerialClob
 
 @DatabaseReset
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class InterviewDateTest : BaseIntegration() {
+class InterviewDetailsTest : BaseIntegration() {
     @Autowired
     lateinit var rabbitTemplate: RabbitTemplate
 
@@ -137,42 +139,48 @@ class InterviewDateTest : BaseIntegration() {
     }
 
     fun publish(uuid: UUID) {
-        val resultBody = mapOf(
-            "meetingUUID" to uuid.toString(),
-            "meetingDate" to "1655979300000",
-            "meetingLength" to "20"
+        val resultBody = InterviewDetailsToSend(
+            uuid.toString(),
+            "1655979300000",
+            "20",
+            listOf("a@b.com")
         )
         send(resultBody)
     }
 
     fun badPublish() {
-        val resultBody = mapOf(
-            "meetingUUID" to "1",
-            "meetingDate" to "yes",
-            "meetingLength" to "-1"
+        val resultBody = InterviewDetailsToSend(
+            "1",
+            "yes",
+            "-1",
+            listOf("a@b.com")
         )
         send(resultBody)
     }
 
     fun badPublishInterviewLength(uuid: UUID) {
-        val resultBody = mapOf(
-            "meetingUUID" to uuid.toString(),
-            "meetingDate" to "1655979300000",
-            "meetingLength" to "-1"
+        val resultBody = InterviewDetailsToSend(
+            uuid.toString(),
+            "1655979300000",
+            "-1",
+            listOf("mail")
         )
         send(resultBody)
     }
 
     fun publishWithMistake() {
-        val resultBody = mapOf(
-            "results" to "xd",
-            "code" to "xd",
-            "taskId" to "4"
+        val resultBody = InterviewDetailsToSend(
+            "xd",
+            "xd",
+            "4",
+            listOf("mail")
         )
         send(resultBody)
     }
 
-    private fun send(msg: Map<String, String>) = Json.encodeToString(msg).let {
+    private fun send(msg: InterviewDetailsToSend) = Json.encodeToString(msg).let {
         rabbitTemplate.send("interview", Message(Base64.getEncoder().encode(it.toByteArray()), MessageProperties()))
     }
+    @Serializable
+    data class InterviewDetailsToSend(val meetingUUID: String, val meetingDate: String, val meetingLength: String, val hosts: List<String>)
 }

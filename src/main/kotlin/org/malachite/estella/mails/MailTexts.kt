@@ -30,19 +30,19 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getInterviewDevInvitation(jobSeekerName: String, url: String, hrPartnerFullName: String, position: String) =
+    fun getInterviewDevInvitation(jobSeekerName: String, url: String, date: String, hrPartnerFullName: String, position: String) =
         """
             Hi,
-            You have been added as host of interview with $jobSeekerName for $position.
-            It will take place at $url. 
+            You have been added as host of interview with $jobSeekerName recruiting for $position.
+            It will take place at $url on $date. 
             All the best,
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getInterviewDateConfirmation(organization: String, url: String, date: String, hrPartnerFullName: String, position: String) =
+    fun getInterviewJobSeekerConfirmation(organization: String, url: String, date: String, hrPartnerFullName: String, position: String) =
         """
             Hi,
-            The date for your interview for $position at $organization has been set.
+            You've picked the date for your interview for $position at $organization has been set.
             The interview will take place at $url on $date. 
             All the best,
             $hrPartnerFullName

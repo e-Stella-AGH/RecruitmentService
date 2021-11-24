@@ -50,19 +50,19 @@ fun Interview.toInterviewDevInvitationAsMailPayload(offer: Offer, application: A
     return MailPayload(
             subject = "You are invited for interview with ${jobSeekerFullName}!",
             receiver = hostMail,
-            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, hrPartnerFullName, offer.position),
+            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )
 }
 
-fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application: Application, mail: String): MailPayload {
+fun Interview.toInterviewJobSeekerConfirmationAsMailPayload(offer: Offer, application: Application, mail: String): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
     val position = offer.position
     val role = when (this.applicationStage.stage.type) {
-            StageType.HR_INTERVIEW -> "/hr/"
-            StageType.TECHNICAL_INTERVIEW -> "/technical/"
+            StageType.HR_INTERVIEW -> "hr/"
+            StageType.TECHNICAL_INTERVIEW -> "technical/"
             else -> ""
         }
 
@@ -71,7 +71,7 @@ fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application
     return MailPayload(
             subject = "Your interview's date for $position has been set!",
             receiver = mail,
-            content = MailTexts.getInterviewDateConfirmation(jobSeekerFullName, url, date, hrPartnerFullName, offer.position),
+            content = MailTexts.getInterviewJobSeekerConfirmation(jobSeekerFullName, url, date, hrPartnerFullName, offer.position),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )
