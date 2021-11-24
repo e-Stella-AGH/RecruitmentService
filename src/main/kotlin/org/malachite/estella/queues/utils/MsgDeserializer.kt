@@ -54,18 +54,21 @@ data class TaskResultRabbitDTO(
 data class InterviewResultRabbit(
     val meetingUUID: String,
     val meetingDate: Long,
-    val meetingLength: Int
+    val meetingLength: Int,
+    val hosts: List<String>
 ) {
     fun toInterviewResultRabbitDTO(): InterviewResultRabbitDTO =
         InterviewResultRabbitDTO(
             PayloadUUID(meetingUUID).toUUID(),
             Instant.ofEpochMilli(meetingDate).let { Timestamp.from(it) },
-            meetingLength
+            meetingLength,
+            hosts
         )
 }
 
 data class InterviewResultRabbitDTO(
     val meetingUUID: UUID,
     val meetingDate: Timestamp,
-    val meetingLength: Int
+    val meetingLength: Int,
+    val hosts: List<String>
 )

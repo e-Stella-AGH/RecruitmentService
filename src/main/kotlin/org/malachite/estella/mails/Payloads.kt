@@ -3,7 +3,7 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
-import org.malachite.estella.commons.models.offers.RecruitmentStage
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -50,22 +50,28 @@ fun Interview.toInterviewDevInvitationAsMailPayload(offer: Offer, application: A
     return MailPayload(
             subject = "You are invited for interview with ${jobSeekerFullName}!",
             receiver = hostMail,
-            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, hrPartnerFullName, offer.position),
+            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )
 }
 
-fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application: Application, mail: String): MailPayload {
+fun Interview.toInterviewJobSeekerConfirmationAsMailPayload(offer: Offer, application: Application, mail: String): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
     val position = offer.position
-    val url = "${MAIN_URL}interview/${this.id}"
+    val role = when (this.applicationStage.stage.type) {
+            StageType.HR_INTERVIEW -> "hr/"
+            StageType.TECHNICAL_INTERVIEW -> "technical/"
+            else -> ""
+        }
+
+    val url = "${MAIN_URL}interview/$role${this.id}"
     val date = this.dateTime.toString()
     return MailPayload(
             subject = "Your interview's date for $position has been set!",
             receiver = mail,
-            content = MailTexts.getInterviewDateConfirmation(jobSeekerFullName, url, date, hrPartnerFullName, offer.position),
+            content = MailTexts.getInterviewJobSeekerConfirmation(jobSeekerFullName, url, date, hrPartnerFullName, offer.position),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )
@@ -108,6 +114,29 @@ fun TaskStage.toTaskAssignmentRequestPayload(mail: String, offer: Offer): MailPa
             sender_name = "e-Stella Team",
             receiver = mail,
             content = MailTexts.getTaskAssignmentRequestText(this.applicationStage.stage.type, url, hrPartnerFullName, offer.position, this.id!!),
+            sender_email = MAIN_MAIL
+    )
+}
+fun TaskStage.toTaskAssignedNotificationPayload(mail: String, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val url = "${MAIN_URL}task/${this.id}"
+    return MailPayload(
+            subject = "You have been requested to solve a task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskAssignedNotificationText(url, hrPartnerFullName, offer.position),
+            sender_email = MAIN_MAIL
+    )
+}
+
+fun TaskStage.toTaskSubmittedNotificationPayload(mail: String, timeToWait: Int, offer: Offer): MailPayload {
+    val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
+    val url = "${MAIN_URL}tasks/review/${this.id}"
+    return MailPayload(
+            subject = "You have been requested to review a task",
+            sender_name = "e-Stella Team",
+            receiver = mail,
+            content = MailTexts.getTaskSubmittedNotificationText(url, timeToWait, hrPartnerFullName),
             sender_email = MAIN_MAIL
     )
 }

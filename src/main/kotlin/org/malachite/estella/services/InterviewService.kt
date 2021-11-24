@@ -12,7 +12,6 @@ import org.malachite.estella.security.Authority
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
-import java.time.Instant
 import java.util.*
 
 @Service
@@ -74,20 +73,12 @@ class InterviewService(
         val applicationStage = interview.applicationStage
         val application = applicationStage.application
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
-        mailService.sendInterviewDateConfirmationMail(
-            offer,
-            savedInterview,
-            application!!,
-            application.jobSeeker.user.mail
-        )
-        savedInterview.applicationStage.hosts.forEach { mail ->
-            mailService.sendInterviewDateConfirmationMail(
+        mailService.sendInterviewJobSeekerConfirmationMail(
                 offer,
                 savedInterview,
                 application,
-                mail
-            )
-        }
+                application.jobSeeker.user.mail
+        )
     }
 
     fun getInterviewWithCheckRights(id: UUID): Interview =

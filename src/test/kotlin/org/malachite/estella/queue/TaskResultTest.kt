@@ -4,18 +4,12 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.*
 import org.malachite.estella.BaseIntegration
-import org.malachite.estella.aplication.domain.ApplicationRepository
-import org.malachite.estella.aplication.domain.ApplicationStageRepository
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.commons.models.offers.ApplicationStatus
 import org.malachite.estella.commons.models.tasks.Task
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
-import org.malachite.estella.people.domain.JobSeekerRepository
-import org.malachite.estella.process.domain.RecruitmentStageRepository
-import org.malachite.estella.task.domain.TaskRepository
-import org.malachite.estella.task.domain.TaskStageRepository
 import org.malachite.estella.util.DatabaseReset
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +32,7 @@ class TaskResultTest : BaseIntegration() {
 
     private lateinit var task: Task
     private lateinit var taskStage: TaskStage
+    private lateinit var taskResult: TaskResult
 
     @BeforeEach
     fun prepareTask() {
@@ -60,6 +55,7 @@ class TaskResultTest : BaseIntegration() {
         this.taskStage = TaskStage(null, setOf(), savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)
         task = taskRepository.save(task)
+        taskResult = taskResultRepository.save(TaskResult(null, null, null, null, null, task, taskStage))
     }
 
     val now = Timestamp.from(Instant.now())
@@ -71,9 +67,10 @@ class TaskResultTest : BaseIntegration() {
         val xd1 = "xd"
         val xd2 = "xdd"
         val code = SerialClob(xd1.toCharArray())
-        val results = SerialBlob(xd1.toByteArray())
+        val results =  SerialBlob(xd1.toByteArray())
+        var taskResult = taskResultRepository.findById(this.taskResult.id!!).get()
+        taskResult = taskResult.copy(results = results, code = code, startTime = now, taskStage = taskResult.taskStage)
 
-        val taskResult = TaskResult(null, results, code, now, null, task, taskStage)
         publish(taskResult)
 
         eventually {

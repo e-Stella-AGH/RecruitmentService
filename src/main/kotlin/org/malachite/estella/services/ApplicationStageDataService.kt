@@ -148,9 +148,10 @@ class ApplicationStageDataService(
                     ?: false
             }
 
-    fun setHostsForInterview(interview: Interview, hostsMails: Set<String>) {
+    fun setHostsForInterview(interviewId: UUID, hostsMails: MutableSet<String>) {
+        val interview = interviewService.getInterview(interviewId)
         val savedApplicationStage =
-            applicationStageRepository.save(interview.applicationStage.copy(hosts = hostsMails.toMutableSet()))
+            applicationStageRepository.save(interview.applicationStage.copy(hosts = hostsMails))
         val offer = recruitmentProcessService.getProcessFromStage(savedApplicationStage).offer
         hostsMails.forEach { mail ->
             mailService.sendInterviewDevInvitationMail(
