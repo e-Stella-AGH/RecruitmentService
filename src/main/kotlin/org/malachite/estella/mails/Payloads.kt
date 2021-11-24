@@ -3,6 +3,7 @@ package org.malachite.estella.mails
 import org.malachite.estella.commons.models.interviews.Interview
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.Offer
+import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
@@ -59,7 +60,13 @@ fun Interview.toInterviewDateConfirmationAsMailPayload(offer: Offer, application
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
     val position = offer.position
-    val url = "${MAIN_URL}interview/${this.id}"
+    val role = when (this.applicationStage.stage.type) {
+            StageType.HR_INTERVIEW -> "/hr/"
+            StageType.TECHNICAL_INTERVIEW -> "/technical/"
+            else -> ""
+        }
+
+    val url = "${MAIN_URL}interview/$role${this.id}"
     val date = this.dateTime.toString()
     return MailPayload(
             subject = "Your interview's date for $position has been set!",
