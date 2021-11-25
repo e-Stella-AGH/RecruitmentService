@@ -23,5 +23,5 @@ class OfferExceptionHandler {
 
     @ExceptionHandler(ApplicationAlreadyMadeOnOfferException::class)
     fun handleUnauthenticated(ex: ApplicationAlreadyMadeOnOfferException): ResponseEntity<Any> =
-        OwnResponses.BAD_REQUEST("Someone already applied on this offer!")
+        OwnResponses.BAD_REQUEST("You can't delete offer, because someone already applied on this offer!")
 }
