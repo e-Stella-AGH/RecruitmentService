@@ -32,9 +32,9 @@ class TaskController(
             @RequestHeader(EStellaHeaders.devPassword) password: String?
     ): ResponseEntity<Any> {
         if (!areParamsValid(organizationUuid, taskStageUuid, devMail, interviewUuid))
-            return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required"))
+            return OwnResponses.BAD_REQUEST("Exactly one of parameters: organizationUuid, taskStageUuid, devMail is required")
         if (!isPasswordProvided(organizationUuid, taskStageUuid, devMail, password) && interviewUuid == null)
-            return OwnResponses.UNAUTH
+            throw UnauthenticatedException()
         val tasks: List<TaskDto> =
                 when {
                     organizationUuid != null -> devMail?.let { taskStageService.getTasksByDev(it, password!!) }

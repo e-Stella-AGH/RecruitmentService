@@ -18,6 +18,7 @@ class  OfferService(
     @Autowired private val offerRepository: OfferRepository,
     @Autowired private val desiredSkillService: DesiredSkillService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
+    @Autowired private val applicationStageDataService: ApplicationStageDataService,
     @Autowired private val securityService: SecurityService
 ) : EStellaService<Offer>() {
 
@@ -74,6 +75,10 @@ class  OfferService(
 
     fun deleteOffer(id: Int) {
         if (!checkAuth(this.getOffer(id)).contains(Permission.DELETE)) throw UnauthenticatedException()
+        val processStages = offerRepository.findById(id).get().recruitmentProcess!!.stages
+        val applicationsStages = applicationStageDataService.getAllApplicationStageData()
+            .map { it.application.getCurrentApplicationStage().stage }.toSet()
+        if(applicationsStages.filter { processStages.contains(it) }.isNotEmpty()) throw ApplicationAlreadyMadeOnOfferException()
         offerRepository.deleteById(id)
     }
 

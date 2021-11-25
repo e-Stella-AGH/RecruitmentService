@@ -30,6 +30,8 @@ class ApplicationStageDataService(
 ) : EStellaService<ApplicationStageData>() {
     override val throwable: Exception = ApplicationNotFoundException()
 
+    fun getAllApplicationStageData() = applicationStageRepository.findAll()
+
     fun createApplicationStageData(
         application: Application,
         recruitmentStage: RecruitmentStage,

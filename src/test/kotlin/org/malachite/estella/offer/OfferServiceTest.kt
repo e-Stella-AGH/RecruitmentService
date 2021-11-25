@@ -14,9 +14,7 @@ import org.malachite.estella.offer.domain.OfferRequest
 import org.malachite.estella.offer.domain.Skill
 import org.malachite.estella.security.Authority
 import org.malachite.estella.security.UserContextDetails
-import org.malachite.estella.services.DesiredSkillService
-import org.malachite.estella.services.OfferService
-import org.malachite.estella.services.SecurityService
+import org.malachite.estella.services.*
 import org.malachite.estella.util.offersWithNullProcess
 import org.malachite.estella.util.users
 import strikt.api.expectThat
@@ -28,7 +26,8 @@ class OfferServiceTest {
     private val repository = DummyOfferRepository()
     private val desiredSkillServiceMock = mockk<DesiredSkillService>()
     private val securityServiceMock = mockk<SecurityService>()
-    private val offerService = OfferService(repository, desiredSkillServiceMock, mockk(), securityServiceMock)
+    private val applicationStageDataService = mockk<ApplicationStageDataService>()
+    private val offerService = OfferService(repository, desiredSkillServiceMock, mockk(),applicationStageDataService, securityServiceMock)
 
     @BeforeEach
     fun setUp() {
@@ -169,19 +168,6 @@ class OfferServiceTest {
         }
     }
 
-    @Test
-    fun `should be able to delete offer`() {
-        val offer = offerService.addOffer(offers[0])
-        every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
-                offer.creator.user,
-                "abc",
-                setOf(Authority.hr),
-                true
-        )
-
-        offerService.deleteOffer(offer.id!!)
-        expectThat(repository.size()).isEqualTo(0)
-    }
 
     @Test
     fun `should throw unath when hr is not the same one who created when deleting`() {
@@ -197,22 +183,6 @@ class OfferServiceTest {
         expectThrows<UnauthenticatedException> {
             offerService.deleteOffer(offer.id!!)
         }
-    }
-
-    @Test
-    fun `organization should be able to delete offer`() {
-        val offer = offers[0].let { it.copy(creator = it.creator.copy(id = 1)) }
-        offerService.addOffer(offer)
-        every { securityServiceMock.getUserDetailsFromContext() } returns UserContextDetails(
-                offer.creator.organization.user,
-                "abc",
-                setOf(Authority.organization),
-                true
-        )
-
-        offerService.deleteOffer(offer.id!!)
-
-        expectThat(repository.size()).isEqualTo(0)
     }
 
     @Test
