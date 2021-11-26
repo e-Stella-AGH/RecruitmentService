@@ -30,8 +30,8 @@ class MailService(
     fun sendOrganizationVerificationMail(organization: Organization, verified: Boolean) =
         sendMail(organization.toVerificationMailPayload(verified))
 
-    fun sendInterviewDevInvitationMail(offer: Offer, interview:Interview, application: Application, hostMail: String) =
-        sendMail(interview.toInterviewDevInvitationAsMailPayload(offer, application,hostMail))
+    fun sendInterviewHostInvitationMail(offer: Offer, interview:Interview, application: Application, hostMail: String) =
+        sendMail(interview.toInterviewHostInvitationAsMailPayload(offer, application,hostMail))
 
     fun sendInterviewJobSeekerConfirmationMail(offer: Offer, interview:Interview, application: Application, mail: String) =
         sendMail(interview.toInterviewJobSeekerConfirmationAsMailPayload(offer, application,mail))

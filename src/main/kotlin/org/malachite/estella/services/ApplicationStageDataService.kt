@@ -13,7 +13,6 @@ import org.malachite.estella.commons.models.offers.StageType
 import org.malachite.estella.commons.models.tasks.TaskResult
 import org.malachite.estella.commons.models.tasks.TaskStage
 import org.malachite.estella.interview.api.NotesFilePayload
-import org.malachite.estella.task.domain.TaskStageNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -154,7 +153,7 @@ class ApplicationStageDataService(
             applicationStageRepository.save(interview.applicationStage.copy(hosts = hostsMails))
         val offer = recruitmentProcessService.getProcessFromStage(savedApplicationStage).offer
         hostsMails.forEach { mail ->
-            mailService.sendInterviewDevInvitationMail(
+            mailService.sendInterviewHostInvitationMail(
                 offer,
                 interview,
                 savedApplicationStage.application,

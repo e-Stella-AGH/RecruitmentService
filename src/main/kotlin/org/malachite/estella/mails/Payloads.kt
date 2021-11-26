@@ -43,10 +43,15 @@ fun Application.toApplicationConfirmationAsMailPayload(offer: Offer): MailPayloa
     )
 }
 
-fun Interview.toInterviewDevInvitationAsMailPayload(offer: Offer, application: Application, hostMail: String): MailPayload {
+fun Interview.toInterviewHostInvitationAsMailPayload(offer: Offer, application: Application, hostMail: String): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val jobSeekerFullName = "${application.jobSeeker.user.firstName} ${application.jobSeeker.user.lastName}"
-    val url = "${MAIN_URL}interview/${this.id}/${offer.creator.organization.id}"
+    val role = when (this.applicationStage.stage.type) {
+        StageType.HR_INTERVIEW -> "hr/"
+        StageType.TECHNICAL_INTERVIEW -> "technical/"
+        else -> ""
+    }
+    val url = "${MAIN_URL}interview/$role${this.id}/${offer.creator.organization.id}"
     return MailPayload(
             subject = "You are invited for interview with ${jobSeekerFullName}!",
             receiver = hostMail,
