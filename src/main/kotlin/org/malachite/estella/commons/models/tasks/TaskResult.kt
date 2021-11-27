@@ -23,4 +23,23 @@ data class TaskResult(
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "taskStage")
     val taskStage: TaskStage? = null
-)
+) {
+    override fun equals(other: Any?) = other is TaskResult && EssentialData(this) == EssentialData(other)
+    override fun hashCode() = EssentialData(this).hashCode()
+    override fun toString() = EssentialData(this).toString().replaceFirst("EssentialData", "TaskResult")
+
+    companion object {
+        private data class EssentialData(
+            val id: Int?,
+            val results: Blob?,
+            val code: Clob?,
+            val startTime: Timestamp?,
+            val endTime: Timestamp?,
+            val task: Task
+        ) {
+            constructor(stage: TaskResult) : this(
+                stage.id, stage.results, stage.code, stage.startTime, stage.endTime, stage.task
+            )
+        }
+    }
+}
