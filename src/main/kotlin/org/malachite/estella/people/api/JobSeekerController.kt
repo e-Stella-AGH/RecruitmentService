@@ -10,9 +10,11 @@ import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@Transactional
 @RequestMapping("/api/jobseekers")
 class JobSeekerController(
     @Autowired private val jobSeekerService: JobSeekerService,
