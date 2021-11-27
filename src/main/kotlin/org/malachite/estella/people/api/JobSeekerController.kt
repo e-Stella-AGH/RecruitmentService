@@ -9,12 +9,13 @@ import org.malachite.estella.services.JobSeekerFileService
 import org.malachite.estella.services.JobSeekerService
 import org.malachite.estella.services.SecurityService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import java.sql.SQLNonTransientException
 
 @RestController
-@Transactional
 @RequestMapping("/api/jobseekers")
 class JobSeekerController(
     @Autowired private val jobSeekerService: JobSeekerService,
@@ -36,9 +37,22 @@ class JobSeekerController(
     @CrossOrigin
     @PostMapping
     fun registerJobSeeker(@RequestBody jobSeekerRequest: JobSeekerRequest): ResponseEntity<JobSeekerDTO> =
-        jobSeekerRequest.toJobSeeker()
-            .let { jobSeekerService.registerJobSeeker(it) }
-            .let { OwnResponses.CREATED(it.toJobSeekerDTO()) }
+        try {
+            jobSeekerRequest
+                .toJobSeeker()
+                .let { jobSeekerService.registerJobSeeker(it) }
+                .let { OwnResponses.CREATED(it.toJobSeekerDTO()) }
+        } catch (e: Exception) {
+            when (e) {
+                is DataIntegrityViolationException,
+                is SQLNonTransientException ->
+                    throw UserAlreadyExistsException()
+                else -> {
+                    println("Error msg: ${e.message}")
+                    throw e
+                }
+            }
+        }
 
     @CrossOrigin
     @DeleteMapping("/{jobSeekerId}")
@@ -50,11 +64,13 @@ class JobSeekerController(
         }
 
     @CrossOrigin
+    @Transactional
     @GetMapping("/files")
     fun getJobSeekerFiles(): ResponseEntity<List<JobSeekerFileDTO>> =
         securityService.getJobSeekerFromContextUnsafe().files
             .map { it.toJobSeekerFileDTO() }
             .let { ResponseEntity.ok(it) }
+
 
     @CrossOrigin
     @PutMapping("/files")
