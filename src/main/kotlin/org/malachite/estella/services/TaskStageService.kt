@@ -37,7 +37,7 @@ class TaskStageService(
     override val throwable: Exception = TaskStageNotFoundException()
 
     fun createTaskStage(applicationStage: ApplicationStageData, interview: Interview?): TaskStage =
-            TaskStage(null, setOf(), applicationStage)
+            TaskStage(null, applicationStage)
                     .let { taskStageRepository.save(it) }
 
     fun getAll() = taskStageRepository.findAll()

@@ -11,40 +11,42 @@ import javax.persistence.*
 data class ApplicationStageData(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
     @ManyToOne val stage: RecruitmentStage,
-    @JsonIgnore @ManyToOne @JoinColumn(name = "application_id") val application: Application,
-    @OneToMany(fetch = FetchType.EAGER) @JoinColumn(name = "interviews_id") val notes: Set<Note>,
-    @ElementCollection(fetch = FetchType.EAGER) val hosts: MutableSet<String>
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "application_id")
+    val application: Application,
+
+    @JsonIgnore
+    @OneToOne
+    var tasksStage: TaskStage? = null,
+
+    @JsonIgnore
+    @OneToOne
+    var interview: Interview? = null,
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "interviews_id")
+    val notes: Set<Note>,
+
+    @ElementCollection(fetch = FetchType.EAGER) val hosts: MutableSet<String>,
 ) {
 
-    @JsonIgnore
-    @OneToOne
-    var tasksStage: TaskStage? = null
+    override fun equals(other: Any?) = other is ApplicationStageData && EssentialData(this) == EssentialData(other)
+    override fun hashCode() = EssentialData(this).hashCode()
+    override fun toString() = EssentialData(this).toString().replaceFirst("EssentialData", "ApplicationStageData")
 
-    @JsonIgnore
-    @OneToOne
-    var interview: Interview? = null
-
-    constructor(
-        id: Int?,
-        stage: RecruitmentStage,
-        application: Application,
-        tasksStage: TaskStage?,
-        interview: Interview?,
-        notes: Set<Note>,
-        hosts: MutableSet<String>
-    ) : this(id, stage, application, notes, hosts) {
-        this.tasksStage = tasksStage
-        this.interview = interview
+    companion object {
+        private data class EssentialData(
+            val id: Int?,
+            val stage: RecruitmentStage,
+            val application: Application,
+            val notes: Set<Note>,
+            val hosts: MutableSet<String>,
+        ) {
+            constructor(data: ApplicationStageData) : this(
+                data.id, data.stage, data.application, data.notes, data.hosts
+            )
+        }
     }
-
-
-    fun copy(
-        id: Int? = this.id,
-        stage: RecruitmentStage = this.stage,
-        application: Application = this.application,
-        tasksStage: TaskStage? = this.tasksStage,
-        interview: Interview? = this.interview,
-        notes: Set<Note> = this.notes,
-        hosts: MutableSet<String> = this.hosts
-    ) = ApplicationStageData(id,stage,application,tasksStage,interview,notes,hosts)
 }
