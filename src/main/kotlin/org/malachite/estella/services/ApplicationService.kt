@@ -21,7 +21,6 @@ class ApplicationService(
     @Autowired private val applicationStageDataService: ApplicationStageDataService,
     @Autowired private val recruitmentProcessService: RecruitmentProcessService,
     @Autowired private val taskStageService: TaskStageService,
-    @Autowired private val organizationService: OrganizationService,
     @Autowired private val securityService: SecurityService,
     @Autowired private val mailService: MailService
 ) : EStellaService<Application>() {

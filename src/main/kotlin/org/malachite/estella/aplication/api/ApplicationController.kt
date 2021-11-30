@@ -2,6 +2,7 @@ package org.malachite.estella.aplication.api
 
 import org.malachite.estella.aplication.domain.*
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses.CREATED
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
@@ -112,11 +113,11 @@ class ApplicationController(
     fun updateApplicationStage(
         @PathVariable applicationId: Int,
         @RequestBody(required = false) devs: ApplicationStageDevs?
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         applicationService.getApplicationById(applicationId).let {
             recruitmentProcessService.getProcessFromStage(it.applicationStages.last())
         }.let {
-            if (!securityService.checkOfferRights(it.offer)) return UNAUTH
+            if (!securityService.checkOfferRights(it.offer)) throw UnauthenticatedException()
             applicationService.setNextStageOfApplication(applicationId, it, devs?.devs?: mutableListOf()).let { SUCCESS }
         }
 
@@ -125,13 +126,13 @@ class ApplicationController(
     @PutMapping("/{applicationId}/reject")
     fun rejectApplication(
         @PathVariable applicationId: Int
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         applicationService.getApplicationById(applicationId)
             .let {
                 recruitmentProcessService.getProcessFromStage(it.applicationStages.first())
             }
             .let {
-                if (!securityService.checkOfferRights(it.offer)) return UNAUTH
+                if (!securityService.checkOfferRights(it.offer)) throw UnauthenticatedException()
                 applicationService.rejectApplication(applicationId).let { SUCCESS }
             }
 
@@ -144,7 +145,7 @@ class ApplicationController(
         @RequestParam("interview_note") interviewUUID: PayloadUUID?,
         @RequestHeader(EStellaHeaders.devPassword) password: String?,
         @RequestBody notes: MeetingNotes
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         when {
             applicationId != null -> applicationService.getApplicationById(applicationId)
                 .let { applicationStageDataService.setNotesToApplied(it, password, notes.notes) }

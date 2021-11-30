@@ -1,5 +1,6 @@
 package org.malachite.estella.interview.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.interview.domain.InterviewDTO
@@ -41,20 +42,20 @@ class InterviewController(
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_hosts")
-    fun setHosts(@PathVariable meetingId: PayloadUUID, @RequestBody hosts: MeetingHosts): ResponseEntity<Any> =
+    fun setHosts(@PathVariable meetingId: PayloadUUID, @RequestBody hosts: MeetingHosts): ResponseEntity<Message> =
         interviewService.getInterviewWithCheckRights(meetingId.toUUID())
             .let { applicationStageDataService.setHostsForInterview(it.id!!, hosts.hostsMails.toMutableSet()) }
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_duration")
-    fun setDuration(@PathVariable meetingId: PayloadUUID, @RequestBody length: MeetingLength): ResponseEntity<Any> =
+    fun setDuration(@PathVariable meetingId: PayloadUUID, @RequestBody length: MeetingLength): ResponseEntity<Message> =
         interviewService.setDuration(meetingId.toUUID(), length.minutesLength)
             .let { OwnResponses.SUCCESS }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/pick_date")
-    fun pickDate(@PathVariable meetingId: PayloadUUID, @RequestBody date: MeetingDate): ResponseEntity<Any> =
+    fun pickDate(@PathVariable meetingId: PayloadUUID, @RequestBody date: MeetingDate): ResponseEntity<Message> =
         interviewService.setDate(meetingId.toUUID(), date.dateTime)
             .let { OwnResponses.SUCCESS }
 }

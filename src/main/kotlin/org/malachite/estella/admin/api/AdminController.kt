@@ -1,6 +1,7 @@
 package org.malachite.estella.admin.api
 
 import org.malachite.estella.commons.EStellaHeaders
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses.SUCCESS
 import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.commons.PayloadUUID
@@ -24,7 +25,7 @@ class AdminController(
     @PostMapping("/verify/{organizationUUID}")
     fun verifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Any> =
+        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Message> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
                 .verifyOrganization(organizationUUID.toUUID())
@@ -36,7 +37,7 @@ class AdminController(
     @PostMapping("/deverify/{organizationUUID}")
     fun deverifyOrganization(
         @RequestHeader(EStellaHeaders.adminApiKey) apiKey: String?,
-        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Any> =
+        @PathVariable organizationUUID: PayloadUUID): ResponseEntity<Message> =
         if(securityService.isCorrectApiKey(apiKey))
             organizationService
                 .deverifyOrganization(organizationUUID.toUUID())

@@ -1,10 +1,13 @@
 package org.malachite.estella.organization.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.OwnResponses.UNAUTH
 import org.malachite.estella.commons.PayloadUUID
+import org.malachite.estella.commons.UnauthenticatedException
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.people.domain.HrPartnerResponse
 import org.malachite.estella.people.domain.toResponse
 import org.malachite.estella.services.HrPartnerService
@@ -40,19 +43,19 @@ class OrganizationController(
 
     @CrossOrigin
     @GetMapping("/organization")
-    fun getOrganizationByUser(): ResponseEntity<Any> =
+    fun getOrganizationByUser(): ResponseEntity<Organization> =
         securityService.getOrganizationFromContext()
             ?.let { ResponseEntity.ok(it) }
-            ?: UNAUTH
+            ?: throw UnauthenticatedException()
 
     @CrossOrigin
     @Transactional
     @GetMapping("/offers")
-    fun getOrganizationsOffers(): ResponseEntity<Any> =
+    fun getOrganizationsOffers(): ResponseEntity<List<OfferResponse>> =
         securityService.getOrganizationFromContext()
             ?.let { offerService.getOrganizationOffers(it) }
             ?.let { ResponseEntity.ok(it) }
-            ?: UNAUTH
+            ?: throw UnauthenticatedException()
 
 
     @CrossOrigin
@@ -66,7 +69,7 @@ class OrganizationController(
     fun updateOrganization(
         @PathVariable("organizationId") organizationId: PayloadUUID,
         @RequestBody organizationRequest: OrganizationRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         organizationService.updateOrganization(organizationId.toUUID(), organizationRequest.toOrganization())
             .let { OwnResponses.SUCCESS }
 
@@ -75,7 +78,7 @@ class OrganizationController(
     @DeleteMapping("/{organizationId}")
     fun deleteOrganization(
         @PathVariable("organizationId") organizationId: PayloadUUID
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         organizationService.deleteOrganization(organizationId.toUUID()).let { OwnResponses.SUCCESS }
 
 

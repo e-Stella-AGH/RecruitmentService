@@ -1,5 +1,6 @@
 package org.malachite.estella.people.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.SuccessMessage
 import org.malachite.estella.commons.models.people.JobSeeker
@@ -76,7 +77,7 @@ class JobSeekerController(
     @PutMapping("/files")
     fun addJobSeekerFiles(
         @RequestBody jobSeekerFileRequest: JobSeekerFilesRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         securityService.getJobSeekerFromContext()!!
             .let { jobSeekerService.updateJobSeekerFiles(it, jobSeekerFileRequest.files) }
             .let { OwnResponses.SUCCESS }

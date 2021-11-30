@@ -1,5 +1,6 @@
 package org.malachite.estella.people.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.Organization
@@ -50,7 +51,7 @@ class HrPartnerController(
     @DeleteMapping("/{hrPartnerId}")
     fun deleteHrPartner(
         @PathVariable("hrPartnerId") hrId: Int
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         hrPartnerService.deleteHrPartner(hrId).let {
             OwnResponses.SUCCESS
         }
@@ -59,7 +60,7 @@ class HrPartnerController(
     @DeleteMapping("/mail")
     fun deleteHrPartnerByMail(
         @RequestBody mail: HrPartnerMail
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         hrPartnerService.deleteHrPartnerByMail(mail.mail).let {
             OwnResponses.SUCCESS
         }

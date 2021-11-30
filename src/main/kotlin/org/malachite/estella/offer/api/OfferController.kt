@@ -1,5 +1,6 @@
 package org.malachite.estella.offer.api
 
+import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.models.offers.Offer
 import org.malachite.estella.offer.domain.OfferRequest
@@ -52,7 +53,7 @@ class OfferController(
     fun updateOffer(
         @PathVariable("offerId") offerId: Int,
         @RequestBody offerRequest: OfferRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         offerService.updateOffer(offerId, offerRequest)
             .let { OwnResponses.SUCCESS }
 
@@ -60,7 +61,7 @@ class OfferController(
     @DeleteMapping("/{offerId}")
     fun deleteOffer(
         @PathVariable("offerId") offerId: Int
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         offerService.deleteOffer(offerId)
             .let { OwnResponses.SUCCESS }
 }

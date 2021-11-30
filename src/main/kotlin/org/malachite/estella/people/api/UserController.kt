@@ -62,8 +62,8 @@ class UserController(
     fun refresh(
         @PathVariable userId: Int,
         @RequestHeader(EStellaHeaders.jwtToken) jwt: String?
-    ): ResponseEntity<Any> {
-        jwt ?: return OwnResponses.UNAUTH
+    ): ResponseEntity<Message> {
+        jwt ?: throw UnauthenticatedException()
         return securityService.refreshToken(jwt, userId)
             ?.let {
                 ResponseEntity.ok()
@@ -80,7 +80,7 @@ class UserController(
     @PutMapping
     fun updateUser(
         @RequestBody userRequest: UserRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         userService.updateUser(userRequest)
             .let { OwnResponses.SUCCESS }
 
@@ -88,7 +88,7 @@ class UserController(
     @PutMapping("/personalData")
     fun updatePersonalData(
         @RequestBody personalDataRequest: PersonalDataRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         userService.updateUserPersonalData(personalDataRequest)
             .let { OwnResponses.SUCCESS }
 
@@ -96,7 +96,7 @@ class UserController(
     @PutMapping("/password")
     fun updatePersonalData(
         @RequestBody passwordRequest: PasswordRequest
-    ): ResponseEntity<Any> =
+    ): ResponseEntity<Message> =
         userService.updateUserPassword(passwordRequest)
             .let { OwnResponses.SUCCESS }
 

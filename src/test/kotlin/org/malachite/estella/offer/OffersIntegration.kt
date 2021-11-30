@@ -127,6 +127,23 @@ class OffersIntegration: BaseIntegration() {
 
     @Test
     @Order(4)
+    fun `should not delete offer if someone applied on offer`() {
+        val offers = getOffers().filter { it.creator.user.mail == getHrPartner().user.mail }
+        startProcess(offers[0].id!!)
+        val offer = offerRepository.findAll().find { it.id == offers[0].id!! }!!
+        val jobSeeker = jobSeekerRepository.findAll().first()
+        applyForOffer(jobSeeker,"a",offer)
+        val hrPartner = getHrPartner()
+        val response = httpRequest(
+            path = "/api/offers/${offer.id}",
+            method = HttpMethod.DELETE,
+            headers = mapOf(EStellaHeaders.jwtToken to getAuthToken(hrPartner.user.mail, hrPassword))
+        )
+        expectThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    }
+
+    @Test
+    @Order(5)
     fun `for job_seeker should only get offers that's processes are started`() {
         val offers = getOffers().filter { it.creator.user.mail == getHrPartner().user.mail }
         startProcess(offers[0].id!!)

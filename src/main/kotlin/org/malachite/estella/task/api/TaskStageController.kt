@@ -34,7 +34,7 @@ class TaskStageController(
             @RequestParam("interview", required = false) interviewUuid: String?,
             @RequestHeader(EStellaHeaders.devPassword) password: String,
             @RequestBody tasks: Tasks
-    ): ResponseEntity<Any> {
+    ): ResponseEntity<Message> {
         if (listOfNotNull(taskStageUuid, interviewUuid).size != 1)
             return ResponseEntity.badRequest().body(Message("Exactly one of parameters: organizationUuid and taskStageUuid is required"))
         taskStageUuid?.let {
