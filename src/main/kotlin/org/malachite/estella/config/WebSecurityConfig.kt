@@ -26,12 +26,13 @@ class WebSecurityConfig(val jwtFilter: JwtSecurityFilter, val userDetailsService
 
     override fun configure(http: HttpSecurity?) {
         http!!
-                .cors().and()
-                .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeRequests()
-                .anyRequest().permitAll().and()
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .cors().and()
+            .csrf().disable()
+            .headers().frameOptions().disable().and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+            .authorizeRequests()
+            .anyRequest().permitAll().and()
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
     }
 
     @Bean

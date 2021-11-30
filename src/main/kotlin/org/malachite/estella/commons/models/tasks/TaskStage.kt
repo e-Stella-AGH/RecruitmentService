@@ -8,26 +8,30 @@ import javax.persistence.*
 @Entity
 @Table(name = "tasks_stages")
 data class TaskStage(
-    @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: UUID?,
-    @JsonIgnore @OneToOne val applicationStage: ApplicationStageData
-) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val id: UUID?,
+
+    @JsonIgnore
+    @OneToOne
+    val applicationStage: ApplicationStageData,
 
     @JsonIgnore
     @OneToMany(mappedBy = "taskStage", fetch = FetchType.EAGER)
-    var tasksResult: Set<TaskResult> = setOf()
+    var tasksResult: Set<TaskResult> = setOf(),
+) {
+    override fun equals(other: Any?) = other is TaskStage && EssentialData(this) == EssentialData(other)
+    override fun hashCode() = EssentialData(this).hashCode()
+    override fun toString() = EssentialData(this).toString().replaceFirst("EssentialData", "TaskStage")
 
-
-    constructor(id: UUID?, tasksResult: Set<TaskResult>, applicationStage: ApplicationStageData) : this(
-        id,
-        applicationStage
-    ) {
-        this.tasksResult = tasksResult
+    companion object {
+        private data class EssentialData(
+            val id: UUID?,
+            val applicationStage: ApplicationStageData,
+        ) {
+            constructor(stage: TaskStage) : this(
+                stage.id, stage.applicationStage
+            )
+        }
     }
-
-    fun copy(
-        id: UUID? = this.id,
-        tasksResult: Set<TaskResult> = this.tasksResult,
-        applicationStage: ApplicationStageData = this.applicationStage
-    ): TaskStage =
-        TaskStage(id, tasksResult, applicationStage)
 }

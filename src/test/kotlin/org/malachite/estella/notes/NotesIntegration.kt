@@ -71,7 +71,7 @@ class NotesIntegration : BaseIntegration() {
         var savedApplicationStageData = applicationStageDataRepository.save(applicationStageData)
 
 
-        var taskStage = TaskStage(null, setOf(), savedApplicationStageData)
+        var taskStage = TaskStage(null, savedApplicationStageData)
         taskStage = taskStageRepository.save(taskStage)
 
         zonedDateTime = ZonedDateTime.of(LocalDateTime.MIN, ZoneId.systemDefault())

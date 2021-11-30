@@ -9,37 +9,37 @@ import javax.persistence.*
 @Entity
 @Table(name = "tasks_results")
 data class TaskResult(
-    @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Int?,
-    @Lob val results: Blob?, @Lob val code: Clob?,
-    val startTime: Timestamp?, val endTime: Timestamp?,
-    @ManyToOne val task: Task
-) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val id: Int?,
+
+    @Lob val results: Blob?,
+    @Lob val code: Clob?,
+    val startTime: Timestamp?,
+    val endTime: Timestamp?,
+    @ManyToOne val task: Task,
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "taskStage")
-    var taskStage: TaskStage? = null
+    val taskStage: TaskStage? = null
+) {
+    override fun equals(other: Any?) = other is TaskResult && EssentialData(this) == EssentialData(other)
+    override fun hashCode() = EssentialData(this).hashCode()
+    override fun toString() = EssentialData(this).toString().replaceFirst("EssentialData", "TaskResult")
 
-    constructor(
-        id: Int?,
-        results: Blob?,
-        code: Clob?,
-        startTime: Timestamp?,
-        endTime: Timestamp?,
-        task: Task,
-        taskStage: TaskStage
-    ) : this(id, results, code, startTime, endTime, task) {
-        this.taskStage = taskStage
+    companion object {
+        private data class EssentialData(
+            val id: Int?,
+            val results: Blob?,
+            val code: Clob?,
+            val startTime: Timestamp?,
+            val endTime: Timestamp?,
+            val task: Task
+        ) {
+            constructor(stage: TaskResult) : this(
+                stage.id, stage.results, stage.code, stage.startTime, stage.endTime, stage.task
+            )
+        }
     }
-
-    fun copy(
-        id: Int? = this.id,
-        results: Blob? = this.results,
-        code: Clob? = this.code,
-        startTime: Timestamp? = this.startTime,
-        endTime: Timestamp? = this.endTime,
-        task: Task = this.task,
-        taskStage: TaskStage? = this.taskStage
-    ): TaskResult = TaskResult(id, results, code, startTime, endTime, task, taskStage!!)
-
 }
