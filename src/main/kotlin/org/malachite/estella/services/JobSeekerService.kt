@@ -12,8 +12,12 @@ import org.malachite.estella.people.domain.UserNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.sql.SQLIntegrityConstraintViolationException
+import java.sql.SQLNonTransientException
 
 @Service
+@Transactional
 class JobSeekerService(
     @Autowired private val jobSeekerRepository: JobSeekerRepository,
     @Autowired private val mailService: MailService,
@@ -31,12 +35,11 @@ class JobSeekerService(
         createJobSeeker(jobSeeker)
             .also { mailService.sendRegisterMail(it.user) }
 
+
     fun createJobSeeker(jobSeeker: JobSeeker): JobSeeker =
-        try {
-            jobSeekerRepository.save(jobSeeker)
-        } catch (e: DataIntegrityViolationException) {
-            throw UserAlreadyExistsException()
-        }
+        jobSeekerRepository
+            .save(jobSeeker)
+
 
     fun deleteJobSeeker(id: Int) {
         if (!checkRights(id).contains(Permission.DELETE)) throw UnauthenticatedException()
