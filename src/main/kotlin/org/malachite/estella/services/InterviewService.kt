@@ -42,7 +42,10 @@ class InterviewService(
     fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
         getLastInterviewFromApplicationId(applicationId).getId()
 
-    fun getLastInterviewFromApplicationId(applicationId: Int, withPossibleHosts: Boolean = false): InterviewWithPossibleHosts =
+    fun getLastInterviewFromApplicationId(
+        applicationId: Int,
+        withPossibleHosts: Boolean = false
+    ): InterviewWithPossibleHosts =
         withExceptionThrower {
             getAllByApplicationId(applicationId).sortedBy { it.dateTime }.sortedWith { a, b ->
                 when {
@@ -74,6 +77,7 @@ class InterviewService(
     ) {
         fun getId() = PayloadUUID(this.id.toString())
     }
+
     fun Interview.toInterviewWithPossibleHosts(hosts: List<String>? = null) =
         InterviewWithPossibleHosts(this.id, this.dateTime, this.minutesLength, this.applicationStage, hosts)
 

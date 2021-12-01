@@ -8,7 +8,9 @@ import org.malachite.estella.commons.PayloadUUID
 import org.malachite.estella.commons.models.offers.Application
 import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.interview.domain.InterviewDTO
+import org.malachite.estella.interview.domain.InterviewWithPossibleHostsDTO
 import org.malachite.estella.interview.domain.toInterviewDTO
+import org.malachite.estella.interview.domain.toInterviewWithPossibleHostsDTO
 import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.InterviewService
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,23 +49,6 @@ class InterviewController(
         @RequestParam("with_possible_hosts") withPossibleHosts: Boolean = false
     ): ResponseEntity<InterviewWithPossibleHostsDTO> =
         interviewService.getLastInterviewFromApplicationId(applicationId, withPossibleHosts).let { ResponseEntity.ok(it.toInterviewWithPossibleHostsDTO()) }
-
-    data class InterviewWithPossibleHostsDTO(
-        val id: String?,
-        val dateTime: Timestamp?,
-        val minutesLength: Int?,
-        val application: ApplicationDTO,
-        val hosts: Set<String>,
-        val possibleHosts: List<String>?
-    )
-    fun InterviewService.InterviewWithPossibleHosts.toInterviewWithPossibleHostsDTO() = InterviewWithPossibleHostsDTO(
-        this.id.toString(),
-        this.dateTime,
-        this.minutesLength,
-        this.applicationStage.application.toApplicationDTO(),
-        this.applicationStage.hosts,
-        this.possibleHosts
-    )
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_hosts")

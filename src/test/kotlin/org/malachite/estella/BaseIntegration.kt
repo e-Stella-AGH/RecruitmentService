@@ -16,6 +16,7 @@ import org.malachite.estella.interview.api.JobseekerName
 import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewNoteDTO
 import org.malachite.estella.interview.domain.InterviewRepository
+import org.malachite.estella.interview.domain.InterviewWithPossibleHostsDTO
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
@@ -300,7 +301,7 @@ class BaseIntegration {
         this["hosts"] as Set<String>?
     )
 
-    fun Map<String, Any>.toInterviewWithPossibleHostsDTO() = InterviewController.InterviewWithPossibleHostsDTO(
+    fun Map<String, Any>.toInterviewWithPossibleHostsDTO() = InterviewWithPossibleHostsDTO(
         this["id"] as String?,
         (this["dateTime"] as String?)?.toTimestamp(),
         this["minutesLength"] as Int?,
