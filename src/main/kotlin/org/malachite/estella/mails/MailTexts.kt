@@ -30,11 +30,12 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getInterviewDevInvitation(jobSeekerName: String, url: String, date: String, hrPartnerFullName: String, position: String) =
+    fun getInterviewHostInvitation(jobSeekerName: String, url: String, date: String, hrPartnerFullName: String, position: String, passwordNote: String) =
         """
             Hi,
             You have been added as host of interview with $jobSeekerName recruiting for $position.
             It will take place at $url on $date. 
+            $passwordNote
             All the best,
             $hrPartnerFullName
             """.trimIndent()
@@ -79,12 +80,14 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getTaskSubmittedNotificationText(url: String, timeToWait: Int, hrPartnerFullName: String) =
+    fun getTaskSubmittedNotificationText(url: String, timeToWait: Int, hrPartnerFullName: String, password: UUID) =
             """
             Hi,
             The candidate has started solving tasks from a stage you were assigned to.
             In $timeToWait minutes you should be able to review the tasks.
             You can do that at: $url.
+            Password for this assignment is:
+            $password
             All the best,
             $hrPartnerFullName
             """.trimIndent()

@@ -52,10 +52,18 @@ fun Interview.toInterviewHostInvitationAsMailPayload(offer: Offer, application: 
         else -> ""
     }
     val url = "${MAIN_URL}interview/$role${this.id}/${offer.creator.organization.id}"
+
+    val passwordNote = if (role == "technical/")
+        """
+        Password for adding notes is 
+        $this.applicationStage.tasksStage!!.id.toString()
+        but remember that you can use any of passwords we've sent you that are still valid."""
+    else ""
+
     return MailPayload(
             subject = "You are invited for interview with ${jobSeekerFullName}!",
             receiver = hostMail,
-            content = MailTexts.getInterviewDevInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position),
+            content = MailTexts.getInterviewHostInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position, passwordNote),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )
@@ -137,11 +145,12 @@ fun TaskStage.toTaskAssignedNotificationPayload(mail: String, offer: Offer): Mai
 fun TaskStage.toTaskSubmittedNotificationPayload(mail: String, timeToWait: Int, offer: Offer): MailPayload {
     val hrPartnerFullName = "${offer.creator.user.firstName} ${offer.creator.user.lastName}"
     val url = "${MAIN_URL}tasks/review/${this.id}"
+    val password = offer.creator.organization.id!!
     return MailPayload(
             subject = "You have been requested to review a task",
             sender_name = "e-Stella Team",
             receiver = mail,
-            content = MailTexts.getTaskSubmittedNotificationText(url, timeToWait, hrPartnerFullName),
+            content = MailTexts.getTaskSubmittedNotificationText(url, timeToWait, hrPartnerFullName, password),
             sender_email = MAIN_MAIL
     )
 }
