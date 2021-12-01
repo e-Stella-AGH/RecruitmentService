@@ -52,11 +52,18 @@ fun Interview.toInterviewHostInvitationAsMailPayload(offer: Offer, application: 
         else -> ""
     }
     val url = "${MAIN_URL}interview/$role${this.id}/${offer.creator.organization.id}"
-    val password = if (role == "technical/") this.applicationStage.tasksStage!!.id.toString() else ""
+
+    val passwordNote = if (role == "technical/")
+        """
+        Password for adding notes is 
+        $this.applicationStage.tasksStage!!.id.toString()
+        but remember that you can use any of passwords we've sent you that are still valid."""
+    else ""
+
     return MailPayload(
             subject = "You are invited for interview with ${jobSeekerFullName}!",
             receiver = hostMail,
-            content = MailTexts.getInterviewHostInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position, password),
+            content = MailTexts.getInterviewHostInvitation(jobSeekerFullName, url, this.dateTime.toString(), hrPartnerFullName, offer.position, passwordNote),
             sender_name = hrPartnerFullName,
             sender_email = offer.creator.user.mail
     )

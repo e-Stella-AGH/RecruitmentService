@@ -30,16 +30,12 @@ object MailTexts {
             $hrPartnerFullName
             """.trimIndent()
 
-    fun getInterviewHostInvitation(jobSeekerName: String, url: String, date: String, hrPartnerFullName: String, position: String, password: String) =
+    fun getInterviewHostInvitation(jobSeekerName: String, url: String, date: String, hrPartnerFullName: String, position: String, passwordNote: String) =
         """
             Hi,
             You have been added as host of interview with $jobSeekerName recruiting for $position.
             It will take place at $url on $date. 
-            ${if (password.isNotEmpty()) """
-            Password for adding notes is 
-            $password
-            but remember that you can use any of passwords we've sent you that are still valid."""
-            else ""}
+            $passwordNote
             All the best,
             $hrPartnerFullName
             """.trimIndent()
