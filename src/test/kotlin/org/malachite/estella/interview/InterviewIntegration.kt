@@ -24,6 +24,7 @@ import org.malachite.estella.util.EmailServiceStub
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
@@ -272,6 +273,48 @@ class InterviewIntegration : BaseIntegration() {
         interview = interviewRepository.findAll().first()
 
         expectThat(interview.dateTime.toString()).isEqualTo(dateTime.toString())
+    }
+
+    @Test
+    @Order(11)
+    fun `should be able to get newest interview with possible hosts`() {
+        EmailServiceStub.stubForSendEmail()
+        var interview = Interview(null, null, null, applicationStageData)
+        interviewRepository.save(interview)
+
+        val response = httpRequest(
+            path = "/api/interview/newest/${applicationStageData.application.id}/interview?with_possible_hosts=true",
+            method = HttpMethod.GET
+        )
+
+        (response.body as Map<String, Any>).toInterviewWithPossibleHostsDTO().let {
+            expect {
+                that(it.id).isEqualTo(interview.id.toString())
+                that(it.hosts).isEqualTo(interview.applicationStage.hosts)
+                that(it.possibleHosts).isEqualTo(listOf("principus@roma.com"))
+            }
+        }
+    }
+
+    @Test
+    @Order(12)
+    fun `should return null as possible hosts when they are not explicite asked for`() {
+        EmailServiceStub.stubForSendEmail()
+        var interview = Interview(null, null, null, applicationStageData)
+        interviewRepository.save(interview)
+
+        val response = httpRequest(
+            path = "/api/interview/newest/${applicationStageData.application.id}/interview",
+            method = HttpMethod.GET
+        )
+
+        (response.body as Map<String, Any>).toInterviewWithPossibleHostsDTO().let {
+            expect {
+                that(it.id).isEqualTo(interview.id.toString())
+                that(it.hosts).isEqualTo(interview.applicationStage.hosts)
+                that(it.possibleHosts).isNull()
+            }
+        }
     }
 
     private val password = "a"

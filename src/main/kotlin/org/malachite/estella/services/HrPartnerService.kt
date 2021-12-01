@@ -12,6 +12,7 @@ import org.malachite.estella.people.domain.UserNotFoundException
 import org.malachite.estella.security.Authority
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class HrPartnerService(
@@ -48,6 +49,9 @@ class HrPartnerService(
         mailService.sendHrPartnerRegisterMail(resultHrPartner, password)
         return hrPartner
     }
+
+    fun getAllHRsFromOrganization(organizationUUID: UUID) =
+        this.getHrPartners().filter { it.organization.id == organizationUUID }
 
     private fun updateHrPartner(id: Int, hrPartner: HrPartner) {
         if(!getPermissions(id).contains(Permission.UPDATE)) throw UnauthenticatedException()

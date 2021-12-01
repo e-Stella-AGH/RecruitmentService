@@ -5,7 +5,7 @@ import java.io.File
 
 const val applicationPath = "src/main/resources/application.properties"
 const val configPath = "config2.json"
-const val dropDB = false
+const val dropDB = true
 
 fun getConfigurationData(): MutableMap<String, String> {
     val file = File(configPath)
@@ -17,7 +17,7 @@ fun getConfigurationData(): MutableMap<String, String> {
 fun getApplicationPropertiesForSql(env: MutableMap<String, String>): String {
     val ddlAuto = if(dropDB) "create" else "validate"
     return """
-			spring.datasource.url=${env["DATABASE_URL"]}
+			spring.datasource.url=jdbc:postgresql://pg-9281a3e-dawid199960-0a1b.aivencloud.com:13068/stellar_data?sslmode=require&user=avnadmin&password=RnRzMlPImbPgxP6v
             spring.jpa.generate-ddl=true
             spring.jpa.hibernate.ddl-auto=${ddlAuto}
 			spring.jpa.show-sql=true
@@ -43,7 +43,7 @@ fun getApplicationPropertiesForH2(): String {
 }
 
 fun prepareSpringProperties(env: MutableMap<String, String> = getConfigurationData()) {
-    var properties = if (env.isNotEmpty()) getApplicationPropertiesForSql(env) else getApplicationPropertiesForH2()
+    var properties = getApplicationPropertiesForSql(env)
     properties += "\n" + getOtherApplicationProperties()
     File(applicationPath).printWriter().use { out ->
         out.println(properties)
