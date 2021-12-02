@@ -11,10 +11,12 @@ import org.malachite.estella.commons.models.people.HrPartner
 import org.malachite.estella.commons.models.people.JobSeeker
 import org.malachite.estella.commons.models.people.Organization
 import org.malachite.estella.commons.models.people.User
+import org.malachite.estella.interview.api.InterviewController
 import org.malachite.estella.interview.api.JobseekerName
 import org.malachite.estella.interview.domain.InterviewDTO
 import org.malachite.estella.interview.domain.InterviewNoteDTO
 import org.malachite.estella.interview.domain.InterviewRepository
+import org.malachite.estella.interview.domain.InterviewWithPossibleHostsDTO
 import org.malachite.estella.offer.domain.OfferRepository
 import org.malachite.estella.offer.domain.OfferResponse
 import org.malachite.estella.offer.domain.OrganizationResponse
@@ -297,6 +299,15 @@ class BaseIntegration {
         this["minutesLength"] as Int,
         (this["application"] as Map<String, Any>).toApplicationDTO(),
         this["hosts"] as Set<String>?
+    )
+
+    fun Map<String, Any>.toInterviewWithPossibleHostsDTO() = InterviewWithPossibleHostsDTO(
+        this["id"] as String?,
+        (this["dateTime"] as String?)?.toTimestamp(),
+        this["minutesLength"] as Int?,
+        (this["application"] as Map<String, Any>).toApplicationDTO(),
+        (this["hosts"] as List<String>).toSet(),
+        this["possibleHosts"] as List<String>?
     )
 
     fun List<Map<String, Any>>.toInterviewNotesDTO() =

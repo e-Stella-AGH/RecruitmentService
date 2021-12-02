@@ -42,7 +42,10 @@ class InterviewService(
     fun getLastInterviewIdFromApplicationId(applicationId: Int): PayloadUUID =
         getLastInterviewFromApplicationId(applicationId).getId()
 
-    fun getLastInterviewFromApplicationId(applicationId: Int): Interview =
+    fun getLastInterviewFromApplicationId(
+        applicationId: Int,
+        withPossibleHosts: Boolean = false
+    ): InterviewWithPossibleHosts =
         withExceptionThrower {
             getAllByApplicationId(applicationId).sortedBy { it.dateTime }.sortedWith { a, b ->
                 when {
@@ -50,9 +53,33 @@ class InterviewService(
                     b.dateTime == null -> 1
                     else -> a.dateTime.compareTo(b.dateTime)
                 }
-
             }.first()
+        }.let { interview ->
+            if (withPossibleHosts) {
+                val possibleHosts = interview.applicationStage.let {
+                    recruitmentProcessService.getProcessFromStage(it)
+                }.offer.creator.organization.id.let {
+                    hrPartnerService.getAllHRsFromOrganization(it!!)
+                }.map { it.user.mail }
+
+                interview.toInterviewWithPossibleHosts(possibleHosts)
+            } else {
+                interview.toInterviewWithPossibleHosts()
+            }
         }
+
+    data class InterviewWithPossibleHosts(
+        val id: UUID?,
+        val dateTime: Timestamp?,
+        val minutesLength: Int?,
+        val applicationStage: ApplicationStageData,
+        val possibleHosts: List<String>?
+    ) {
+        fun getId() = PayloadUUID(this.id.toString())
+    }
+
+    fun Interview.toInterviewWithPossibleHosts(hosts: List<String>? = null) =
+        InterviewWithPossibleHosts(this.id, this.dateTime, this.minutesLength, this.applicationStage, hosts)
 
     fun setDuration(id: UUID, length: Int) {
         if (!canHrUpdate(id)) throw UnauthenticatedException()
@@ -74,10 +101,10 @@ class InterviewService(
         val application = applicationStage.application
         val offer = recruitmentProcessService.getProcessFromStage(applicationStage).offer
         mailService.sendInterviewJobSeekerConfirmationMail(
-                offer,
-                savedInterview,
-                application,
-                application.jobSeeker.user.mail
+            offer,
+            savedInterview,
+            application,
+            application.jobSeeker.user.mail
         )
     }
 

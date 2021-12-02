@@ -1,16 +1,23 @@
 package org.malachite.estella.interview.api
 
+import org.malachite.estella.aplication.domain.ApplicationDTO
+import org.malachite.estella.aplication.domain.toApplicationDTO
 import org.malachite.estella.commons.Message
 import org.malachite.estella.commons.OwnResponses
 import org.malachite.estella.commons.PayloadUUID
+import org.malachite.estella.commons.models.offers.Application
+import org.malachite.estella.commons.models.offers.ApplicationStageData
 import org.malachite.estella.interview.domain.InterviewDTO
+import org.malachite.estella.interview.domain.InterviewWithPossibleHostsDTO
 import org.malachite.estella.interview.domain.toInterviewDTO
+import org.malachite.estella.interview.domain.toInterviewWithPossibleHostsDTO
 import org.malachite.estella.services.ApplicationStageDataService
 import org.malachite.estella.services.InterviewService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
+import java.util.*
 import javax.transaction.Transactional
 
 @RestController
@@ -37,8 +44,11 @@ class InterviewController(
     @CrossOrigin
     @Transactional
     @GetMapping("/newest/{applicationId}/interview")
-    fun getNewestInterview(@PathVariable applicationId: Int): ResponseEntity<InterviewDTO> =
-        interviewService.getLastInterviewFromApplicationId(applicationId).let { ResponseEntity.ok(it.toInterviewDTO()) }
+    fun getNewestInterview(
+        @PathVariable applicationId: Int,
+        @RequestParam("with_possible_hosts") withPossibleHosts: Boolean = false
+    ): ResponseEntity<InterviewWithPossibleHostsDTO> =
+        interviewService.getLastInterviewFromApplicationId(applicationId, withPossibleHosts).let { ResponseEntity.ok(it.toInterviewWithPossibleHostsDTO()) }
 
     @CrossOrigin
     @PutMapping("/{meetingId}/set_hosts")
