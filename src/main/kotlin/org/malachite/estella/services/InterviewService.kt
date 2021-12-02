@@ -56,8 +56,8 @@ class InterviewService(
             }.first()
         }.let { interview ->
             if (withPossibleHosts) {
-                val possibleHosts = interview.applicationStage.application.applicationStages.first().stage.id.let {
-                    recruitmentProcessService.getProcessFromStage(it!!)
+                val possibleHosts = interview.applicationStage.let {
+                    recruitmentProcessService.getProcessFromStage(it)
                 }.offer.creator.organization.id.let {
                     hrPartnerService.getAllHRsFromOrganization(it!!)
                 }.map { it.user.mail }
