@@ -56,7 +56,7 @@ fun Interview.toInterviewHostInvitationAsMailPayload(offer: Offer, application: 
     val passwordNote = if (role == "technical/")
         """
         Password for adding notes is 
-        $this.applicationStage.tasksStage!!.id.toString()
+        ${this.applicationStage.tasksStage!!.id.toString()}
         but remember that you can use any of passwords we've sent you that are still valid."""
     else ""
 
