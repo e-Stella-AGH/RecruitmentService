@@ -114,7 +114,7 @@ class ApplicationStageDataService(
 
     private fun getNotesByApplicationStage(applicationStage: ApplicationStageData, password: String?): List<Note> =
         assertAccessApplicationStageData(applicationStage, password)
-            .let { applicationStage.application!!.applicationStages.flatMap { it.notes } }
+            .let { applicationStage.application!!.applicationStages.flatMap { it.notes }.distinct() }
 
     fun getNotesByTaskIdWithTask(id: UUID, password: String?): TasksNotes =
         taskStageService.getTaskStage(id)
