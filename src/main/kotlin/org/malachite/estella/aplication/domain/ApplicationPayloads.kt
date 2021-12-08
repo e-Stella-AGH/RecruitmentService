@@ -15,13 +15,8 @@ import org.malachite.estella.commons.toBase64String
 import org.malachite.estella.people.domain.*
 import org.malachite.estella.services.TasksNotes
 import org.malachite.estella.task.domain.TaskResultNotExistException
-import java.sql.Blob
-import java.sql.Clob
 import java.sql.Date
 import java.time.LocalDate
-import java.util.*
-import javax.sql.rowset.serial.SerialBlob
-import javax.sql.rowset.serial.SerialClob
 
 interface ApplicationPayload {
     fun toApplication(stage: RecruitmentStage, jobSeeker: JobSeeker, files: Set<JobSeekerFile>): Application
@@ -91,7 +86,7 @@ fun Application.toApplicationDTO() =
         this.id,
         this.applicationDate,
         this.status,
-        this.applicationStages.last().stage,
+        this.applicationStages.maxByOrNull { it.id!! }!!.stage,
         this.jobSeeker.toJobSeekerDTO(),
         this.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
         this.applicationStages.map { it.stage.id!! }
