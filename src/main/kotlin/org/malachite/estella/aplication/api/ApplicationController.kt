@@ -88,7 +88,7 @@ class ApplicationController(
         this.application.id,
         this.application.applicationDate,
         this.application.status,
-        this.application.applicationStages.last().stage,
+        this.application.applicationStages.maxByOrNull { it.id!! }!!.stage,
         this.application.jobSeeker.toJobSeekerDTO(),
         this.application.seekerFiles.map { it.toJobSeekerFileDTO() }.toSet(),
         this.stages,
