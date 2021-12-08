@@ -46,18 +46,22 @@ class ApplicationService(
     }
 
     fun insertApplicationWithoutUser(offerId: Int, applicationPayload: ApplicationNoUserPayload): Application =
-            jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
-                    .let { insertApplication(offerId, it, applicationPayload) }
+        jobSeekerService.getOrCreateJobSeeker(applicationPayload.toJobSeeker())
+            .let { insertApplication(offerId, it, applicationPayload) }
 
-    fun setNextStageOfApplication(applicationId: Int, recruitmentProcess: RecruitmentProcess, devs: MutableList<String>) {
+    fun setNextStageOfApplication(
+        applicationId: Int,
+        recruitmentProcess: RecruitmentProcess,
+        devs: MutableList<String>
+    ) {
         val application = applicationRepository.findById(applicationId).get()
 
         if (application.status != ApplicationStatus.IN_PROGRESS)
             throw UnsupportedOperationException("Cannot change stage of resolved application!")
 
         val recruitmentProcessStages = recruitmentProcess
-                .stages
-                .sortedBy { it.id }
+            .stages
+            .sortedBy { it.id }
 
         val applicationRecruitmentStages = application.applicationStages.map { it.stage }.sortedBy { it.id }
 
@@ -70,14 +74,14 @@ class ApplicationService(
 
         if (isNotLastStage(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
             application.addNewApplicationStageData(recruitmentProcessStages[indexOfRecruitmentStage + 1], devs)
-                    .let {
-                        if (shouldBeAccepted(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
-                            it.copy(status = ApplicationStatus.ACCEPTED)
-                        else
-                            it
-                    }.let {
-                        applicationRepository.save(it)
-                    }
+                .let {
+                    if (shouldBeAccepted(indexOfRecruitmentStage, recruitmentProcessStages.lastIndex))
+                        it.copy(status = ApplicationStatus.ACCEPTED)
+                    else
+                        it
+                }.let {
+                    applicationRepository.save(it)
+                }
     }
 
     private fun isNotLastStage(currentIndex: Int, lastIndex: Int) = currentIndex < lastIndex
@@ -85,34 +89,34 @@ class ApplicationService(
     private fun shouldBeAccepted(currentIndex: Int, lastIndex: Int) = currentIndex == lastIndex - 1
 
     private fun Application.addNewApplicationStageData(recruitmentStage: RecruitmentStage, devs: MutableList<String>) =
-            applicationStageDataService.createApplicationStageData(
-                    this,
-                    recruitmentStage,
-                    devs
-            ).let {
-                val stages = ArrayList(this.applicationStages.plus(it))
-                val newApplication = this.copy(applicationStages = stages)
-                newApplication
-            }.let { applicationRepository.save(it) }
+        applicationStageDataService.createApplicationStageData(
+            this,
+            recruitmentStage,
+            devs
+        ).let {
+            val stages = ArrayList(this.applicationStages.plus(it))
+            val newApplication = this.copy(applicationStages = stages)
+            newApplication
+        }.let { applicationRepository.save(it) }
 
 
     fun getApplicationById(applicationId: Int): Application =
-            withExceptionThrower { applicationRepository.findById(applicationId).get() }
+        withExceptionThrower { applicationRepository.findById(applicationId).get() }
 
     fun getAllApplications(): List<Application> =
-            applicationRepository
-                    .findAll()
+        applicationRepository
+            .findAll()
 
 
     fun Application.isInThisProcess(recruitmentProcess: RecruitmentProcess): Boolean =
-        this.applicationStages.first().let { recruitmentProcess.stages.contains(it.stage)}
+        this.applicationStages.first().let { recruitmentProcess.stages.contains(it.stage) }
 
     private fun Application.toApplicationInfo(stages: List<RecruitmentStage>, offerName: String) =
         ApplicationInfo(
             id,
             applicationDate,
             status,
-            stage = applicationStages.last().stage,
+            stage = applicationStages.maxByOrNull { it.id!! }!!.stage,
             jobSeeker,
             seekerFiles,
             stages,
@@ -130,7 +134,7 @@ class ApplicationService(
                 val process = it.recruitmentProcess
                 if (process != null && process.stages.isNotEmpty())
                     applicationRepository.findAll().toList()
-                        .filter {it.isInThisProcess(process)}
+                        .filter { it.isInThisProcess(process) }
                         .map { application -> application.toApplicationInfo(process.stages.getAsList(), it.name) }
                 else
                     listOf()
@@ -159,20 +163,22 @@ class ApplicationService(
     }
 
     fun getApplicationsForDev(devMail: String, password: String): List<ApplicationForDevDTO> =
-            securityService.getTaskStageFromPassword(password)?.let { recruitmentProcessService.getProcessFromStage(it.applicationStage) }
-                    ?.let { process ->
-                        val offer = process.offer
-                        taskStageService.getByOrganization(offer.creator.organization.id)
-                                .filter { it.applicationStage.hosts.contains(devMail) }
-                                .map { stage ->
-                                    ApplicationForDevDTO(
-                                            stage.applicationStage.application!!.toApplicationDTO(),
-                                            stage.id.toString(),
-                                            stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
-                                            offer.position)
-                                }
+        securityService.getTaskStageFromPassword(password)
+            ?.let { recruitmentProcessService.getProcessFromStage(it.applicationStage) }
+            ?.let { process ->
+                val offer = process.offer
+                taskStageService.getByOrganization(offer.creator.organization.id)
+                    .filter { it.applicationStage.hosts.contains(devMail) }
+                    .map { stage ->
+                        ApplicationForDevDTO(
+                            stage.applicationStage.application!!.toApplicationDTO(),
+                            stage.id.toString(),
+                            stage.applicationStage.notes.map { it.toApplicationNoteDTO() }.toSet(),
+                            offer.position
+                        )
                     }
-                    ?: mutableListOf()
+            }
+            ?: mutableListOf()
 
     data class ApplicationWithStagesAndOfferName(
         val application: Application,
